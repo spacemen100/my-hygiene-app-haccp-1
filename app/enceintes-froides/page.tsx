@@ -9,14 +9,15 @@ import {
   Paper,
   LinearProgress,
   Chip,
+  CardHeader,
 } from '@mui/material';
 import {
   AcUnit as SnowflakeIcon,
-  Thermostat,
-  Warning,
-  TrendingDown,
-  Wifi,
-  WifiOff,
+  Thermostat as ThermometerIcon,
+  Warning as WarningIcon,
+  TrendingDown as TrendingDownIcon,
+  Wifi as WifiIcon,
+  WifiOff as WifiOffIcon,
 } from '@mui/icons-material';
 
 export default function EnceintesFroidesPage() {
@@ -27,155 +28,221 @@ export default function EnceintesFroidesPage() {
     { id: "CONG-1", name: "Congélateur 1", temp: "-18.5°C", target: "-18°C", status: "normal", connected: false }
   ];
 
-  const stats = [
-    { label: "Enceintes", value: "4", icon: SnowflakeIcon, color: "#2196f3" },
-    { label: "Normales", value: "3", icon: Thermostat, color: "#4caf50" },
-    { label: "Alertes", value: "1", icon: Warning, color: "#ff9800" },
-    { label: "Moyenne", value: "2.3°C", icon: TrendingDown, color: "#00bcd4" }
-  ];
-
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-600 to-cyan-700 rounded-2xl p-8 text-white shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-white/20 rounded-xl">
-            <Snowflake className="h-8 w-8" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Enceintes froides</h1>
-            <p className="text-cyan-100 text-lg">Surveillance des températures en temps réel</p>
-          </div>
-        </div>
-      </div>
+      <Box sx={{
+        background: 'linear-gradient(to right, #0891b2, #0e7490)',
+        borderRadius: '16px',
+        p: 4,
+        color: 'white',
+        boxShadow: 3,
+        mb: 4
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Box sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.2)', borderRadius: '12px' }}>
+            <SnowflakeIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+              Enceintes froides
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#bae6fd' }}>
+              Surveillance des températures en temps réel
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Enceintes</p>
-                <p className="text-3xl font-bold text-gray-900">4</p>
-              </div>
-              <div className="p-3 rounded-xl bg-blue-50">
-                <Snowflake className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Normales</p>
-                <p className="text-3xl font-bold text-green-600">3</p>
-              </div>
-              <div className="p-3 rounded-xl bg-green-50">
-                <Thermometer className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Alertes</p>
-                <p className="text-3xl font-bold text-orange-600">1</p>
-              </div>
-              <div className="p-3 rounded-xl bg-orange-50">
-                <AlertTriangle className="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Moyenne</p>
-                <p className="text-3xl font-bold text-cyan-600">2.3°C</p>
-              </div>
-              <div className="p-3 rounded-xl bg-cyan-50">
-                <TrendingDown className="h-6 w-6 text-cyan-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Chambers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {chambers.map((chamber) => (
-          <Card key={chamber.id} className={`shadow-md transition-all duration-200 ${
-            chamber.status === 'warning' ? 'border-orange-200 bg-orange-50/30' :
-            chamber.status === 'alert' ? 'border-red-200 bg-red-50/30' : 'hover:shadow-lg'
-          }`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">{chamber.name}</CardTitle>
-                  <CardDescription>ID: {chamber.id}</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  {chamber.connected ? (
-                    <Wifi className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <WifiOff className="h-5 w-5 text-red-500" />
-                  )}
-                  <div className={`w-3 h-3 rounded-full ${
-                    chamber.status === 'normal' ? 'bg-green-500' :
-                    chamber.status === 'warning' ? 'bg-orange-500' : 'bg-red-500'
-                  }`} />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{chamber.temp}</p>
-                    <p className="text-sm text-gray-500">Température actuelle</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-medium text-gray-600">{chamber.target}</p>
-                    <p className="text-sm text-gray-500">Consigne</p>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className={`h-2 rounded-full ${
-                    chamber.status === 'normal' ? 'bg-green-500' :
-                    chamber.status === 'warning' ? 'bg-orange-500' : 'bg-red-500'
-                  }`} style={{ width: '85%' }} />
-                </div>
-                <p className="text-xs text-gray-500 text-center">
-                  Dernière mesure : Il y a 2 minutes
-                </p>
-              </div>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ boxShadow: 2, border: 'none' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Enceintes
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+                    4
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: '#e0f2fe' }}>
+                  <SnowflakeIcon sx={{ color: '#0284c7', fontSize: 24 }} />
+                </Box>
+              </Box>
             </CardContent>
           </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ boxShadow: 2, border: 'none' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Normales
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', color: '#16a34a' }}>
+                    3
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: '#dcfce7' }}>
+                  <ThermometerIcon sx={{ color: '#16a34a', fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ boxShadow: 2, border: 'none' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Alertes
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', color: '#ea580c' }}>
+                    1
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: '#ffedd5' }}>
+                  <WarningIcon sx={{ color: '#ea580c', fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ boxShadow: 2, border: 'none' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Moyenne
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', color: '#0d9488' }}>
+                    2.3°C
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: '#ccfbf1' }}>
+                  <TrendingDownIcon sx={{ color: '#0d9488', fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Chambers Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {chambers.map((chamber) => (
+          <Grid item xs={12} sm={6} key={chamber.id}>
+            <Card sx={{
+              boxShadow: 3,
+              transition: 'all 0.2s',
+              ...(chamber.status === 'warning' ? { 
+                border: '1px solid #fed7aa',
+                backgroundColor: 'rgba(254, 215, 170, 0.1)'
+              } : chamber.status === 'alert' ? {
+                border: '1px solid #fecaca',
+                backgroundColor: 'rgba(254, 202, 202, 0.1)'
+              } : { '&:hover': { boxShadow: 6 } })
+            }}>
+              <CardHeader
+                title={
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h6" component="div">
+                        {chamber.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        ID: {chamber.id}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {chamber.connected ? (
+                        <WifiIcon sx={{ color: '#16a34a', fontSize: 20 }} />
+                      ) : (
+                        <WifiOffIcon sx={{ color: '#dc2626', fontSize: 20 }} />
+                      )}
+                      <Box sx={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        backgroundColor: chamber.status === 'normal' ? '#16a34a' :
+                                        chamber.status === 'warning' ? '#ea580c' : '#dc2626'
+                      }} />
+                    </Box>
+                  </Box>
+                }
+              />
+              <CardContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
+                        {chamber.temp}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Température actuelle
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="h6" component="div">
+                        {chamber.target}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Consigne
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ width: '100%', backgroundColor: '#e5e7eb', borderRadius: '9999px', height: 8 }}>
+                    <Box sx={{
+                      height: '100%',
+                      borderRadius: '9999px',
+                      backgroundColor: chamber.status === 'normal' ? '#16a34a' :
+                                      chamber.status === 'warning' ? '#ea580c' : '#dc2626',
+                      width: '85%'
+                    }} />
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+                    Dernière mesure : Il y a 2 minutes
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         ))}
-      </div>
+      </Grid>
 
       {/* Temperature History */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="text-xl">Historique des températures</CardTitle>
-          <CardDescription>
-            Évolution des températures sur les dernières 24h
-          </CardDescription>
-        </CardHeader>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={
+            <Typography variant="h6" component="div">
+              Historique des températures
+            </Typography>
+          }
+          subheader="Évolution des températures sur les dernières 24h"
+        />
         <CardContent>
-          <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-            <div className="text-center text-gray-500">
-              <TrendingDown className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Graphique des températures</p>
-              <p className="text-sm">Interface à implémenter</p>
-            </div>
-          </div>
+          <Box sx={{
+            height: 256,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed #e5e7eb',
+            borderRadius: '12px'
+          }}>
+            <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
+              <TrendingDownIcon sx={{ fontSize: 48, opacity: 0.5, mx: 'auto', mb: 2 }} />
+              <Typography>Graphique des températures</Typography>
+              <Typography variant="caption">Interface à implémenter</Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
-    </div>
-  )
+    </Box>
+  );
 }
