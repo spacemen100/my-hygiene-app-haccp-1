@@ -21,42 +21,42 @@ export function Sidebar() {
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             <Link
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary bg-muted text-primary"
+              href="/controle-reception"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <ClipboardCheck className="h-4 w-4" />
               Contrôle à réception
             </Link>
             <Link
-              href="#"
+              href="/etiquettes"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Tags className="h-4 w-4" />
               Enregistrement des étiquettes
             </Link>
             <Link
-              href="#"
+              href="/impression-dlc"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Printer className="h-4 w-4" />
               Impression des DLC secondaires
             </Link>
             <Link
-              href="#"
+              href="/enceintes-froides"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Snowflake className="h-4 w-4" />
               Enceintes froides
             </Link>
             <Link
-              href="#"
+              href="/suivi-refroidissement"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Thermometer className="h-4 w-4" />
               Suivi de refroidissement
             </Link>
             <Link
-              href="#"
+              href="/plan-nettoyage"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <SprayCan className="h-4 w-4" />
