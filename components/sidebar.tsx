@@ -1,6 +1,12 @@
 // components/sidebar.tsx
-import { LayoutDashboard, Thermometer, ClipboardCheck, ClipboardList, Gauge, Settings } from "lucide-react"
-import { Button } from "./ui/button"
+import { 
+  ClipboardCheck, 
+  Tags, 
+  Printer, 
+  Snowflake, 
+  Thermometer, 
+  SprayCan 
+} from "lucide-react"
 import Link from "next/link"
 
 export function Sidebar() {
@@ -18,43 +24,43 @@ export function Sidebar() {
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary bg-muted text-primary"
             >
-              <LayoutDashboard className="h-4 w-4" />
-              Tableau de bord
+              <ClipboardCheck className="h-4 w-4" />
+              Contrôle à réception
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
-              <ClipboardCheck className="h-4 w-4" />
-              Traçabilité
+              <Tags className="h-4 w-4" />
+              Enregistrement des étiquettes
+            </Link>
+            <Link
+              href="#"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Printer className="h-4 w-4" />
+              Impression des DLC secondaires
+            </Link>
+            <Link
+              href="#"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Snowflake className="h-4 w-4" />
+              Enceintes froides
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Thermometer className="h-4 w-4" />
-              Températures
+              Suivi de refroidissement
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
-              <ClipboardList className="h-4 w-4" />
-              Hygiène et audits
-            </Link>
-            <Link
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-            >
-              <Gauge className="h-4 w-4" />
-              Statistiques
-            </Link>
-            <Link
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-            >
-              <Settings className="h-4 w-4" />
-              Paramètres
+              <SprayCan className="h-4 w-4" />
+              Plan de nettoyage
             </Link>
           </nav>
         </div>
