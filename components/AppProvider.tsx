@@ -17,12 +17,12 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  ClipboardCheck,
+  AssignmentTurnedIn as ClipboardCheck,
   Label as TagsIcon,
   Print as PrinterIcon,
   AcUnit as SnowflakeIcon,
   Thermostat as ThermometerIcon,
-  Cleaning as SprayCanIcon,
+  CleaningServices as SprayCanIcon,
   Home as HomeIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
