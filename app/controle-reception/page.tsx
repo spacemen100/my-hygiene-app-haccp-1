@@ -13,6 +13,9 @@ import {
   Paper,
   Button,
   Divider,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Assignment as ClipboardCheck,
@@ -22,22 +25,123 @@ import {
   Add,
   Circle,
 } from '@mui/icons-material';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+type Delivery = {
+  id: string;
+  delivery_number: string;
+  delivery_date: string;
+  supplier: {
+    name: string;
+  } | null;
+  is_compliant: boolean | null;
+  product_reception_controls: Array<{
+    temperature: number | null;
+  }>;
+};
 
 export default function ControleReceptionPage() {
-  const recentControls = [
-    { id: "LOT001", supplier: "Fournisseur A", date: "2024-08-09", status: "approved", temperature: "2°C" },
-    { id: "LOT002", supplier: "Fournisseur B", date: "2024-08-08", status: "rejected", temperature: "8°C" },
-    { id: "LOT003", supplier: "Fournisseur C", date: "2024-08-08", status: "pending", temperature: "4°C" }
-  ];
+  const supabase = createClientComponentClient();
+  const router = useRouter();
+  const [recentControls, setRecentControls] = useState<Delivery[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    today: 0,
+    approved: 0,
+    pending: 0,
+  });
 
-  const stats = [
-    { label: "Aujourd'hui", value: "12", icon: Inventory2, color: "#2196f3" },
-    { label: "Approuvés", value: "10", icon: CheckCircle, color: "#4caf50" },
-    { label: "En attente", value: "2", icon: Warning, color: "#ff9800" }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Récupérer l'utilisateur actuel
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        // Récupérer les livraisons récentes avec les fournisseurs et contrôles associés
+        const today = new Date().toISOString().split('T')[0];
+        const { data: deliveries, error: deliveriesError } = await supabase
+          .from('deliveries')
+          .select(`
+            id,
+            delivery_number,
+            delivery_date,
+            is_compliant,
+            supplier:suppliers(name),
+            product_reception_controls(temperature)
+          `)
+          .order('delivery_date', { ascending: false })
+          .limit(10);
+
+        if (deliveriesError) throw deliveriesError;
+
+        setRecentControls(deliveries || []);
+
+        // Calculer les statistiques
+        const todayDeliveries = deliveries?.filter(d => 
+          d.delivery_date?.startsWith(today)
+        ).length || 0;
+        
+        const approvedDeliveries = deliveries?.filter(d => 
+          d.is_compliant === true
+        ).length || 0;
+        
+        const pendingDeliveries = deliveries?.filter(d => 
+          d.is_compliant === null
+        ).length || 0;
+
+        setStats({
+          today: todayDeliveries,
+          approved: approvedDeliveries,
+          pending: pendingDeliveries,
+        });
+
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Erreur lors du chargement des données');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [supabase, router]);
+
+  const handleCloseSnackbar = () => {
+    setError(null);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
+
       {/* Header */}
       <Paper
         sx={{
@@ -71,72 +175,124 @@ export default function ControleReceptionPage() {
 
       {/* Quick Stats */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {stats.map((stat, index) => (
-          <Grid item xs={12} md={4} key={index}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
-                      {stat.label}
-                    </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                      {stat.value}
-                    </Typography>
-                  </Box>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${stat.color}20`,
-                      color: stat.color,
-                      width: 56,
-                      height: 56,
-                    }}
-                  >
-                    <stat.icon />
-                  </Avatar>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom variant="body2">
+                    Aujourd'hui
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    {stats.today}
+                  </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                <Avatar
+                  sx={{
+                    bgcolor: '#2196f320',
+                    color: '#2196f3',
+                    width: 56,
+                    height: 56,
+                  }}
+                >
+                  <Inventory2 />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom variant="body2">
+                    Approuvés
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    {stats.approved}
+                  </Typography>
+                </Box>
+                <Avatar
+                  sx={{
+                    bgcolor: '#4caf5020',
+                    color: '#4caf50',
+                    width: 56,
+                    height: 56,
+                  }}
+                >
+                  <CheckCircle />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom variant="body2">
+                    En attente
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    {stats.pending}
+                  </Typography>
+                </Box>
+                <Avatar
+                  sx={{
+                    bgcolor: '#ff980020',
+                    color: '#ff9800',
+                    width: 56,
+                    height: 56,
+                  }}
+                >
+                  <Warning />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* New Control Button */}
-      <Card
-        sx={{
-          mb: 4,
-          border: '2px dashed',
-          borderColor: 'primary.light',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            borderColor: 'primary.main',
-            bgcolor: 'primary.50',
-            transform: 'translateY(-2px)',
-          },
-        }}
-      >
-        <CardContent sx={{ textAlign: 'center', py: 6 }}>
-          <Avatar
-            sx={{
-              bgcolor: 'primary.light',
-              color: 'primary.contrastText',
-              width: 72,
-              height: 72,
-              mx: 'auto',
-              mb: 2,
-            }}
-          >
-            <Add sx={{ fontSize: 36 }} />
-          </Avatar>
-          <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
-            Nouveau contrôle à réception
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Cliquez pour démarrer un nouveau contrôle qualité
-          </Typography>
-        </CardContent>
-      </Card>
+      <Link href="/controle-reception/nouveau" passHref>
+        <Card
+          sx={{
+            mb: 4,
+            border: '2px dashed',
+            borderColor: 'primary.light',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'primary.50',
+              transform: 'translateY(-2px)',
+            },
+          }}
+        >
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <Avatar
+              sx={{
+                bgcolor: 'primary.light',
+                color: 'primary.contrastText',
+                width: 72,
+                height: 72,
+                mx: 'auto',
+                mb: 2,
+              }}
+            >
+              <Add sx={{ fontSize: 36 }} />
+            </Avatar>
+            <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
+              Nouveau contrôle à réception
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Cliquez pour démarrer un nouveau contrôle qualité
+            </Typography>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* Recent Controls */}
       <Card>
@@ -148,77 +304,99 @@ export default function ControleReceptionPage() {
             Historique des derniers contrôles effectués
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <List>
-            {recentControls.map((control, index) => (
-              <ListItem
-                key={control.id}
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  mb: 2,
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2 }}>
-                  <Circle
+          {recentControls.length === 0 ? (
+            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              Aucun contrôle trouvé
+            </Typography>
+          ) : (
+            <List>
+              {recentControls.map((control) => {
+                // Calculer la température moyenne
+                const avgTemp = control.product_reception_controls?.length > 0
+                  ? (control.product_reception_controls.reduce((sum, prc) => sum + (prc.temperature || 0), 0) / 
+                     control.product_reception_controls.length).toFixed(1)
+                  : 'N/A';
+
+                return (
+                  <ListItem
+                    key={control.id}
                     sx={{
-                      fontSize: 12,
-                      color: 
-                        control.status === 'approved' ? 'success.main' :
-                        control.status === 'rejected' ? 'error.main' : 'warning.main'
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      mb: 2,
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                      },
                     }}
-                  />
-                </Box>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          Lot {control.id}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {control.supplier}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {control.temperature}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Température
-                          </Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {control.date}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Date
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={
-                            control.status === 'approved' ? 'Approuvé' :
-                            control.status === 'rejected' ? 'Rejeté' : 'En attente'
-                          }
-                          color={
-                            control.status === 'approved' ? 'success' :
-                            control.status === 'rejected' ? 'error' : 'warning'
-                          }
-                          size="small"
-                          variant="outlined"
-                        />
-                      </Box>
+                    secondaryAction={
+                      <Button 
+                        size="small" 
+                        onClick={() => router.push(`/controle-reception/${control.id}`)}
+                      >
+                        Détails
+                      </Button>
+                    }
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2 }}>
+                      <Circle
+                        sx={{
+                          fontSize: 12,
+                          color: 
+                            control.is_compliant === true ? 'success.main' :
+                            control.is_compliant === false ? 'error.main' : 'warning.main'
+                        }}
+                      />
                     </Box>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              {control.delivery_number || `Livraison ${control.id.slice(0, 6)}`}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {control.supplier?.name || 'Fournisseur inconnu'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {avgTemp}°C
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Température
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {new Date(control.delivery_date).toLocaleDateString()}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Date
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={
+                                control.is_compliant === true ? 'Approuvé' :
+                                control.is_compliant === false ? 'Rejeté' : 'En attente'
+                              }
+                              color={
+                                control.is_compliant === true ? 'success' :
+                                control.is_compliant === false ? 'error' : 'warning'
+                              }
+                              size="small"
+                              variant="outlined"
+                            />
+                          </Box>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          )}
         </CardContent>
       </Card>
     </Box>
