@@ -15,7 +15,7 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  ClipboardCheck,
+  Assignment as ClipboardCheck,
   Inventory2,
   CheckCircle,
   Warning,

@@ -17,12 +17,12 @@ import {
   CheckCircle,
   Warning,
   TrendingUp,
-  Activity,
-  ClipboardCheck,
-  Label as TagsIcon,
+  Assignment as ClipboardCheck,
+  LocalOffer as TagsIcon,
   AcUnit as SnowflakeIcon,
-  Cleaning as SprayCanIcon,
+  CleaningServices as SprayCanIcon,
   Circle,
+  DirectionsRun as Activity,
 } from '@mui/icons-material';
 import Link from 'next/link';
 
