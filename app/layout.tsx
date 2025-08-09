@@ -13,6 +13,7 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import { Session } from '@supabase/auth-helpers-nextjs';
+import Header from '@/components/Header';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -60,6 +61,7 @@ export default function RootLayout({
           <CssBaseline />
           <AuthProvider session={session}>
             <AppProvider>
+              <Header />
               {children}
             </AppProvider>
           </AuthProvider>
