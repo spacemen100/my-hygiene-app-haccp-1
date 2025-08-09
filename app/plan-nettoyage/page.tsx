@@ -1,4 +1,6 @@
-import { Card } from "@/components/ui/card"
+import {
+  Card,
+} from '@mui/material';
 import { SprayCan } from "lucide-react"
 
 export default function PlanNettoyagePage() {
