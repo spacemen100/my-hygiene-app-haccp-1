@@ -1,15 +1,12 @@
-// app/layout.tsx
+'use client';
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import "./globals.css"
-import { Sidebar } from "@/components/sidebar"
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { theme } from '@/theme/theme';
+import { AppProvider } from '@/components/AppProvider';
 
 const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "Mon Application",
-  description: "Application de suivi qualité",
-}
 
 export default function RootLayout({
   children,
@@ -19,12 +16,12 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={inter.className}>
-        <div className="flex min-h-screen bg-gray-50">
-          <Sidebar />
-          <main className="flex-1 md:ml-72 p-6">
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AppProvider>
             {children}
-          </main>
-        </div>
+          </AppProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
