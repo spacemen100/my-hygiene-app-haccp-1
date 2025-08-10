@@ -39,9 +39,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             <MenuIcon />
           </IconButton>
         )}
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          HACCP Manager
-        </Typography>
         {session ? (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography variant="body1" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
