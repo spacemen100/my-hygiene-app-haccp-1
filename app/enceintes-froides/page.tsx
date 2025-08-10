@@ -40,13 +40,13 @@ export default function EnceintesFroidesPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Récupérer les enceintes froides
         const { data: coldStorageData, error: coldStorageError } = await supabase
           .from('cold_storage_units')
           .select('*')
           .eq('is_active', true);
-        
+
         if (coldStorageError) throw coldStorageError;
 
         // Récupérer les derniers relevés pour chaque enceinte
@@ -58,11 +58,12 @@ export default function EnceintesFroidesPage() {
               .eq('cold_storage_unit_id', chamber.id)
               .order('reading_date', { ascending: false })
               .limit(1);
-            
+
             if (readingError) throw readingError;
-            
+
             return {
               ...chamber,
+              is_active: chamber.is_active ?? false, // Handle null case
               last_reading: readingData[0] ? {
                 temperature: readingData[0].temperature,
                 reading_time: readingData[0].reading_date,
@@ -94,17 +95,17 @@ export default function EnceintesFroidesPage() {
           table: 'cold_storage_temperature_readings'
         },
         (payload) => {
-          setChambers(prevChambers => 
-            prevChambers.map(chamber => 
+          setChambers(prevChambers =>
+            prevChambers.map(chamber =>
               chamber.id === payload.new.cold_storage_unit_id
                 ? {
-                    ...chamber,
-                    last_reading: {
-                      temperature: payload.new.temperature,
-                      reading_time: payload.new.reading_date,
-                      is_alert: !payload.new.is_compliant
-                    }
+                  ...chamber,
+                  last_reading: {
+                    temperature: payload.new.temperature,
+                    reading_time: payload.new.reading_date,
+                    is_alert: !payload.new.is_compliant
                   }
+                }
                 : chamber
             )
           );
@@ -148,7 +149,7 @@ export default function EnceintesFroidesPage() {
     const now = new Date();
     const date = new Date(dateString);
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return `Il y a ${diffInSeconds} secondes`;
     if (diffInSeconds < 3600) return `Il y a ${Math.floor(diffInSeconds / 60)} minutes`;
     if (diffInSeconds < 86400) return `Il y a ${Math.floor(diffInSeconds / 3600)} heures`;
@@ -157,16 +158,16 @@ export default function EnceintesFroidesPage() {
 
   // Calcul des statistiques
   const totalChambers = chambers.length;
-  const normalChambers = chambers.filter(chamber => 
+  const normalChambers = chambers.filter(chamber =>
     chamber.last_reading && getChamberStatus(chamber) === 'normal'
   ).length;
-  const warningChambers = chambers.filter(chamber => 
+  const warningChambers = chambers.filter(chamber =>
     chamber.last_reading && getChamberStatus(chamber) === 'warning'
   ).length;
-  const alertChambers = chambers.filter(chamber => 
+  const alertChambers = chambers.filter(chamber =>
     chamber.last_reading && getChamberStatus(chamber) === 'alert'
   ).length;
-  const averageTemp = chambers.reduce((sum, chamber) => 
+  const averageTemp = chambers.reduce((sum, chamber) =>
     sum + (chamber.last_reading?.temperature || 0), 0
   ) / chambers.filter(chamber => chamber.last_reading).length;
 
@@ -197,10 +198,10 @@ export default function EnceintesFroidesPage() {
       </Box>
 
       {/* Quick Stats */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        gap: 3, 
+      <Box sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 3,
         mb: 4,
         '& > *': {
           flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' },
@@ -278,10 +279,10 @@ export default function EnceintesFroidesPage() {
       </Box>
 
       {/* Chambers Grid */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        gap: 3, 
+      <Box sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 3,
         mb: 4,
         '& > *': {
           flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' },
@@ -293,7 +294,7 @@ export default function EnceintesFroidesPage() {
           const hasReading = !!chamber.last_reading;
           const targetTemp = (chamber.min_temperature + chamber.max_temperature) / 2;
           const tempRange = chamber.max_temperature - chamber.min_temperature;
-          
+
           // Calcul du pourcentage pour la barre de progression
           let progressPercent = 50;
           if (hasReading && tempRange > 0) {
@@ -305,7 +306,7 @@ export default function EnceintesFroidesPage() {
             <Card key={chamber.id} sx={{
               boxShadow: 3,
               transition: 'all 0.2s',
-              ...(status === 'warning' ? { 
+              ...(status === 'warning' ? {
                 border: '1px solid #fed7aa',
                 backgroundColor: 'rgba(254, 215, 170, 0.1)'
               } : status === 'alert' ? {
@@ -332,10 +333,10 @@ export default function EnceintesFroidesPage() {
                         width: 12,
                         height: 12,
                         borderRadius: '50%',
-                        backgroundColor: 
+                        backgroundColor:
                           status === 'normal' ? '#16a34a' :
-                          status === 'warning' ? '#ea580c' : 
-                          status === 'alert' ? '#dc2626' : '#6b7280'
+                            status === 'warning' ? '#ea580c' :
+                              status === 'alert' ? '#dc2626' : '#6b7280'
                       }} />
                     </Box>
                   </Box>
@@ -367,10 +368,10 @@ export default function EnceintesFroidesPage() {
                         <Box sx={{
                           height: '100%',
                           borderRadius: '9999px',
-                          backgroundColor: 
+                          backgroundColor:
                             status === 'normal' ? '#16a34a' :
-                            status === 'warning' ? '#ea580c' : 
-                            status === 'alert' ? '#dc2626' : '#6b7280',
+                              status === 'warning' ? '#ea580c' :
+                                status === 'alert' ? '#dc2626' : '#6b7280',
                           width: `${Math.min(100, Math.max(0, progressPercent))}%`
                         }} />
                       </Box>
