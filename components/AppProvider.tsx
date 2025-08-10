@@ -38,6 +38,9 @@ const menuItems = [
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
 ];
 
+// Debug log to check if menuItems is loaded correctly
+console.log('Menu items loaded:', menuItems.length, 'items');
+
 interface AppProviderProps {
   children: React.ReactNode;
   mobileOpen?: boolean;
@@ -79,7 +82,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             HACCP Manager
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            Gestion Qualité
+            Gestion Qualité & Admin
           </Typography>
         </Box>
       </Box>
