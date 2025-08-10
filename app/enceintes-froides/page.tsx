@@ -13,8 +13,6 @@ import {
   Thermostat as ThermometerIcon,
   Warning as WarningIcon,
   TrendingDown as TrendingDownIcon,
-  Wifi as WifiIcon,
-  WifiOff as WifiOffIcon,
 } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
