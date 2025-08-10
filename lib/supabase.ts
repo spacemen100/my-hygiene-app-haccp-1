@@ -22,6 +22,10 @@ export const supabase = createClient(
 )
 
 // Types pour l'authentification
+interface UserMetadata {
+  [key: string]: unknown
+}
+
 interface AuthResponse {
   data: {
     user: User | null
@@ -41,7 +45,7 @@ interface AuthCallback {
 
 // Helper functions pour l'authentification
 export const auth = {
-  signUp: async (email: string, password: string, metadata?: any): Promise<AuthResponse> => {
+  signUp: async (email: string, password: string, metadata?: UserMetadata): Promise<AuthResponse> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -77,10 +81,10 @@ export const auth = {
 
 // Helper functions pour la base de données
 export const db = {
-  select: (table: string) => supabase.from(table).select(),
-  insert: <T = any>(table: string, data: T) => supabase.from(table).insert(data),
-  update: <T = any>(table: string, data: T) => supabase.from(table).update(data),
-  delete: (table: string) => supabase.from(table).delete(),
+  select: <T = unknown>(table: string) => supabase.from<T>(table).select(),
+  insert: <T = unknown>(table: string, data: T) => supabase.from<T>(table).insert(data),
+  update: <T = unknown>(table: string, data: T) => supabase.from<T>(table).update(data),
+  delete: <T = unknown>(table: string) => supabase.from<T>(table).delete(),
 }
 
 // Helper functions pour le stockage de fichiers
