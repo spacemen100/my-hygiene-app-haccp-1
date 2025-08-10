@@ -8,7 +8,7 @@ export default function ReceptionControl() {
   const [formData, setFormData] = useState<TablesInsert<'product_reception_controls'>>({
     control_date: new Date().toISOString(),
     product_name: '',
-    storage_type: '',
+    storage_type: 'ambiant',
     temperature: null,
     is_compliant: true,
     delivery_id: null,
@@ -26,6 +26,18 @@ export default function ReceptionControl() {
       
       if (error) throw error;
       alert('Contrôle enregistré avec succès!');
+      // Reset form after successful submission
+      setFormData({
+        control_date: new Date().toISOString(),
+        product_name: '',
+        storage_type: 'ambiant',
+        temperature: null,
+        is_compliant: true,
+        delivery_id: null,
+        product_id: null,
+        best_before_date: null,
+        use_by_date: null,
+      });
     } catch (error) {
       console.error('Error saving control:', error);
       alert('Erreur lors de l\'enregistrement');
@@ -55,7 +67,7 @@ export default function ReceptionControl() {
             required
             className="w-full p-2 border rounded"
           >
-            <option value="">Sélectionner</option>
+            <option value="ambiant">Ambiant</option>
             <option value="fridge">Réfrigéré</option>
             <option value="freezer">Congélateur</option>
             <option value="dry">Sec</option>
@@ -68,6 +80,26 @@ export default function ReceptionControl() {
             type="number"
             value={formData.temperature || ''}
             onChange={(e) => setFormData({...formData, temperature: Number(e.target.value)})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Date de péremption</label>
+          <input
+            type="date"
+            value={formData.best_before_date || ''}
+            onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Date limite de consommation</label>
+          <input
+            type="date"
+            value={formData.use_by_date || ''}
+            onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
             className="w-full p-2 border rounded"
           />
         </div>
