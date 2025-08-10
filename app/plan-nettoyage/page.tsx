@@ -137,7 +137,7 @@ export default function CleaningPlan() {
       return recordDate.toDateString() === today.toDateString() && r.is_completed;
     }).length,
     complianceRate: records.length > 0 ? 
-      Math.round((records.filter(r => r.is_compliant).length / records.length) * 100 : 
+      Math.round((records.filter(r => r.is_compliant).length / records.length) * 100) : 
       0,
     pendingTasks: tasks.length - records.filter(r => r.is_completed).length
   };
