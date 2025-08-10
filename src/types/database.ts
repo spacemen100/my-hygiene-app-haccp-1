@@ -402,7 +402,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
-          location: string | null
+          location: string
           max_temperature: number
           min_temperature: number
           name: string
@@ -414,7 +414,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          location?: string | null
+          location: string
           max_temperature: number
           min_temperature: number
           name: string
@@ -426,7 +426,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          location?: string | null
+          location?: string
           max_temperature?: number
           min_temperature?: number
           name?: string
