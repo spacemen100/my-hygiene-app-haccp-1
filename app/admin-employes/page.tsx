@@ -194,7 +194,7 @@ export default function AdminEmployesPage() {
         console.log('[AdminEmployes] No organization, creating default one');
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .insert([{ name: 'Organisation par défaut', description: 'Créée automatiquement' }])
+          .insert([{ name: 'Organisation par défaut' }])
           .select()
           .single();
         
