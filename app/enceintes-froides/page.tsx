@@ -1,323 +1,159 @@
-'use client';
-import { useEffect, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Alert,
-  Snackbar,
-} from '@mui/material';
-import { Thermostat as TemperatureIcon, Add, Edit, Delete } from '@mui/icons-material';
-import { supabase } from '@/lib/supabase';
-import { Tables } from '@/src/types/database';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { Tables, TablesInsert } from '../types/database';
 
-export default function ColdStoragePage() {
-  const [coldStorageUnits, setColdStorageUnits] = useState<Tables<'cold_storage_units'>[]>([]);
-  const [temperatureReadings, setTemperatureReadings] = useState<Tables<'cold_storage_temperature_readings'>[]>([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [currentReading, setCurrentReading] = useState<Partial<Tables<'cold_storage_temperature_readings'>>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+export default function ColdStorage() {
+  const [units, setUnits] = useState<Tables<'cold_storage_units'>[]>([]);
+  const [readings, setReadings] = useState<Tables<'cold_storage_temperature_readings'>[]>([]);
+  const [formData, setFormData] = useState<TablesInsert<'cold_storage_temperature_readings'>>({
+    reading_date: new Date().toISOString(),
+    temperature: 0,
+    is_compliant: true,
+    cold_storage_unit_id: null,
+    comments: null,
+    user_id: null,
+  });
 
   useEffect(() => {
-    fetchColdStorageUnits();
-    fetchTemperatureReadings();
+    fetchUnits();
+    fetchReadings();
   }, []);
 
-  const fetchColdStorageUnits = async () => {
+  const fetchUnits = async () => {
+    const { data, error } = await supabase.from('cold_storage_units').select('*');
+    if (!error && data) setUnits(data);
+  };
+
+  const fetchReadings = async () => {
     const { data, error } = await supabase
-      .from('cold_storage_units')
+      .from('cold_storage_temperature_readings')
       .select('*')
-      .order('name', { ascending: true });
-
-    if (error) {
-      setError('Erreur lors du chargement des enceintes froides');
-      console.error(error);
-    } else {
-      setColdStorageUnits(data || []);
-    }
+      .order('reading_date', { ascending: false })
+      .limit(10);
+    if (!error && data) setReadings(data);
   };
 
-  const fetchTemperatureReadings = async () => {
-    const { data, error } = await supabase
-      .from('cold_storage_temperature_readings')
-      .select('*, cold_storage_units(name)')
-      .order('reading_date', { ascending: false });
-
-    if (error) {
-      setError('Erreur lors du chargement des relevés de température');
-      console.error(error);
-    } else {
-      setTemperatureReadings(data || []);
-    }
-  };
-
-  const handleAddReading = () => {
-    setCurrentReading({
-      reading_date: new Date().toISOString().split('T')[0],
-      is_compliant: true,
-    });
-    setOpenDialog(true);
-  };
-
-  const handleEditReading = (reading: Tables<'cold_storage_temperature_readings'>) => {
-    setCurrentReading(reading);
-    setOpenDialog(true);
-  };
-
-  const handleDeleteReading = async (id: string) => {
-    const { error } = await supabase
-      .from('cold_storage_temperature_readings')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      setError('Erreur lors de la suppression du relevé');
-      console.error(error);
-    } else {
-      setSuccess('Relevé supprimé avec succès');
-      fetchTemperatureReadings();
-    }
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      if (currentReading.id) {
-        // Mise à jour
-        const { error } = await supabase
-          .from('cold_storage_temperature_readings')
-          .update(currentReading)
-          .eq('id', currentReading.id);
-
-        if (error) throw error;
-        setSuccess('Relevé mis à jour avec succès');
-      } else {
-        // Création
-        const { error } = await supabase
-          .from('cold_storage_temperature_readings')
-          .insert([currentReading]);
-
-        if (error) throw error;
-        setSuccess('Relevé enregistré avec succès');
-      }
-
-      setOpenDialog(false);
-      fetchTemperatureReadings();
+      const { data, error } = await supabase
+        .from('cold_storage_temperature_readings')
+        .insert([formData]);
+      
+      if (error) throw error;
+      alert('Lecture enregistrée avec succès!');
+      fetchReadings();
     } catch (error) {
-      setError('Erreur lors de l\'enregistrement du relevé');
-      console.error(error);
+      console.error('Error saving reading:', error);
+      alert('Erreur lors de l\'enregistrement');
     }
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setCurrentReading({});
-  };
-
-  const handleCloseSnackbar = () => {
-    setError(null);
-    setSuccess(null);
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Header */}
-      <Paper
-        sx={{
-          background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-          color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.2)',
-              width: 56,
-              height: 56,
-            }}
-          >
-            <TemperatureIcon sx={{ fontSize: 32 }} />
-          </Avatar>
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-              Relevés des températures des enceintes froides
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Enregistrement et suivi des températures des chambres froides et réfrigérateurs
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-              Historique des relevés
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={handleAddReading}
-            >
-              Nouveau relevé
-            </Button>
-          </Box>
-
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Enceinte froide</TableCell>
-                  <TableCell align="right">Température (°C)</TableCell>
-                  <TableCell>Conforme</TableCell>
-                  <TableCell>Commentaires</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {temperatureReadings.map((reading) => (
-                  <TableRow key={reading.id}>
-                    <TableCell>{new Date(reading.reading_date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      {reading.cold_storage_units ? (reading.cold_storage_units as unknown as { name: string }).name : 'N/A'}
-                    </TableCell>
-                    <TableCell align="right">{reading.temperature}</TableCell>
-                    <TableCell>
-                      {reading.is_compliant ? (
-                        <Typography color="success.main">Conforme</Typography>
-                      ) : (
-                        <Typography color="error.main">Non conforme</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell sx={{ maxWidth: 200 }}>{reading.comments}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleEditReading(reading)}>
-                        <Edit color="primary" />
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteReading(reading.id)}>
-                        <Delete color="error" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Enceintes Froides</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Nouvelle Lecture</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block">Unité de stockage</label>
+              <select
+                value={formData.cold_storage_unit_id || ''}
+                onChange={(e) => setFormData({...formData, cold_storage_unit_id: e.target.value})}
+                required
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Sélectionner une unité</option>
+                {units.map(unit => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name} ({unit.location})
+                  </option>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-
-      {/* Dialog pour ajouter/modifier un relevé */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {currentReading.id ? 'Modifier le relevé' : 'Nouveau relevé de température'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-            <TextField
-              label="Date du relevé"
-              type="date"
-              value={currentReading.reading_date || ''}
-              onChange={(e) => setCurrentReading({ ...currentReading, reading_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-            />
-
-            <TextField
-              select
-              label="Enceinte froide"
-              value={currentReading.cold_storage_unit_id || ''}
-              onChange={(e) => setCurrentReading({ ...currentReading, cold_storage_unit_id: e.target.value })}
-              fullWidth
-            >
-              {coldStorageUnits.map((unit) => (
-                <MenuItem key={unit.id} value={unit.id}>
-                  {unit.name} ({unit.location}) - {unit.min_temperature}°C à {unit.max_temperature}°C
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              label="Température (°C)"
-              type="number"
-              value={currentReading.temperature || ''}
-              onChange={(e) => setCurrentReading({ ...currentReading, temperature: Number(e.target.value) })}
-              fullWidth
-              inputProps={{ step: '0.1' }}
-            />
-
-            <TextField
-              select
-              label="Conformité"
-              value={currentReading.is_compliant ? 'true' : 'false'}
-              onChange={(e) => setCurrentReading({ ...currentReading, is_compliant: e.target.value === 'true' })}
-              fullWidth
-            >
-              <MenuItem value="true">Conforme</MenuItem>
-              <MenuItem value="false">Non conforme</MenuItem>
-            </TextField>
-
-            <TextField
-              label="Commentaires"
-              multiline
-              rows={3}
-              value={currentReading.comments || ''}
-              onChange={(e) => setCurrentReading({ ...currentReading, comments: e.target.value })}
-              fullWidth
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Annuler</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Enregistrer
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Notifications */}
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="error" onClose={handleCloseSnackbar}>
-          {error}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={!!success}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="success" onClose={handleCloseSnackbar}>
-          {success}
-        </Alert>
-      </Snackbar>
-    </Box>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block">Température (°C)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={formData.temperature}
+                onChange={(e) => setFormData({...formData, temperature: Number(e.target.value)})}
+                required
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            <div>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_compliant}
+                  onChange={(e) => setFormData({...formData, is_compliant: e.target.checked})}
+                  className="mr-2"
+                />
+                Conforme
+              </label>
+            </div>
+            
+            <div>
+              <label className="block">Commentaires</label>
+              <textarea
+                value={formData.comments || ''}
+                onChange={(e) => setFormData({...formData, comments: e.target.value})}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+              Enregistrer
+            </button>
+          </form>
+        </div>
+        
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Dernières Lectures</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border">
+              <thead>
+                <tr>
+                  <th className="py-2 px-4 border">Date</th>
+                  <th className="py-2 px-4 border">Unité</th>
+                  <th className="py-2 px-4 border">Température</th>
+                  <th className="py-2 px-4 border">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {readings.map(reading => {
+                  const unit = units.find(u => u.id === reading.cold_storage_unit_id);
+                  return (
+                    <tr key={reading.id}>
+                      <td className="py-2 px-4 border">
+                        {new Date(reading.reading_date).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {unit ? unit.name : 'N/A'}
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {reading.temperature}°C
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {reading.is_compliant ? (
+                          <span className="text-green-500">Conforme</span>
+                        ) : (
+                          <span className="text-red-500">Non conforme</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

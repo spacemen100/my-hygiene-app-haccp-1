@@ -1,69 +1,82 @@
-'use client';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  Paper,
-} from '@mui/material';
-import { Label as TagsIcon } from '@mui/icons-material';
+import { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { TablesInsert } from '../types/database';
 
-export default function EtiquettesPage() {
+export default function LabelRecording() {
+  const [formData, setFormData] = useState<TablesInsert<'label_records'>>({
+    record_date: new Date().toISOString(),
+    photo_url: '',
+    product_name: '',
+    supplier_name: '',
+    batch_number: '',
+    organization_id: null,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase
+        .from('label_records')
+        .insert([formData]);
+      
+      if (error) throw error;
+      alert('Enregistrement d\'étiquette réussi!');
+    } catch (error) {
+      console.error('Error saving label:', error);
+      alert('Erreur lors de l\'enregistrement');
+    }
+  };
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Header */}
-      <Paper
-        sx={{
-          background: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)',
-          color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.2)',
-              width: 56,
-              height: 56,
-            }}
-          >
-            <TagsIcon sx={{ fontSize: 32 }} />
-          </Avatar>
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-              Enregistrement des étiquettes
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Interface pour enregistrer et gérer les étiquettes des produits
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      <Card>
-        <CardContent sx={{ p: 6, textAlign: 'center' }}>
-          <Avatar
-            sx={{
-              bgcolor: 'secondary.light',
-              width: 80,
-              height: 80,
-              mx: 'auto',
-              mb: 3,
-            }}
-          >
-            <TagsIcon sx={{ fontSize: 40 }} />
-          </Avatar>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-            Gestion des étiquettes
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Interface à implémenter pour la gestion des étiquettes produits
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Enregistrement des Étiquettes</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Nom du produit</label>
+          <input
+            type="text"
+            value={formData.product_name || ''}
+            onChange={(e) => setFormData({...formData, product_name: e.target.value})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Nom du fournisseur</label>
+          <input
+            type="text"
+            value={formData.supplier_name || ''}
+            onChange={(e) => setFormData({...formData, supplier_name: e.target.value})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Numéro de lot</label>
+          <input
+            type="text"
+            value={formData.batch_number || ''}
+            onChange={(e) => setFormData({...formData, batch_number: e.target.value})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Photo de l'étiquette</label>
+          <input
+            type="text"
+            value={formData.photo_url}
+            onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
+            placeholder="URL de la photo"
+            required
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+          Enregistrer
+        </button>
+      </form>
+    </div>
   );
 }

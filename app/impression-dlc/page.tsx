@@ -1,69 +1,73 @@
-'use client';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  Paper,
-} from '@mui/material';
-import { Print as PrinterIcon } from '@mui/icons-material';
+import { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { TablesInsert } from '../types/database';
 
-export default function ImpressionDLCPage() {
+export default function LabelPrinting() {
+  const [formData, setFormData] = useState<TablesInsert<'label_printings'>>({
+    print_date: new Date().toISOString(),
+    expiry_date: '',
+    label_count: 1,
+    product_label_type_id: null,
+    organization_id: null,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase
+        .from('label_printings')
+        .insert([formData]);
+      
+      if (error) throw error;
+      alert('Impression enregistrée avec succès!');
+    } catch (error) {
+      console.error('Error saving printing:', error);
+      alert('Erreur lors de l\'enregistrement');
+    }
+  };
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Header */}
-      <Paper
-        sx={{
-          background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-          color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.2)',
-              width: 56,
-              height: 56,
-            }}
-          >
-            <PrinterIcon sx={{ fontSize: 32 }} />
-          </Avatar>
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-              Impression des DLC secondaires
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Interface pour imprimer les dates limites de consommation secondaires
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      <Card>
-        <CardContent sx={{ p: 6, textAlign: 'center' }}>
-          <Avatar
-            sx={{
-              bgcolor: 'warning.light',
-              width: 80,
-              height: 80,
-              mx: 'auto',
-              mb: 3,
-            }}
-          >
-            <PrinterIcon sx={{ fontSize: 40 }} />
-          </Avatar>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-            Impression DLC
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Interface à implémenter pour l&apos;impression des DLC secondaires
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Impression des DLC Secondaires</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Date d'expiration</label>
+          <input
+            type="date"
+            value={formData.expiry_date.split('T')[0]}
+            onChange={(e) => setFormData({...formData, expiry_date: new Date(e.target.value).toISOString()})}
+            required
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Nombre d'étiquettes</label>
+          <input
+            type="number"
+            value={formData.label_count}
+            onChange={(e) => setFormData({...formData, label_count: Number(e.target.value)})}
+            min="1"
+            required
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Type d'étiquette</label>
+          <input
+            type="text"
+            value={formData.product_label_type_id || ''}
+            onChange={(e) => setFormData({...formData, product_label_type_id: e.target.value})}
+            placeholder="ID du type d'étiquette"
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+          Enregistrer
+        </button>
+      </form>
+    </div>
   );
 }

@@ -1,69 +1,136 @@
-'use client';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  Paper,
-} from '@mui/material';
-import { Thermostat as ThermometerIcon } from '@mui/icons-material';
+import { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { TablesInsert } from '../types/database';
 
-export default function SuiviRefroidissementPage() {
+export default function CoolingTracking() {
+  const [formData, setFormData] = useState<TablesInsert<'cooling_records'>>({
+    start_date: new Date().toISOString(),
+    end_date: null,
+    product_name: '',
+    product_type: '',
+    start_core_temperature: 0,
+    end_core_temperature: null,
+    is_compliant: null,
+    comments: null,
+    organization_id: null,
+    user_id: null,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase
+        .from('cooling_records')
+        .insert([formData]);
+      
+      if (error) throw error;
+      alert('Enregistrement de refroidissement réussi!');
+    } catch (error) {
+      console.error('Error saving cooling record:', error);
+      alert('Erreur lors de l\'enregistrement');
+    }
+  };
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Header */}
-      <Paper
-        sx={{
-          background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
-          color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.2)',
-              width: 56,
-              height: 56,
-            }}
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Suivi de Refroidissement</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Nom du produit</label>
+          <input
+            type="text"
+            value={formData.product_name}
+            onChange={(e) => setFormData({...formData, product_name: e.target.value})}
+            required
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div>
+          <label className="block">Type de produit</label>
+          <input
+            type="text"
+            value={formData.product_type}
+            onChange={(e) => setFormData({...formData, product_type: e.target.value})}
+            required
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block">Température initiale (°C)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.start_core_temperature}
+              onChange={(e) => setFormData({...formData, start_core_temperature: Number(e.target.value)})}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          
+          <div>
+            <label className="block">Température finale (°C)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.end_core_temperature || ''}
+              onChange={(e) => setFormData({...formData, end_core_temperature: Number(e.target.value)})}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block">Date de début</label>
+            <input
+              type="datetime-local"
+              value={formData.start_date ? formData.start_date.substring(0, 16) : ''}
+              onChange={(e) => setFormData({...formData, start_date: new Date(e.target.value).toISOString()})}
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          
+          <div>
+            <label className="block">Date de fin</label>
+            <input
+              type="datetime-local"
+              value={formData.end_date ? formData.end_date.substring(0, 16) : ''}
+              onChange={(e) => setFormData({...formData, end_date: e.target.value ? new Date(e.target.value).toISOString() : null})}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        
+        <div>
+          <label className="block">Conformité</label>
+          <select
+            value={formData.is_compliant === null ? '' : String(formData.is_compliant)}
+            onChange={(e) => setFormData({...formData, is_compliant: e.target.value === '' ? null : e.target.value === 'true'})}
+            className="w-full p-2 border rounded"
           >
-            <ThermometerIcon sx={{ fontSize: 32 }} />
-          </Avatar>
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-              Suivi de refroidissement
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Interface pour suivre les courbes de refroidissement des produits
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      <Card>
-        <CardContent sx={{ p: 6, textAlign: 'center' }}>
-          <Avatar
-            sx={{
-              bgcolor: 'info.light',
-              width: 80,
-              height: 80,
-              mx: 'auto',
-              mb: 3,
-            }}
-          >
-            <ThermometerIcon sx={{ fontSize: 40 }} />
-          </Avatar>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-            Courbe de refroidissement
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Interface à implémenter pour le suivi des courbes de refroidissement
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+            <option value="">Non évalué</option>
+            <option value="true">Conforme</option>
+            <option value="false">Non conforme</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block">Commentaires</label>
+          <textarea
+            value={formData.comments || ''}
+            onChange={(e) => setFormData({...formData, comments: e.target.value})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+          Enregistrer
+        </button>
+      </form>
+    </div>
   );
 }
