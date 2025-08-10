@@ -39,6 +39,7 @@ export default function LoginPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
         p: 2,
       }}
     >
@@ -46,20 +47,27 @@ export default function LoginPage() {
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          maxWidth: 400,
+          maxWidth: 420,
           width: '100%',
-          p: 4,
-          boxShadow: 3,
-          borderRadius: 2,
+          p: 5,
+          boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+          borderRadius: 3,
           bgcolor: 'background.paper',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
-          Connexion
-        </Typography>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
+            HACCP Manager
+          </Typography>
+          <Typography variant="h6" component="h2" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+            Connexion à votre espace
+          </Typography>
+        </Box>
         
         {error && (
-          <Typography color="error" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography color="error" sx={{ mb: 3, textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
             {error}
           </Typography>
         )}
@@ -72,6 +80,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           margin="normal"
           required
+          sx={{ mb: 2 }}
         />
 
         <TextField
@@ -82,17 +91,35 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           margin="normal"
           required
+          sx={{ mb: 3 }}
         />
 
         <Button
           fullWidth
           variant="contained"
           type="submit"
-          sx={{ mt: 3, mb: 2 }}
+          size="large"
+          sx={{ 
+            mt: 2, 
+            mb: 2, 
+            py: 1.5,
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
+            }
+          }}
           disabled={isLoading}
         >
-          {isLoading ? <CircularProgress size={24} /> : 'Se connecter'}
+          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
         </Button>
+
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Typography variant="body2" color="text.secondary">
+            Système de gestion HACCP - Version 1.0
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

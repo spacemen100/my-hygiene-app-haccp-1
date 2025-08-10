@@ -14,6 +14,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import { Session } from '@supabase/auth-helpers-nextjs';
 import Header from '@/components/Header';
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,11 @@ export default function RootLayout({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClientComponentClient();
+  const pathname = usePathname();
+
+  // Pages qui ne doivent pas afficher le header
+  const noHeaderPages = ['/login'];
+  const shouldShowHeader = !noHeaderPages.includes(pathname);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -61,7 +67,7 @@ export default function RootLayout({
           <CssBaseline />
           <AuthProvider session={session}>
             <AppProvider>
-              <Header />
+              {shouldShowHeader && <Header />}
               {children}
             </AppProvider>
           </AuthProvider>

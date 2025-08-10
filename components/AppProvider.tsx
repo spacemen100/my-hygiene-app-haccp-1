@@ -50,6 +50,10 @@ export function AppProvider({ children }: AppProviderProps) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const pathname = usePathname();
 
+  // Pages qui ne doivent pas afficher la sidebar
+  const noSidebarPages = ['/login'];
+  const shouldShowSidebar = !noSidebarPages.includes(pathname);
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -152,6 +156,11 @@ export function AppProvider({ children }: AppProviderProps) {
       </Box>
     </Box>
   );
+
+  // Si on ne doit pas afficher la sidebar, afficher seulement les children
+  if (!shouldShowSidebar) {
+    return <>{children}</>;
+  }
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
