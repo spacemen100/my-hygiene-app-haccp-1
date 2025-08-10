@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
@@ -63,11 +63,17 @@ const ROLES = [
 ];
 
 export default function AdminEmployesPage() {
+  console.log('[AdminEmployes] Component rendering');
+  
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { employee: currentEmployee } = useEmployee();
+  
+  console.log('[AdminEmployes] Current employee:', currentEmployee);
+  console.log('[AdminEmployes] Loading state:', loading);
+  console.log('[AdminEmployes] Employees count:', employees.length);
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -84,17 +90,16 @@ export default function AdminEmployesPage() {
     organization_id: '',
   });
 
-  useEffect(() => {
-    if (currentEmployee?.organization_id) {
-      setFormData(prev => ({ ...prev, organization_id: currentEmployee.organization_id }));
-      loadEmployees();
+  const loadEmployees = useCallback(async () => {
+    console.log('[AdminEmployes] loadEmployees called with org ID:', currentEmployee?.organization_id);
+    
+    if (!currentEmployee?.organization_id) {
+      console.log('[AdminEmployes] No organization ID, returning');
+      return;
     }
-  }, [currentEmployee]);
-
-  const loadEmployees = async () => {
-    if (!currentEmployee?.organization_id) return;
 
     try {
+      console.log('[AdminEmployes] Starting to load employees...');
       setLoading(true);
       setError(null);
 
@@ -105,15 +110,35 @@ export default function AdminEmployesPage() {
         .order('last_name')
         .order('first_name');
 
+      console.log('[AdminEmployes] Supabase response:', { data, error });
+      
       if (error) throw error;
       setEmployees(data || []);
+      console.log('[AdminEmployes] Employees loaded successfully, count:', data?.length || 0);
     } catch (err) {
-      console.error('Erreur lors du chargement des employés:', err);
+      console.error('[AdminEmployes] Error loading employees:', err);
       setError('Erreur lors du chargement des employés');
     } finally {
+      console.log('[AdminEmployes] Setting loading to false');
       setLoading(false);
     }
-  };
+  }, [currentEmployee?.organization_id]);
+
+  useEffect(() => {
+    console.log('[AdminEmployes] useEffect triggered with:', {
+      organizationId: currentEmployee?.organization_id,
+      hasCurrentEmployee: !!currentEmployee
+    });
+    
+    if (currentEmployee?.organization_id) {
+      console.log('[AdminEmployes] Setting form data and loading employees');
+      setFormData(prev => ({ ...prev, organization_id: currentEmployee.organization_id }));
+      loadEmployees();
+    } else {
+      console.log('[AdminEmployes] No organization ID available');
+    }
+  }, [currentEmployee?.organization_id, loadEmployees]);
+
 
   const handleOpenDialog = (employee: Employee | null = null) => {
     if (employee) {
@@ -228,6 +253,7 @@ export default function AdminEmployesPage() {
   };
 
   if (loading) {
+    console.log('[AdminEmployes] Rendering loading state');
     return (
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -236,6 +262,8 @@ export default function AdminEmployesPage() {
       </Container>
     );
   }
+  
+  console.log('[AdminEmployes] Rendering main content');
 
   return (
     <Container maxWidth="xl">
@@ -483,8 +511,10 @@ export default function AdminEmployesPage() {
         onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3 }
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3
+          }
         }}
       >
         <DialogTitle sx={{ pb: 1 }}>
