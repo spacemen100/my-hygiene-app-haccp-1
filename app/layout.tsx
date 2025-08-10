@@ -7,6 +7,9 @@ import {
 import { Inter } from "next/font/google";
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { fr } from 'date-fns/locale';
 import { theme } from '@/theme/theme';
 import { AuthProvider } from '@/components/AuthProvider';
 import { AppLayout } from '@/components/AppLayout';
@@ -58,11 +61,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AuthProvider session={session}>
-            <AppLayout>
-              {children}
-            </AppLayout>
-          </AuthProvider>
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
+            <AuthProvider session={session}>
+              <AppLayout>
+                {children}
+              </AppLayout>
+            </AuthProvider>
+          </LocalizationProvider>
         </ThemeProvider>
       </body>
     </html>
