@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { TablesInsert } from '../types/database';
+import { supabase } from '@/lib/supabase';
+import { TablesInsert } from '@/src/types/database';
 
 export default function CoolingTracking() {
   const [formData, setFormData] = useState<TablesInsert<'cooling_records'>>({

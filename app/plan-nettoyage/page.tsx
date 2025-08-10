@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Tables, TablesInsert } from '../types/database';
+import { supabase } from '@/lib/supabase';
+import { Tables, TablesInsert } from '@/src/types/database';
 
 export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
