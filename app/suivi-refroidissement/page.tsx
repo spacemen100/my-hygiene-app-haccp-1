@@ -382,7 +382,7 @@ export default function CoolingTracking() {
                   />
                 </Grid>
 
-                {/* Section d'analyse du refroidissement */}
+                {/* Section d analyse du refroidissement */}
                 {formData.end_core_temperature !== null && formData.end_core_temperature !== undefined && formData.end_date && (
                   <Grid item xs={12}>
                     <Card variant="outlined" sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>

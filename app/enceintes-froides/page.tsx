@@ -593,7 +593,7 @@ export default function ColdStorage() {
                 <Stack spacing={1}>
                   <Typography variant="body2">• <strong>Minimum 2 fois par jour</strong> : matin et soir</Typography>
                   <Typography variant="body2">• <strong>Après chaque ouverture prolongée</strong> de l'enceinte</Typography>
-                  <Typography variant="body2">• <strong>En cas d'alarme</strong> ou de dysfonctionnement</Typography>
+                  <Typography variant="body2">• <strong>En cas d alarme</strong> ou de dysfonctionnement</Typography>
                   <Typography variant="body2">• <strong>Lors de variations climatiques</strong> importantes</Typography>
                 </Stack>
               </Grid>

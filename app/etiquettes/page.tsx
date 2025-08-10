@@ -59,8 +59,8 @@ export default function LabelRecording() {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
-      console.error("Erreur d'accès à la caméra:", error);
-      setAlert({ type: 'error', message: "Impossible d'accéder à la caméra" });
+      console.error("Erreur d accès à la caméra:", error);
+      setAlert({ type: 'error', message: "Impossible d accéder à la caméra" });
     }
   };
 

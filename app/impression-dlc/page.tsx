@@ -284,7 +284,7 @@ export default function LabelPrinting() {
         </Grid>
 
         <Grid container spacing={4}>
-          {/* Formulaire d'impression */}
+          {/* Formulaire d impression */}
           <Grid item xs={12} lg={8}>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
@@ -294,7 +294,7 @@ export default function LabelPrinting() {
                   </Avatar>
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      Configuration d'Impression
+                      Configuration d impression
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Paramétrez vos étiquettes DLC secondaires
@@ -306,7 +306,7 @@ export default function LabelPrinting() {
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <TextField
-                        label="Date d'expiration"
+                        label="Date d expiration"
                         type="date"
                         value={formData.expiry_date ? formData.expiry_date.split('T')[0] : ''}
                         onChange={(e) => setFormData({...formData, expiry_date: new Date(e.target.value).toISOString()})}
@@ -360,11 +360,11 @@ export default function LabelPrinting() {
                       </FormControl>
                     </Grid>
 
-                    {/* Alertes d'urgence */}
+                    {/* Alertes d urgence */}
                     {previewData.urgencyLevel === 'high' && (
                       <Grid item xs={12}>
                         <Alert severity="error">
-                          <strong>Attention :</strong> Date d'expiration très proche ou dépassée
+                          <strong>Attention :</strong> Date d expiration très proche ou dépassée
                         </Alert>
                       </Grid>
                     )}
@@ -372,7 +372,7 @@ export default function LabelPrinting() {
                     {previewData.urgencyLevel === 'medium' && (
                       <Grid item xs={12}>
                         <Alert severity="warning">
-                          <strong>À surveiller :</strong> Date d'expiration dans moins d'une semaine
+                          <strong>À surveiller :</strong> Date d expiration dans moins d une semaine
                         </Alert>
                       </Grid>
                     )}
@@ -528,7 +528,7 @@ export default function LabelPrinting() {
               
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'warning.main' }}>
-                  ⚠️ Codes Couleur d'Urgence
+                  ⚠️ Codes Couleur d urgence
                 </Typography>
                 <Stack spacing={1}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
