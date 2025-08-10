@@ -93,15 +93,16 @@ export default function AdminEmployesPage() {
   const loadEmployees = useCallback(async () => {
     console.log('[AdminEmployes] loadEmployees called with org ID:', currentEmployee?.organization_id);
     
-    if (!currentEmployee?.organization_id) {
-      console.log('[AdminEmployes] No organization ID, returning');
-      return;
-    }
-
     try {
       console.log('[AdminEmployes] Starting to load employees...');
       setLoading(true);
       setError(null);
+
+      if (!currentEmployee?.organization_id) {
+        console.log('[AdminEmployes] No organization ID, setting empty employees list');
+        setEmployees([]);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('employees')
@@ -130,12 +131,14 @@ export default function AdminEmployesPage() {
       hasCurrentEmployee: !!currentEmployee
     });
     
+    // Toujours charger les employés, même sans organisation
+    loadEmployees();
+    
     if (currentEmployee?.organization_id) {
-      console.log('[AdminEmployes] Setting form data and loading employees');
+      console.log('[AdminEmployes] Setting form data with org ID');
       setFormData(prev => ({ ...prev, organization_id: currentEmployee.organization_id }));
-      loadEmployees();
     } else {
-      console.log('[AdminEmployes] No organization ID available');
+      console.log('[AdminEmployes] No organization ID available, will need to create first employee');
     }
   }, [currentEmployee?.organization_id, loadEmployees]);
 
@@ -157,7 +160,7 @@ export default function AdminEmployesPage() {
         last_name: '',
         role: null,
         is_active: true,
-        organization_id: currentEmployee?.organization_id || '',
+        organization_id: currentEmployee?.organization_id || '', // Peut être vide
       });
     }
     setDialogOpen(true);
@@ -185,16 +188,31 @@ export default function AdminEmployesPage() {
         return;
       }
 
-      if (!formData.organization_id) {
-        setError('ID de l\'organisation manquant');
-        return;
+      // Si pas d'organisation, créer une organisation par défaut
+      let organizationId = formData.organization_id;
+      if (!organizationId) {
+        console.log('[AdminEmployes] No organization, creating default one');
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert([{ name: 'Organisation par défaut', description: 'Créée automatiquement' }])
+          .select()
+          .single();
+        
+        if (orgError) {
+          console.error('[AdminEmployes] Error creating organization:', orgError);
+          setError('Erreur lors de la création de l\'organisation');
+          return;
+        }
+        
+        organizationId = orgData.id;
+        console.log('[AdminEmployes] Created organization with ID:', organizationId);
       }
 
       if (editingEmployee) {
         // Update existing employee
         const { error } = await supabase
           .from('employees')
-          .update(formData as EmployeeUpdate)
+          .update({ ...formData, organization_id: organizationId } as EmployeeUpdate)
           .eq('id', editingEmployee.id);
 
         if (error) throw error;
@@ -203,7 +221,7 @@ export default function AdminEmployesPage() {
         // Create new employee
         const { error } = await supabase
           .from('employees')
-          .insert([formData]);
+          .insert([{ ...formData, organization_id: organizationId }]);
 
         if (error) throw error;
         setSuccess('Employé créé avec succès');
@@ -312,6 +330,15 @@ export default function AdminEmployesPage() {
       {success && (
         <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
           {success}
+        </Alert>
+      )}
+      
+      {!currentEmployee && !loading && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            <strong>Première utilisation ?</strong> Créez votre premier employé pour commencer à utiliser le système.
+            Une organisation sera automatiquement créée pour vous.
+          </Typography>
         </Alert>
       )}
 
@@ -493,9 +520,14 @@ export default function AdminEmployesPage() {
                 {employees.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary">
+                      <Typography color="text.secondary" sx={{ mb: 2 }}>
                         Aucun employé trouvé
                       </Typography>
+                      {!currentEmployee && (
+                        <Typography variant="body2" color="text.secondary">
+                          Cliquez sur "Nouvel Employé" pour créer votre premier employé
+                        </Typography>
+                      )}
                     </TableCell>
                   </TableRow>
                 )}
