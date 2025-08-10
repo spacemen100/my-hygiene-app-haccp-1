@@ -40,7 +40,7 @@ export default function RootLayout({
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   if (loading) {
     return (

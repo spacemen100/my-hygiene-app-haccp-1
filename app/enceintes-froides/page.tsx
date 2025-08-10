@@ -5,10 +5,6 @@ import {
   CardContent,
   Typography,
   Grid,
-  Avatar,
-  Paper,
-  LinearProgress,
-  Chip,
   CardHeader,
 } from '@mui/material';
 import {

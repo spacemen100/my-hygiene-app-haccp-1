@@ -15,7 +15,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
-  isLoading: true,
+  isLoading: false,
   signOut: async () => {},
   signInWithEmail: async () => null,
 });

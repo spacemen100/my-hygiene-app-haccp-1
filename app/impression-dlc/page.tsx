@@ -60,7 +60,7 @@ export default function ImpressionDLCPage() {
             Impression DLC
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Interface à implémenter pour l'impression des DLC secondaires
+            Interface à implémenter pour l&apos;impression des DLC secondaires
           </Typography>
         </CardContent>
       </Card>

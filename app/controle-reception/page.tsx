@@ -36,7 +36,7 @@ type Delivery = {
   delivery_date: string;
   supplier: {
     name: string;
-  } | null;
+  }[] | null;
   is_compliant: boolean | null;
   product_reception_controls: Array<{
     temperature: number | null;
@@ -181,7 +181,7 @@ export default function ControleReceptionPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography color="text.secondary" gutterBottom variant="body2">
-                    Aujourd'hui
+                    Aujourd&apos;hui
                   </Typography>
                   <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
                     {stats.today}
@@ -356,7 +356,7 @@ export default function ControleReceptionPage() {
                               {control.delivery_number || `Livraison ${control.id.slice(0, 6)}`}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {control.supplier?.name || 'Fournisseur inconnu'}
+                              {control.supplier?.[0]?.name || 'Fournisseur inconnu'}
                             </Typography>
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
