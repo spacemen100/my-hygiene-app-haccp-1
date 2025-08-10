@@ -29,17 +29,31 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+// Types basés sur votre schéma de base de données
+type Supplier = {
+  id: string;
+  name: string;
+};
+
+type ProductReceptionControl = {
+  id: string;
+  temperature: number | null;
+  is_compliant: boolean;
+};
+
 type Delivery = {
   id: string;
-  delivery_number: string;
+  delivery_number: string | null;
   delivery_date: string;
-  supplier: {
-    name: string;
-  }[] | null;
   is_compliant: boolean | null;
-  product_reception_controls: Array<{
-    temperature: number | null;
-  }>;
+  supplier: Supplier | null;
+  product_reception_controls: ProductReceptionControl[];
+};
+
+type DeliveryStats = {
+  today: number;
+  approved: number;
+  pending: number;
 };
 
 export default function ControleReceptionPage() {
@@ -48,7 +62,7 @@ export default function ControleReceptionPage() {
   const [recentControls, setRecentControls] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DeliveryStats>({
     today: 0,
     approved: 0,
     pending: 0,
@@ -60,14 +74,22 @@ export default function ControleReceptionPage() {
         setLoading(true);
         
         // Récupérer l'utilisateur actuel
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error('Erreur d\'authentification:', userError);
+          router.push('/login');
+          return;
+        }
+        
         if (!user) {
+          console.log('Utilisateur non connecté, redirection vers login');
           router.push('/login');
           return;
         }
 
         // Récupérer les livraisons récentes avec les fournisseurs et contrôles associés
         const today = new Date().toISOString().split('T')[0];
+        
         const { data: deliveries, error: deliveriesError } = await supabase
           .from('deliveries')
           .select(`
@@ -75,28 +97,50 @@ export default function ControleReceptionPage() {
             delivery_number,
             delivery_date,
             is_compliant,
-            supplier:suppliers(name),
-            product_reception_controls(temperature)
+            supplier:suppliers!deliveries_supplier_id_fkey (
+              id,
+              name
+            ),
+            product_reception_controls (
+              id,
+              temperature,
+              is_compliant
+            )
           `)
           .order('delivery_date', { ascending: false })
           .limit(10);
 
-        if (deliveriesError) throw deliveriesError;
+        if (deliveriesError) {
+          console.error('Erreur lors du chargement des livraisons:', deliveriesError);
+          throw deliveriesError;
+        }
 
-        setRecentControls(deliveries || []);
+        console.log('Livraisons récupérées:', deliveries);
+        
+        // Formatter les données pour correspondre au type attendu
+        const formattedDeliveries: Delivery[] = (deliveries || []).map(delivery => ({
+          id: delivery.id,
+          delivery_number: delivery.delivery_number,
+          delivery_date: delivery.delivery_date,
+          is_compliant: delivery.is_compliant,
+          supplier: delivery.supplier,
+          product_reception_controls: delivery.product_reception_controls || []
+        }));
+
+        setRecentControls(formattedDeliveries);
 
         // Calculer les statistiques
-        const todayDeliveries = deliveries?.filter(d => 
+        const todayDeliveries = formattedDeliveries.filter(d => 
           d.delivery_date?.startsWith(today)
-        ).length || 0;
+        ).length;
         
-        const approvedDeliveries = deliveries?.filter(d => 
+        const approvedDeliveries = formattedDeliveries.filter(d => 
           d.is_compliant === true
-        ).length || 0;
+        ).length;
         
-        const pendingDeliveries = deliveries?.filter(d => 
+        const pendingDeliveries = formattedDeliveries.filter(d => 
           d.is_compliant === null
-        ).length || 0;
+        ).length;
 
         setStats({
           today: todayDeliveries,
@@ -104,9 +148,15 @@ export default function ControleReceptionPage() {
           pending: pendingDeliveries,
         });
 
+        console.log('Statistiques calculées:', {
+          today: todayDeliveries,
+          approved: approvedDeliveries,
+          pending: pendingDeliveries
+        });
+
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Erreur lors du chargement des données');
+        console.error('Erreur lors du chargement des données:', err);
+        setError('Erreur lors du chargement des données. Veuillez réessayer.');
       } finally {
         setLoading(false);
       }
@@ -314,9 +364,12 @@ export default function ControleReceptionPage() {
             <List>
               {recentControls.map((control) => {
                 // Calculer la température moyenne
-                const avgTemp = control.product_reception_controls?.length > 0
-                  ? (control.product_reception_controls.reduce((sum, prc) => sum + (prc.temperature || 0), 0) / 
-                     control.product_reception_controls.length).toFixed(1)
+                const temperatures = control.product_reception_controls
+                  ?.filter(prc => prc.temperature !== null)
+                  ?.map(prc => prc.temperature!) || [];
+                
+                const avgTemp = temperatures.length > 0
+                  ? (temperatures.reduce((sum, temp) => sum + temp, 0) / temperatures.length).toFixed(1)
                   : 'N/A';
 
                 return (
@@ -358,7 +411,7 @@ export default function ControleReceptionPage() {
                               {control.delivery_number || `Livraison ${control.id.slice(0, 6)}`}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {control.supplier?.[0]?.name || 'Fournisseur inconnu'}
+                              {control.supplier?.name || 'Fournisseur inconnu'}
                             </Typography>
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -372,7 +425,7 @@ export default function ControleReceptionPage() {
                             </Box>
                             <Box sx={{ textAlign: 'center' }}>
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {new Date(control.delivery_date).toLocaleDateString()}
+                                {new Date(control.delivery_date).toLocaleDateString('fr-FR')}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 Date
