@@ -24,6 +24,7 @@ import {
   Business as SuppliersIcon,
   Kitchen as StorageIcon,
   LocalOffer as LabelsIcon,
+  People as PeopleIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -42,6 +43,7 @@ const menuItems = [
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
+  { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
 ];
 
 interface AppProviderProps {

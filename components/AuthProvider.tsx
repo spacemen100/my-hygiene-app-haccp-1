@@ -2,12 +2,13 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Session } from '@supabase/auth-helpers-nextjs';
+import { Session, User } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type AuthContextType = {
   session: Session | null;
+  user: User | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
@@ -15,6 +16,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
+  user: null,
   isLoading: false,
   signOut: async () => {},
   signInWithEmail: async () => null,
@@ -59,7 +61,7 @@ export function AuthProvider({
   };
 
   return (
-    <AuthContext.Provider value={{ session, isLoading, signOut, signInWithEmail }}>
+    <AuthContext.Provider value={{ session, user: session?.user || null, isLoading, signOut, signInWithEmail }}>
       {children}
     </AuthContext.Provider>
   );
