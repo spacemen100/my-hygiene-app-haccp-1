@@ -140,7 +140,7 @@ export default function AdminEmployesPage() {
     } else {
       console.log('[AdminEmployes] No organization ID available, will need to create first employee');
     }
-  }, [currentEmployee?.organization_id, loadEmployees]);
+  }, [currentEmployee?.organization_id, loadEmployees, currentEmployee]);
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
@@ -525,7 +525,7 @@ export default function AdminEmployesPage() {
                       </Typography>
                       {!currentEmployee && (
                         <Typography variant="body2" color="text.secondary">
-                          Cliquez sur "Nouvel Employé" pour créer votre premier employé
+                          Cliquez sur &quot;Nouvel Employé&quot; pour créer votre premier employé
                         </Typography>
                       )}
                     </TableCell>
