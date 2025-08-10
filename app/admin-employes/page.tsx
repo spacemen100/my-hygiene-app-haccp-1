@@ -191,9 +191,37 @@ export default function AdminEmployesPage() {
       // Si pas d'organisation, utiliser un UUID par défaut
       let organizationId = formData.organization_id;
       if (!organizationId) {
-        console.log('[AdminEmployes] No organization, using default UUID');
-        organizationId = '00000000-0000-0000-0000-000000000000';
-        console.log('[AdminEmployes] Using default organization ID:', organizationId);
+        console.log('[AdminEmployes] No organization, creating/using default one');
+        const defaultOrgId = '00000000-0000-0000-0000-000000000000';
+        
+        // Vérifier si l'organisation par défaut existe
+        const { data: existingOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('id', defaultOrgId)
+          .single();
+        
+        if (!existingOrg) {
+          console.log('[AdminEmployes] Creating default organization');
+          // Créer l'organisation par défaut avec l'UUID spécifique
+          const { error: createOrgError } = await supabase
+            .from('organizations')
+            .insert([{ 
+              id: defaultOrgId,
+              name: 'Organisation par défaut'
+            }]);
+          
+          if (createOrgError) {
+            console.error('[AdminEmployes] Error creating default organization:', createOrgError);
+            setError('Erreur lors de la création de l\'organisation par défaut');
+            return;
+          }
+          console.log('[AdminEmployes] Default organization created');
+        } else {
+          console.log('[AdminEmployes] Default organization already exists');
+        }
+        
+        organizationId = defaultOrgId;
       }
 
       if (editingEmployee) {
