@@ -59,8 +59,8 @@ export default function LabelRecording() {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
-      console.error('Erreur d\'accès à la caméra:', error);
-      setAlert({ type: 'error', message: 'Impossible d\'accéder à la caméra' });
+      console.error('Erreur d&apos;accès à la caméra:', error);
+      setAlert({ type: 'error', message: 'Impossible d&apos;accéder à la caméra' });
     }
   };
 
@@ -80,20 +80,20 @@ export default function LabelRecording() {
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       
+      if (!context) return;
+      
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
-      if (context) {
-        context.drawImage(video, 0, 0);
-        
-        // Convertir en blob
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            await uploadPhoto(blob);
-            stopCamera();
-          }
-        }, 'image/jpeg', 0.8);
-      }
+      context.drawImage(video, 0, 0);
+      
+      // Convertir en blob
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          await uploadPhoto(blob);
+          stopCamera();
+        }
+      }, 'image/jpeg', 0.8);
     }
   };
 
@@ -126,7 +126,7 @@ export default function LabelRecording() {
       
     } catch (error) {
       console.error('Erreur upload photo:', error);
-      setAlert({ type: 'error', message: 'Erreur lors de l\'upload de la photo' });
+      setAlert({ type: 'error', message: 'Erreur lors de l&apos;upload de la photo' });
     } finally {
       setUploadingPhoto(false);
     }
@@ -173,7 +173,7 @@ export default function LabelRecording() {
       
       if (error) throw error;
       
-      setAlert({ type: 'success', message: 'Enregistrement d\'étiquette réussi!' });
+      setAlert({ type: 'success', message: 'Enregistrement d&apos;étiquette réussi!' });
       
       // Reset du formulaire
       setFormData({
@@ -191,7 +191,7 @@ export default function LabelRecording() {
       
     } catch (error) {
       console.error('Error saving label:', error);
-      setAlert({ type: 'error', message: 'Erreur lors de l\'enregistrement' });
+      setAlert({ type: 'error', message: 'Erreur lors de l&apos;enregistrement' });
     } finally {
       setLoading(false);
     }
@@ -220,7 +220,7 @@ export default function LabelRecording() {
             {/* Section Photo */}
             <Box>
               <Typography variant="h6" gutterBottom>
-                Photo de l'étiquette *
+                Photo de l&apos;étiquette *
               </Typography>
               
               {/* Boutons pour la photo */}
@@ -301,7 +301,7 @@ export default function LabelRecording() {
                     component="img"
                     height="300"
                     image={previewUrl}
-                    alt="Prévisualisation de l'étiquette"
+                    alt="Prévisualisation de l&apos;étiquette"
                     sx={{ objectFit: 'contain' }}
                   />
                 </Card>
