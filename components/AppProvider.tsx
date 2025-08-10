@@ -23,6 +23,7 @@ import {
   AdminPanelSettings as AdminIcon,
   Business as SuppliersIcon,
   Kitchen as StorageIcon,
+  LocalOffer as LabelsIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -40,6 +41,7 @@ const menuItems = [
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
+  { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
 ];
 
 interface AppProviderProps {
