@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
-import { Camera, CheckCircle, XCircle, AlertTriangle, FileText, Thermometer, Calendar, Package } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, AlertTriangle, FileText, Thermometer, Package } from 'lucide-react';
 
 export default function DeliveryControlSystem() {
   const [activeTab, setActiveTab] = useState('ambient');
@@ -62,7 +62,7 @@ const AmbientProductControl = () => {
     storage_type: 'ambiant',
     best_before_date: undefined,
     use_by_date: undefined,
-    is_compliant: null,
+    is_compliant: false,
     control_date: new Date().toISOString()
   });
 
@@ -113,7 +113,7 @@ const AmbientProductControl = () => {
             </label>
             <input
               type="date"
-              value={formData.best_before_date}
+              value={formData.best_before_date || ''}
               onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -125,7 +125,7 @@ const AmbientProductControl = () => {
             </label>
             <input
               type="date"
-              value={formData.use_by_date}
+              value={formData.use_by_date || ''}
               onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -177,18 +177,6 @@ const AmbientProductControl = () => {
           </button>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Commentaires
-          </label>
-          <textarea
-            value={formData.comments}
-            onChange={(e) => setFormData({...formData, comments: e.target.value})}
-            rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Observations supplémentaires..."
-          />
-        </div>
 
         <button
           type="submit"
@@ -209,7 +197,7 @@ const FreshProductControl = () => {
     temperature: undefined,
     best_before_date: undefined,
     use_by_date: undefined,
-    is_compliant: null,
+    is_compliant: false,
     control_date: new Date().toISOString()
   });
 
@@ -222,7 +210,7 @@ const FreshProductControl = () => {
     setFormData({
       ...formData, 
       temperature: !isNaN(temp) ? temp : undefined,
-      is_compliant: !isNaN(temp) ? isTemperatureCompliant(temp) : null
+      is_compliant: !isNaN(temp) ? isTemperatureCompliant(temp) : false
     });
   };
 
@@ -276,7 +264,7 @@ const FreshProductControl = () => {
               value={formData.temperature || ''}
               onChange={handleTemperatureChange}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                formData.temperature !== undefined
+                formData.temperature !== undefined && formData.temperature !== null
                   ? isTemperatureCompliant(formData.temperature)
                     ? 'border-green-500 focus:ring-green-500'
                     : 'border-red-500 focus:ring-red-500'
@@ -285,7 +273,7 @@ const FreshProductControl = () => {
               placeholder="Entre 0°C et 4°C"
               required
             />
-            {formData.temperature !== undefined && (
+            {formData.temperature !== undefined && formData.temperature !== null && (
               <div className="absolute right-3 top-2">
                 {isTemperatureCompliant(formData.temperature) ? (
                   <CheckCircle className="w-5 h-5 text-green-500" />
@@ -307,7 +295,7 @@ const FreshProductControl = () => {
             </label>
             <input
               type="date"
-              value={formData.best_before_date}
+              value={formData.best_before_date || ''}
               onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -319,7 +307,7 @@ const FreshProductControl = () => {
             </label>
             <input
               type="date"
-              value={formData.use_by_date}
+              value={formData.use_by_date || ''}
               onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -339,18 +327,6 @@ const FreshProductControl = () => {
           </button>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Commentaires
-          </label>
-          <textarea
-            value={formData.comments}
-            onChange={(e) => setFormData({...formData, comments: e.target.value})}
-            rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Observations supplémentaires..."
-          />
-        </div>
 
         <button
           type="submit"
@@ -371,7 +347,7 @@ const FrozenProductControl = () => {
     temperature: undefined,
     best_before_date: undefined,
     use_by_date: undefined,
-    is_compliant: null,
+    is_compliant: false,
     control_date: new Date().toISOString()
   });
 
@@ -384,7 +360,7 @@ const FrozenProductControl = () => {
     setFormData({
       ...formData, 
       temperature: !isNaN(temp) ? temp : undefined,
-      is_compliant: !isNaN(temp) ? isTemperatureCompliant(temp) : null
+      is_compliant: !isNaN(temp) ? isTemperatureCompliant(temp) : false
     });
   };
 
@@ -438,7 +414,7 @@ const FrozenProductControl = () => {
               value={formData.temperature || ''}
               onChange={handleTemperatureChange}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                formData.temperature !== undefined
+                formData.temperature !== undefined && formData.temperature !== null
                   ? isTemperatureCompliant(formData.temperature)
                     ? 'border-green-500 focus:ring-green-500'
                     : 'border-red-500 focus:ring-red-500'
@@ -447,7 +423,7 @@ const FrozenProductControl = () => {
               placeholder="-18°C ou moins"
               required
             />
-            {formData.temperature !== undefined && (
+            {formData.temperature !== undefined && formData.temperature !== null && (
               <div className="absolute right-3 top-2">
                 {isTemperatureCompliant(formData.temperature) ? (
                   <CheckCircle className="w-5 h-5 text-green-500" />
@@ -469,7 +445,7 @@ const FrozenProductControl = () => {
             </label>
             <input
               type="date"
-              value={formData.best_before_date}
+              value={formData.best_before_date || ''}
               onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -481,7 +457,7 @@ const FrozenProductControl = () => {
             </label>
             <input
               type="date"
-              value={formData.use_by_date}
+              value={formData.use_by_date || ''}
               onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -501,18 +477,6 @@ const FrozenProductControl = () => {
           </button>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Commentaires
-          </label>
-          <textarea
-            value={formData.comments}
-            onChange={(e) => setFormData({...formData, comments: e.target.value})}
-            rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Observations supplémentaires..."
-          />
-        </div>
 
         <button
           type="submit"
@@ -527,7 +491,7 @@ const FrozenProductControl = () => {
 
 // Composant pour gérer les non-conformités
 const NonConformitiesControl = () => {
-  const [nonConformities, setNonConformities] = useState<any[]>([]);
+  const [nonConformities, setNonConformities] = useState<TablesInsert<'non_conformities'>[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNonConformity, setNewNonConformity] = useState<Partial<TablesInsert<'non_conformities'>>>({
     non_conformity_type: '',
@@ -621,7 +585,7 @@ const NonConformitiesControl = () => {
                   <p className="text-sm text-gray-600">Produit: {nc.product_name}</p>
                 </div>
                 <button
-                  onClick={() => handleDeleteNonConformity(nc.id)}
+                  onClick={() => nc.id && handleDeleteNonConformity(nc.id)}
                   className="text-red-600 hover:text-red-800"
                 >
                   <XCircle className="w-5 h-5" />
@@ -645,7 +609,7 @@ const NonConformitiesControl = () => {
               )}
               
               <p className="text-xs text-gray-500">
-                Signalé le {new Date(nc.created_at).toLocaleDateString('fr-FR')}
+                Signalé le {nc.created_at ? new Date(nc.created_at).toLocaleDateString('fr-FR') : 'Date inconnue'}
               </p>
             </div>
           ))
@@ -664,7 +628,7 @@ const NonConformitiesControl = () => {
                   Type de non-conformité *
                 </label>
                 <select
-                  value={newNonConformity.non_conformity_type}
+                  value={newNonConformity.non_conformity_type || ''}
                   onChange={(e) => setNewNonConformity({...newNonConformity, non_conformity_type: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                   required
@@ -682,7 +646,7 @@ const NonConformitiesControl = () => {
                 </label>
                 <input
                   type="text"
-                  value={newNonConformity.product_name}
+                  value={newNonConformity.product_name || ''}
                   onChange={(e) => setNewNonConformity({...newNonConformity, product_name: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                   required
@@ -707,7 +671,7 @@ const NonConformitiesControl = () => {
                     Unité
                   </label>
                   <select
-                    value={newNonConformity.quantity_type}
+                    value={newNonConformity.quantity_type || 'kg'}
                     onChange={(e) => setNewNonConformity({...newNonConformity, quantity_type: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
@@ -723,9 +687,9 @@ const NonConformitiesControl = () => {
                   Description
                 </label>
                 <textarea
-                  value={newNonConformity.description}
+                  value={newNonConformity.description || ''}
                   onChange={(e) => setNewNonConformity({...newNonConformity, description: e.target.value})}
-                  rows="3"
+                  rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                   placeholder="Décrivez la non-conformité..."
                 />
@@ -738,7 +702,7 @@ const NonConformitiesControl = () => {
                   </label>
                   <input
                     type="text"
-                    value={newNonConformity.other_cause}
+                    value={newNonConformity.other_cause || ''}
                     onChange={(e) => setNewNonConformity({...newNonConformity, other_cause: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                     placeholder="Précisez..."
@@ -766,6 +730,22 @@ const NonConformitiesControl = () => {
                 >
                   Signaler
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Composant pour la documentation et les informations
 const DocInfoControl = () => {
   return (
@@ -839,4 +819,3 @@ const DocInfoControl = () => {
   );
 };
 
-export default DeliveryControlSystem;
