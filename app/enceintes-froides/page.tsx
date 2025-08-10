@@ -25,7 +25,6 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert,
   Avatar,
   Grid,
   Stack
@@ -113,7 +112,7 @@ export default function ColdStorage() {
       });
     } catch (error) {
       console.error('Error saving reading:', error);
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar('Erreur lors de l&apos;enregistrement', { variant: 'error' });
     }
   };
 
@@ -553,7 +552,7 @@ export default function ColdStorage() {
                       📊 Affichage des 10 dernières lectures • Mise à jour en temps réel
                     </Typography>
                     <Typography variant="caption" color="text.disabled" display="block">
-                      Les lectures récentes (moins d'1h) sont surlignées
+                      Les lectures récentes (moins d&apos;1h) sont surlignées
                     </Typography>
                   </Box>
                 )}
@@ -592,8 +591,8 @@ export default function ColdStorage() {
                 </Typography>
                 <Stack spacing={1}>
                   <Typography variant="body2">• <strong>Minimum 2 fois par jour</strong> : matin et soir</Typography>
-                  <Typography variant="body2">• <strong>Après chaque ouverture prolongée</strong> de l'enceinte</Typography>
-                  <Typography variant="body2">• <strong>En cas d alarme</strong> ou de dysfonctionnement</Typography>
+                  <Typography variant="body2">• <strong>Après chaque ouverture prolongée</strong> de l&apos;enceinte</Typography>
+                  <Typography variant="body2">• <strong>En cas d&apos;alarme</strong> ou de dysfonctionnement</Typography>
                   <Typography variant="body2">• <strong>Lors de variations climatiques</strong> importantes</Typography>
                 </Stack>
               </Grid>
@@ -603,9 +602,9 @@ export default function ColdStorage() {
                   ⚠️ Actions en Cas de Non-Conformité
                 </Typography>
                 <Stack spacing={1}>
-                  <Typography variant="body2">• <strong>Vérifier immédiatement</strong> le bon fonctionnement de l'équipement</Typography>
+                  <Typography variant="body2">• <strong>Vérifier immédiatement</strong> le bon fonctionnement de l&apos;équipement</Typography>
                   <Typography variant="body2">• <strong>Isoler les produits</strong> potentiellement compromis</Typography>
-                  <Typography variant="body2">• <strong>Documenter l'incident</strong> et les actions correctives</Typography>
+                  <Typography variant="body2">• <strong>Documenter l&apos;incident</strong> et les actions correctives</Typography>
                   <Typography variant="body2">• <strong>Contacter la maintenance</strong> si nécessaire</Typography>
                 </Stack>
               </Grid>
