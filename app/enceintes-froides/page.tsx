@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import { Thermostat as TemperatureIcon, Add, Edit, Delete } from '@mui/icons-material';
 import { supabase } from '@/lib/supabase';
-import { Tables } from '@/types/supabase';
+import { Tables } from '@/src/types/database';
 
 export default function ColdStoragePage() {
   const [coldStorageUnits, setColdStorageUnits] = useState<Tables<'cold_storage_units'>[]>([]);
