@@ -59,8 +59,8 @@ export default function LabelRecording() {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
-      console.error("Erreur d accès à la caméra:", error);
-      setAlert({ type: 'error', message: "Impossible d accéder à la caméra" });
+      console.error("Erreur d'accès à la caméra:", error);
+      setAlert({ type: 'error', message: "Impossible d'accéder à la caméra" });
     }
   };
 
@@ -105,7 +105,7 @@ export default function LabelRecording() {
       const fileName = `label_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
       
       // Upload vers Supabase Storage
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('etiquettes')
         .upload(fileName, file, {
           contentType: 'image/jpeg',
@@ -220,7 +220,7 @@ export default function LabelRecording() {
             {/* Section Photo */}
             <Box>
               <Typography variant="h6" gutterBottom>
-                Photo de l'étiquette *
+                Photo de l&apos;étiquette *
               </Typography>
               
               {/* Boutons pour la photo */}

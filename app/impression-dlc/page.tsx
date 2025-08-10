@@ -106,7 +106,7 @@ export default function LabelPrinting() {
   const getUrgencyLabel = (urgency: 'low' | 'medium' | 'high' | null, days: number | null) => {
     if (days === null) return 'Non défini';
     if (days < 0) return 'Expiré';
-    if (days === 0) return 'Expire aujourd\'hui';
+    if (days === 0) return 'Expire aujourd&apos;hui';
     if (days === 1) return 'Expire demain';
     switch (urgency) {
       case 'high': return `Urgent (${days}j)`;
@@ -139,7 +139,7 @@ export default function LabelPrinting() {
       });
     } catch (error) {
       console.error('Error saving printing:', error);
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar('Erreur lors de l&apos;enregistrement', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -173,7 +173,7 @@ export default function LabelPrinting() {
               Impression des DLC Secondaires
             </Typography>
             <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
-              Génération d'étiquettes avec dates limites de consommation
+              Génération d&apos;étiquettes avec dates limites de consommation
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
               Dernière impression : {new Date().toLocaleDateString('fr-FR', { 
@@ -238,7 +238,7 @@ export default function LabelPrinting() {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography color="text.secondary" gutterBottom variant="body2">
-                      Type d'étiquette
+                      Type d&apos;étiquette
                     </Typography>
                     <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
                       {labelTypes.find(t => t.id === formData.product_label_type_id)?.category || 'Non défini'}
@@ -294,7 +294,7 @@ export default function LabelPrinting() {
                   </Avatar>
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      Configuration d impression
+                      Configuration d&apos;impression
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Paramétrez vos étiquettes DLC secondaires
@@ -306,7 +306,7 @@ export default function LabelPrinting() {
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <TextField
-                        label="Date d expiration"
+                        label="Date d'expiration"
                         type="date"
                         value={formData.expiry_date ? formData.expiry_date.split('T')[0] : ''}
                         onChange={(e) => setFormData({...formData, expiry_date: new Date(e.target.value).toISOString()})}
@@ -335,7 +335,7 @@ export default function LabelPrinting() {
                     
                     <Grid item xs={12}>
                       <FormControl fullWidth>
-                        <InputLabel>Type d'étiquette</InputLabel>
+                        <InputLabel>Type d&apos;étiquette</InputLabel>
                         <Select
                           value={formData.product_label_type_id || ''}
                           label="Type d'étiquette"
@@ -364,7 +364,7 @@ export default function LabelPrinting() {
                     {previewData.urgencyLevel === 'high' && (
                       <Grid item xs={12}>
                         <Alert severity="error">
-                          <strong>Attention :</strong> Date d expiration très proche ou dépassée
+                          <strong>Attention :</strong> Date d&apos;expiration très proche ou dépassée
                         </Alert>
                       </Grid>
                     )}
@@ -372,7 +372,7 @@ export default function LabelPrinting() {
                     {previewData.urgencyLevel === 'medium' && (
                       <Grid item xs={12}>
                         <Alert severity="warning">
-                          <strong>À surveiller :</strong> Date d expiration dans moins d une semaine
+                          <strong>À surveiller :</strong> Date d&apos;expiration dans moins d&apos;une semaine
                         </Alert>
                       </Grid>
                     )}
@@ -412,7 +412,7 @@ export default function LabelPrinting() {
                   </Avatar>
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      Aperçu de l'Étiquette
+                      Aperçu de l&apos;Étiquette
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Prévisualisation en temps réel
@@ -528,7 +528,7 @@ export default function LabelPrinting() {
               
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'warning.main' }}>
-                  ⚠️ Codes Couleur d urgence
+                  ⚠️ Codes Couleur d&apos;urgence
                 </Typography>
                 <Stack spacing={1}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

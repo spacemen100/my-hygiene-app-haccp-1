@@ -28,22 +28,19 @@ import {
   Alert,
   IconButton,
   Avatar,
-  Grid,
-  Stack
+  Grid
 } from '@mui/material';
 import {
   CleaningServices,
   Schedule,
   CheckCircle,
-  Cancel,
   Warning,
   Save,
   PhotoCamera,
   Assignment,
   TaskAlt,
   CalendarToday,
-  TrendingUp,
-  RocketLaunch
+  TrendingUp
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -122,7 +119,7 @@ export default function CleaningPlan() {
       });
     } catch (error) {
       console.error('Error saving cleaning record:', error);
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar('Erreur lors de l&apos;enregistrement', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -173,7 +170,7 @@ export default function CleaningPlan() {
               Planification et suivi des tâches de nettoyage
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              {stats.totalTasks} tâche{stats.totalTasks !== 1 ? 's' : ''} planifiée{stats.totalTasks !== 1 ? 's' : ''} • {stats.completedToday} exécutée{stats.completedToday !== 1 ? 's' : ''} aujourd'hui
+              {stats.totalTasks} tâche{stats.totalTasks !== 1 ? 's' : ''} planifiée{stats.totalTasks !== 1 ? 's' : ''} • {stats.completedToday} exécutée{stats.completedToday !== 1 ? 's' : ''} aujourd&apos;hui
             </Typography>
           </Box>
         </Box>
@@ -208,7 +205,7 @@ export default function CleaningPlan() {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography color="text.secondary" gutterBottom variant="body2">
-                      Complétées aujourd'hui
+                      Complétées aujourd&apos;hui
                     </Typography>
                     <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
                       {stats.completedToday}
@@ -533,11 +530,11 @@ export default function CleaningPlan() {
               🧽 Bonnes Pratiques de Nettoyage HACCP
             </Typography>
             <Typography variant="body2" sx={{ color: 'success.dark' }}>
-              • <strong>Planification :</strong> Respecter la fréquence des tâches selon le type de surface et l'activité<br/>
+              • <strong>Planification :</strong> Respecter la fréquence des tâches selon le type de surface et l&apos;activité<br/>
               • <strong>Documentation :</strong> Enregistrer systématiquement toutes les opérations de nettoyage<br/>
-              • <strong>Vérification :</strong> Contrôler visuellement l'efficacité du nettoyage avant de valider<br/>
+              • <strong>Vérification :</strong> Contrôler visuellement l&apos;efficacité du nettoyage avant de valider<br/>
               • <strong>Traçabilité :</strong> Photographier les zones critiques après nettoyage si nécessaire<br/>
-              • <strong>Non-conformité :</strong> Signaler immédiatement tout problème et reprendre l'opération
+              • <strong>Non-conformité :</strong> Signaler immédiatement tout problème et reprendre l&apos;opération
             </Typography>
           </CardContent>
         </Card>
