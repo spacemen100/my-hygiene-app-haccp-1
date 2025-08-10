@@ -27,8 +27,7 @@ import {
   Chip,
   Alert,
   IconButton,
-  Avatar,
-  Grid
+  Avatar
 } from '@mui/material';
 import {
   CleaningServices,
@@ -178,8 +177,8 @@ export default function CleaningPlan() {
 
       <Container maxWidth="xl">
         {/* Statistiques rapides */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -197,9 +196,9 @@ export default function CleaningPlan() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -217,9 +216,9 @@ export default function CleaningPlan() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -237,9 +236,9 @@ export default function CleaningPlan() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -257,12 +256,12 @@ export default function CleaningPlan() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
-        <Grid container spacing={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 4 }}>
           {/* Formulaire de nouvelle exécution */}
-          <Grid item xs={12} lg={6}>
+          <Box>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -404,10 +403,10 @@ export default function CleaningPlan() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
           {/* Tableau des dernières exécutions */}
-          <Grid item xs={12} lg={6}>
+          <Box>
             <Card elevation={3}>
               <CardContent>
                 <Typography variant="h5" component="h2" gutterBottom sx={{ 
@@ -520,8 +519,8 @@ export default function CleaningPlan() {
                 )}
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Informations sur les bonnes pratiques */}
         <Card sx={{ mt: 3, bgcolor: 'success.light' }}>

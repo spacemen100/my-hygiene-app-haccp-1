@@ -26,7 +26,6 @@ import {
   Paper,
   Chip,
   Avatar,
-  Grid,
   Stack
 } from '@mui/material';
 import {
@@ -182,8 +181,8 @@ export default function ColdStorage() {
       <Container maxWidth="xl">
         
         {/* Statistiques rapides */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -201,9 +200,9 @@ export default function ColdStorage() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -221,9 +220,9 @@ export default function ColdStorage() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -245,9 +244,9 @@ export default function ColdStorage() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -265,12 +264,12 @@ export default function ColdStorage() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
-        <Grid container spacing={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 4 }}>
           {/* Formulaire de nouvelle lecture */}
-          <Grid item xs={12} lg={6}>
+          <Box>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -429,10 +428,10 @@ export default function ColdStorage() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
           {/* Historique des lectures */}
-          <Grid item xs={12} lg={6}>
+          <Box>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -558,8 +557,8 @@ export default function ColdStorage() {
                 )}
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Guide et bonnes pratiques */}
         <Card sx={{ mt: 4, overflow: 'hidden' }}>
@@ -584,8 +583,8 @@ export default function ColdStorage() {
             </Box>
           </Box>
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
                   🎯 Fréquence de Contrôle
                 </Typography>
@@ -595,9 +594,9 @@ export default function ColdStorage() {
                   <Typography variant="body2">• <strong>En cas d&apos;alarme</strong> ou de dysfonctionnement</Typography>
                   <Typography variant="body2">• <strong>Lors de variations climatiques</strong> importantes</Typography>
                 </Stack>
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
                   ⚠️ Actions en Cas de Non-Conformité
                 </Typography>
@@ -607,8 +606,8 @@ export default function ColdStorage() {
                   <Typography variant="body2">• <strong>Documenter l&apos;incident</strong> et les actions correctives</Typography>
                   <Typography variant="body2">• <strong>Contacter la maintenance</strong> si nécessaire</Typography>
                 </Stack>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
       </Container>

@@ -19,7 +19,6 @@ import {
   Chip,
   LinearProgress,
   Avatar,
-  Grid,
   Stack,
   Paper
 } from '@mui/material';
@@ -185,8 +184,8 @@ export default function CoolingTracking() {
       <Container maxWidth="xl">
         
         {/* Statistiques rapides */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -204,9 +203,9 @@ export default function CoolingTracking() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -224,9 +223,9 @@ export default function CoolingTracking() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -244,9 +243,9 @@ export default function CoolingTracking() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -281,8 +280,8 @@ export default function CoolingTracking() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Formulaire principal */}
         <Card sx={{ transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
@@ -302,8 +301,8 @@ export default function CoolingTracking() {
             </Box>
 
             <Box component="form" onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+                <Box>
                   <TextField
                     label="Nom du produit"
                     value={formData.product_name}
@@ -312,9 +311,9 @@ export default function CoolingTracking() {
                     fullWidth
                     placeholder="Ex: Rôti de porc, Escalopes de volaille..."
                   />
-                </Grid>
+                </Box>
                 
-                <Grid item xs={12} md={6}>
+                <Box>
                   <TextField
                     label="Type de produit"
                     value={formData.product_type}
@@ -323,9 +322,9 @@ export default function CoolingTracking() {
                     fullWidth
                     placeholder="Ex: Volaille, Porc, Bœuf..."
                   />
-                </Grid>
+                </Box>
                 
-                <Grid item xs={12} md={6}>
+                <Box>
                   <TextField
                     label="Température initiale (°C)"
                     type="number"
@@ -338,9 +337,9 @@ export default function CoolingTracking() {
                     fullWidth
                     helperText="Température à cœur au début du refroidissement"
                   />
-                </Grid>
+                </Box>
                 
-                <Grid item xs={12} md={6}>
+                <Box>
                   <TextField
                     label="Température finale (°C)"
                     type="number"
@@ -352,9 +351,9 @@ export default function CoolingTracking() {
                     fullWidth
                     helperText="Température à cœur à la fin (optionnel si en cours)"
                   />
-                </Grid>
+                </Box>
                 
-                <Grid item xs={12} md={6}>
+                <Box>
                   <TextField
                     label="Date et heure de début"
                     type="datetime-local"
@@ -366,9 +365,9 @@ export default function CoolingTracking() {
                       inputLabel: { shrink: true }
                     }}
                   />
-                </Grid>
+                </Box>
                 
-                <Grid item xs={12} md={6}>
+                <Box>
                   <TextField
                     label="Date et heure de fin"
                     type="datetime-local"
@@ -380,11 +379,11 @@ export default function CoolingTracking() {
                     }}
                     helperText="Laisser vide si le refroidissement est en cours"
                   />
-                </Grid>
+                </Box>
 
                 {/* Section d analyse du refroidissement */}
                 {formData.end_core_temperature !== null && formData.end_core_temperature !== undefined && formData.end_date && (
-                  <Grid item xs={12}>
+                  <Box sx={{ gridColumn: '1 / -1' }}>
                     <Card variant="outlined" sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                         <Avatar sx={{ bgcolor: 'success.main' }}>
@@ -400,9 +399,9 @@ export default function CoolingTracking() {
                         </Box>
                       </Box>
                       
-                      <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
                         {coolingRate && (
-                          <Grid item xs={12} sm={6} md={3}>
+                          <Box>
                             <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
                               <Timer color="primary" sx={{ mb: 1 }} />
                               <Typography variant="caption" color="text.secondary" display="block">
@@ -412,10 +411,10 @@ export default function CoolingTracking() {
                                 {coolingRate.toFixed(1)} °C/h
                               </Typography>
                             </Box>
-                          </Grid>
+                          </Box>
                         )}
                         
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Box>
                           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
                             <TrendingDown color="info" sx={{ mb: 1 }} />
                             <Typography variant="caption" color="text.secondary" display="block">
@@ -425,9 +424,9 @@ export default function CoolingTracking() {
                               {(formData.start_core_temperature - formData.end_core_temperature).toFixed(1)}°C
                             </Typography>
                           </Box>
-                        </Grid>
+                        </Box>
                         
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Box>
                           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
                             <AccessTime color="warning" sx={{ mb: 1 }} />
                             <Typography variant="caption" color="text.secondary" display="block">
@@ -437,9 +436,9 @@ export default function CoolingTracking() {
                               {((new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime()) / (1000 * 60 * 60)).toFixed(1)}h
                             </Typography>
                           </Box>
-                        </Grid>
+                        </Box>
                         
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Box>
                           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
                             {coolingStatus === 'compliant' ? <CheckCircle color="success" sx={{ mb: 1 }} /> : <Cancel color="error" sx={{ mb: 1 }} />}
                             <Typography variant="caption" color="text.secondary" display="block">
@@ -460,8 +459,8 @@ export default function CoolingTracking() {
                               sx={{ fontWeight: 600 }}
                             />
                           </Box>
-                        </Grid>
-                      </Grid>
+                        </Box>
+                      </Box>
 
                       {/* Barre de progression */}
                       <Box sx={{ mb: 2 }}>
@@ -496,10 +495,10 @@ export default function CoolingTracking() {
                           'Refroidissement en cours - données incomplètes'}
                       </Alert>
                     </Card>
-                  </Grid>
+                  </Box>
                 )}
 
-                <Grid item xs={12}>
+                <Box sx={{ gridColumn: '1 / -1' }}>
                   <TextField
                     label="Commentaires et observations"
                     multiline
@@ -509,9 +508,9 @@ export default function CoolingTracking() {
                     fullWidth
                     placeholder="Actions correctives, conditions particulières, observations..."
                   />
-                </Grid>
+                </Box>
 
-                <Grid item xs={12}>
+                <Box sx={{ gridColumn: '1 / -1' }}>
                   <Box sx={{ pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Button
                       type="submit"
@@ -531,8 +530,8 @@ export default function CoolingTracking() {
                       {loading ? 'Enregistrement...' : 'Enregistrer le suivi de refroidissement'}
                     </Button>
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </Box>
           </CardContent>
         </Card>
@@ -560,8 +559,8 @@ export default function CoolingTracking() {
             </Box>
           </Box>
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
                   🎯 Objectifs HACCP
                 </Typography>
@@ -571,9 +570,9 @@ export default function CoolingTracking() {
                   <Typography variant="body2">• <strong>Zone critique :</strong> Entre 65°C et 10°C (multiplication bactérienne)</Typography>
                   <Typography variant="body2">• <strong>Mesure obligatoire :</strong> Contrôle de température à cœur</Typography>
                 </Stack>
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
                   ⚠️ Actions Correctives
                 </Typography>
@@ -583,8 +582,8 @@ export default function CoolingTracking() {
                   <Typography variant="body2">• <strong>Produit compromis :</strong> Évaluer la sécurité sanitaire</Typography>
                   <Typography variant="body2">• <strong>Documentation :</strong> Enregistrer toutes les mesures prises</Typography>
                 </Stack>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
       </Container>

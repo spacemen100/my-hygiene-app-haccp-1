@@ -20,8 +20,7 @@ import {
   Chip,
   Paper,
   Stack,
-  Avatar,
-  Grid2 as Grid
+  Avatar
 } from '@mui/material';
 import {
   Print,
@@ -191,8 +190,8 @@ export default function LabelPrinting() {
       <Container maxWidth="xl">
         
         {/* Statistiques rapides */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -210,9 +209,9 @@ export default function LabelPrinting() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -230,9 +229,9 @@ export default function LabelPrinting() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -250,9 +249,9 @@ export default function LabelPrinting() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -280,12 +279,12 @@ export default function LabelPrinting() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
-        <Grid container spacing={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 4 }}>
           {/* Formulaire d impression */}
-          <Grid item xs={12} lg={8}>
+          <Box>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -303,8 +302,8 @@ export default function LabelPrinting() {
                 </Box>
                 
                 <form onSubmit={handleSubmit}>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+                    <Box>
                       <TextField
                         label="Date d'expiration"
                         type="date"
@@ -316,9 +315,9 @@ export default function LabelPrinting() {
                           inputLabel: { shrink: true }
                         }}
                       />
-                    </Grid>
+                    </Box>
                     
-                    <Grid item xs={12} md={6}>
+                    <Box>
                       <TextField
                         label="Nombre d'étiquettes"
                         type="number"
@@ -331,9 +330,9 @@ export default function LabelPrinting() {
                         fullWidth
                         helperText="Entre 1 et 1000 étiquettes"
                       />
-                    </Grid>
+                    </Box>
                     
-                    <Grid item xs={12}>
+                    <Box sx={{ gridColumn: '1 / -1' }}>
                       <FormControl fullWidth>
                         <InputLabel>Type d&apos;étiquette</InputLabel>
                         <Select
@@ -358,25 +357,25 @@ export default function LabelPrinting() {
                           ))}
                         </Select>
                       </FormControl>
-                    </Grid>
+                    </Box>
 
                     {/* Alertes d urgence */}
                     {previewData.urgencyLevel === 'high' && (
-                      <Grid item xs={12}>
+                      <Box sx={{ gridColumn: '1 / -1' }}>
                         <Alert severity="error">
                           <strong>Attention :</strong> Date d&apos;expiration très proche ou dépassée
                         </Alert>
-                      </Grid>
+                      </Box>
                     )}
                     
                     {previewData.urgencyLevel === 'medium' && (
-                      <Grid item xs={12}>
+                      <Box sx={{ gridColumn: '1 / -1' }}>
                         <Alert severity="warning">
                           <strong>À surveiller :</strong> Date d&apos;expiration dans moins d&apos;une semaine
                         </Alert>
-                      </Grid>
+                      </Box>
                     )}
-                  </Grid>
+                  </Box>
                   
                   <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Button
@@ -400,10 +399,10 @@ export default function LabelPrinting() {
                 </form>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
           {/* Aperçu de l'étiquette */}
-          <Grid item xs={12} lg={4}>
+          <Box>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -488,8 +487,8 @@ export default function LabelPrinting() {
                 )}
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Guide et informations */}
         <Card sx={{ mt: 4, overflow: 'hidden' }}>
@@ -514,8 +513,8 @@ export default function LabelPrinting() {
             </Box>
           </Box>
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
                   🎯 Usage et Réglementation
                 </Typography>
@@ -524,9 +523,9 @@ export default function LabelPrinting() {
                   <Typography variant="body2">• Elles permettent de respecter la traçabilité alimentaire selon la réglementation HACCP</Typography>
                   <Typography variant="body2">• La date limite de consommation doit être clairement visible et lisible</Typography>
                 </Stack>
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6}>
+              <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'warning.main' }}>
                   ⚠️ Codes Couleur d&apos;urgence
                 </Typography>
@@ -544,8 +543,8 @@ export default function LabelPrinting() {
                     <Typography variant="body2">Normal (&gt; 7 jours)</Typography>
                   </Box>
                 </Stack>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
       </Container>
