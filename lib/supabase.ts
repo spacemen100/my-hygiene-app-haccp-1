@@ -21,12 +21,33 @@ export const supabase = createClient(
   }
 )
 
-// Export du type Database pour TypeScript
-export type Database = any
+// Définissez des interfaces/types appropriés pour remplacer 'any'
+interface UserMetadata {
+  [key: string]: unknown
+}
+
+interface AuthResponse {
+  data: {
+    user?: {
+      id: string
+      email?: string
+      user_metadata?: UserMetadata
+    }
+    session?: {
+      access_token: string
+      refresh_token: string
+    }
+  }
+  error?: Error | null
+}
+
+interface AuthCallback {
+  (event: string, session: unknown): void
+}
 
 // Helper functions pour l'authentification
 export const auth = {
-  signUp: async (email: string, password: string, metadata?: any) => {
+  signUp: async (email: string, password: string, metadata?: UserMetadata): Promise<AuthResponse> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -37,7 +58,7 @@ export const auth = {
     return { data, error }
   },
 
-  signIn: async (email: string, password: string) => {
+  signIn: async (email: string, password: string): Promise<AuthResponse> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -45,17 +66,17 @@ export const auth = {
     return { data, error }
   },
 
-  signOut: async () => {
+  signOut: async (): Promise<{ error?: Error | null }> => {
     const { error } = await supabase.auth.signOut()
     return { error }
   },
 
-  getCurrentUser: async () => {
+  getCurrentUser: async (): Promise<{ user: unknown | null; error?: Error | null }> => {
     const { data: { user }, error } = await supabase.auth.getUser()
     return { user, error }
   },
 
-  onAuthStateChange: (callback: (event: string, session: any) => void) => {
+  onAuthStateChange: (callback: AuthCallback) => {
     return supabase.auth.onAuthStateChange(callback)
   }
 }
@@ -63,8 +84,8 @@ export const auth = {
 // Helper functions pour la base de données
 export const db = {
   select: (table: string) => supabase.from(table).select(),
-  insert: (table: string, data: any) => supabase.from(table).insert(data),
-  update: (table: string, data: any) => supabase.from(table).update(data),
+  insert: <T = unknown>(table: string, data: T) => supabase.from(table).insert(data),
+  update: <T = unknown>(table: string, data: T) => supabase.from(table).update(data),
   delete: (table: string) => supabase.from(table).delete(),
 }
 
