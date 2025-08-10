@@ -21,7 +21,7 @@ export default function CoolingTracking() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('cooling_records')
         .insert([formData]);
       

@@ -40,7 +40,7 @@ export default function CleaningPlan() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('cleaning_records')
         .insert([formData]);
       

@@ -20,7 +20,7 @@ export default function ReceptionControl() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('product_reception_controls')
         .insert([formData]);
       

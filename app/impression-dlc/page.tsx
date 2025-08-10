@@ -16,7 +16,7 @@ export default function LabelPrinting() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('label_printings')
         .insert([formData]);
       
@@ -33,7 +33,7 @@ export default function LabelPrinting() {
       <h1 className="text-2xl font-bold mb-4">Impression des DLC Secondaires</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block">Date d'expiration</label>
+          <label className="block">Date d&apos;expiration</label>
           <input
             type="date"
             value={formData.expiry_date.split('T')[0]}
@@ -44,7 +44,7 @@ export default function LabelPrinting() {
         </div>
         
         <div>
-          <label className="block">Nombre d'étiquettes</label>
+          <label className="block">Nombre d&apos;étiquettes</label>
           <input
             type="number"
             value={formData.label_count}
@@ -56,7 +56,7 @@ export default function LabelPrinting() {
         </div>
         
         <div>
-          <label className="block">Type d'étiquette</label>
+          <label className="block">Type d&apos;étiquette</label>
           <input
             type="text"
             value={formData.product_label_type_id || ''}

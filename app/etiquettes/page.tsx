@@ -17,7 +17,7 @@ export default function LabelRecording() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('label_records')
         .insert([formData]);
       
@@ -64,7 +64,7 @@ export default function LabelRecording() {
         </div>
         
         <div>
-          <label className="block">Photo de l'étiquette</label>
+          <label className="block">Photo de l&apos;étiquette</label>
           <input
             type="text"
             value={formData.photo_url}

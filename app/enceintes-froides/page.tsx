@@ -38,7 +38,7 @@ export default function ColdStorage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('cold_storage_temperature_readings')
         .insert([formData]);
       
