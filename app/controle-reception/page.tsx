@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
 import {
@@ -51,8 +51,8 @@ type Delivery = TablesInsert<'deliveries'> & {
     name: string;
     contact_person: string;
   };
-  temperature_controls?: any[];
-  non_conformities?: any[];
+  temperature_controls?: TablesInsert<'truck_temperature_controls'>[];
+  non_conformities?: TablesInsert<'non_conformities'>[];
 };
 
 export default function DeliveryComponent() {
@@ -62,19 +62,13 @@ export default function DeliveryComponent() {
     delivery_date: new Date().toISOString(),
     is_compliant: true,
   });
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<TablesInsert<'suppliers'>[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
   const [expandedDelivery, setExpandedDelivery] = useState<string | false>(false);
   const { enqueueSnackbar } = useSnackbar();
 
-  useEffect(() => {
-    fetchDeliveries();
-    fetchSuppliers();
-  }, []);
-
-  const fetchDeliveries = async () => {
+  const fetchDeliveries = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -93,9 +87,9 @@ export default function DeliveryComponent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [enqueueSnackbar]);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = useCallback(async () => {
     try {
       const { data, error } = await supabase.from('suppliers').select('*');
       if (error) throw error;
@@ -104,7 +98,12 @@ export default function DeliveryComponent() {
       console.error('Error fetching suppliers:', error);
       enqueueSnackbar('Impossible de charger les fournisseurs', { variant: 'error' });
     }
-  };
+  }, [enqueueSnackbar]);
+
+  useEffect(() => {
+    fetchDeliveries();
+    fetchSuppliers();
+  }, [fetchDeliveries, fetchSuppliers]);
 
   const handleCreateDelivery = async () => {
     if (!newDelivery.supplier_id || !newDelivery.delivery_date) {
@@ -114,7 +113,7 @@ export default function DeliveryComponent() {
 
     setIsCreating(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('deliveries')
         .insert([{
           ...newDelivery,
@@ -191,7 +190,7 @@ export default function DeliveryComponent() {
     }
   };
 
-  const handleExpandDelivery = (deliveryId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+  const handleExpandDelivery = (deliveryId: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedDelivery(isExpanded ? deliveryId : false);
   };
 
@@ -274,7 +273,9 @@ export default function DeliveryComponent() {
                   delivery_date: date ? date.toISOString() : '',
                 })
               }
-              renderInput={(params) => <TextField {...params} fullWidth />}
+              slotProps={{
+                textField: { fullWidth: true }
+              }}
             />
 
             <TextField
@@ -396,7 +397,7 @@ export default function DeliveryComponent() {
             <Accordion
               key={delivery.id}
               expanded={expandedDelivery === delivery.id}
-              onChange={handleExpandDelivery(delivery.id)}
+              onChange={delivery.id ? handleExpandDelivery(delivery.id) : undefined}
               elevation={3}
             >
               <AccordionSummary
@@ -474,7 +475,7 @@ export default function DeliveryComponent() {
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteDelivery(delivery.id);
+                          if (delivery.id) handleDeleteDelivery(delivery.id);
                         }}
                       >
                         <Delete fontSize="small" color="error" />
