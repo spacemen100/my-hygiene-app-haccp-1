@@ -50,6 +50,16 @@ type Delivery = {
   product_reception_controls: ProductReceptionControl[];
 };
 
+// Type pour les données brutes de Supabase
+type SupabaseDelivery = {
+  id: string;
+  delivery_number: string | null;
+  delivery_date: string;
+  is_compliant: boolean | null;
+  suppliers: Supplier | Supplier[] | null;
+  product_reception_controls: ProductReceptionControl[] | null;
+};
+
 type DeliveryStats = {
   today: number;
   approved: number;
@@ -97,7 +107,7 @@ export default function ControleReceptionPage() {
             delivery_number,
             delivery_date,
             is_compliant,
-            supplier:suppliers!deliveries_supplier_id_fkey (
+            suppliers (
               id,
               name
             ),
@@ -118,12 +128,14 @@ export default function ControleReceptionPage() {
         console.log('Livraisons récupérées:', deliveries);
         
         // Formatter les données pour correspondre au type attendu
-        const formattedDeliveries: Delivery[] = (deliveries || []).map(delivery => ({
+        const formattedDeliveries: Delivery[] = (deliveries || []).map((delivery: SupabaseDelivery) => ({
           id: delivery.id,
           delivery_number: delivery.delivery_number,
           delivery_date: delivery.delivery_date,
           is_compliant: delivery.is_compliant,
-          supplier: delivery.supplier,
+          supplier: Array.isArray(delivery.suppliers) 
+            ? (delivery.suppliers.length > 0 ? delivery.suppliers[0] : null)
+            : delivery.suppliers,
           product_reception_controls: delivery.product_reception_controls || []
         }));
 
