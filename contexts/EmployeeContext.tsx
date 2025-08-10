@@ -20,20 +20,28 @@ interface EmployeeContextType {
 const EmployeeContext = createContext<EmployeeContextType | undefined>(undefined);
 
 export function EmployeeProvider({ children }: { children: React.ReactNode }) {
+  console.log('[EmployeeProvider] Component rendering');
+  
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, session } = useAuth();
+  
+  console.log('[EmployeeProvider] Auth state:', { user: !!user, userId: user?.id, session: !!session });
 
   // Load current user's employee record
   const loadCurrentEmployee = async () => {
+    console.log('[EmployeeProvider] loadCurrentEmployee called with user:', user?.id);
+    
     if (!user) {
+      console.log('[EmployeeProvider] No user, setting employee to null');
       setEmployee(null);
       return;
     }
 
     try {
+      console.log('[EmployeeProvider] Loading employee for user:', user.id);
       setError(null);
       
       const { data, error } = await supabase
@@ -43,13 +51,17 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
         .eq('is_active', true)
         .single();
 
+      console.log('[EmployeeProvider] Employee query result:', { data, error });
+
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('[EmployeeProvider] Error loading employee:', error);
         throw error;
       }
 
+      console.log('[EmployeeProvider] Setting employee:', data || null);
       setEmployee(data || null);
     } catch (err) {
-      console.error('Error loading current employee:', err);
+      console.error('[EmployeeProvider] Error loading current employee:', err);
       setError('Erreur lors du chargement du profil employé');
       setEmployee(null);
     }
@@ -119,15 +131,21 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
 
   // Load employee data when user changes
   useEffect(() => {
+    console.log('[EmployeeProvider] useEffect triggered with session:', !!session, 'user:', !!user);
+    
     const loadData = async () => {
+      console.log('[EmployeeProvider] Starting to load data');
       setLoading(true);
       await loadCurrentEmployee();
+      console.log('[EmployeeProvider] Data loaded, setting loading to false');
       setLoading(false);
     };
 
     if (session) {
+      console.log('[EmployeeProvider] Session exists, loading data');
       loadData();
     } else {
+      console.log('[EmployeeProvider] No session, clearing data');
       setEmployee(null);
       setEmployees([]);
       setLoading(false);

@@ -30,8 +30,12 @@ export default function RootLayout({
   const supabase = createClientComponentClient();
 
   useEffect(() => {
+    console.log('[Layout] Setting up auth listener');
+    
     const fetchSession = async () => {
+      console.log('[Layout] Fetching initial session');
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('[Layout] Initial session:', !!session, session?.user?.id);
       setSession(session);
       setLoading(false);
     };
@@ -39,6 +43,7 @@ export default function RootLayout({
     fetchSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[Layout] Auth state changed:', _event, !!session);
       setSession(session);
     });
 
