@@ -49,6 +49,9 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
 
   const drawer = (
     <Box>
+      {/* Espace pour le header */}
+      <Box sx={{ height: '64px' }} />
+      
       <Box
         sx={{
           p: 3,
@@ -176,8 +179,8 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              top: '64px', // Commencer sous le header
-              height: 'calc(100% - 64px)', // Ajuster la hauteur
+              top: 0, // Touche le haut de l'écran
+              height: '100%', // Prend toute la hauteur
             },
           }}
           open

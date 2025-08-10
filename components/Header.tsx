@@ -20,7 +20,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         top: 0,
         left: 0,
         right: 0,
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        zIndex: (theme) => theme.zIndex.drawer + 2, // Plus élevé pour être au-dessus de la sidebar
         m: 0,
         p: 0,
       }}
