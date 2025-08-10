@@ -49,9 +49,6 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
 
   const drawer = (
     <Box>
-      {/* Espace pour le header */}
-      <Box sx={{ height: '64px' }} />
-      
       <Box
         sx={{
           p: 3,
@@ -195,7 +192,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
           flexGrow: 1,
           p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px', // Espace pour le header fixe
+          mt: { xs: '64px', md: '64px' }, // Espace pour le header fixe sur toutes les tailles
           bgcolor: 'background.default',
           minHeight: '100vh',
         }}

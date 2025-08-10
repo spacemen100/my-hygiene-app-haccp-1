@@ -13,14 +13,16 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const drawerWidth = 280;
+
   return (
     <AppBar 
       position="fixed" 
       sx={{ 
         top: 0,
-        left: 0,
-        right: 0,
-        zIndex: (theme) => theme.zIndex.drawer + 2, // Plus élevé pour être au-dessus de la sidebar
+        left: { xs: 0, md: `${drawerWidth}px` }, // Laisse l'espace pour le sidebar sur desktop
+        width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, // Ajuste la largeur
+        zIndex: (theme) => theme.zIndex.drawer + 1,
         m: 0,
         p: 0,
       }}
