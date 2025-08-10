@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, User, Session } from '@supabase/supabase-js'
 
-// Configuration du client Supabase avec les valeurs directement intégrées
+// Configuration du client Supabase
 export const supabase = createClient(
   'https://wtxsyzdksnbftlckojuz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0eHN5emRrc25iZnRsY2tvanV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2MTk0NTksImV4cCI6MjA3MDE5NTQ1OX0.PVuWcjTvF7GNgfpjgqXLLM7HvH_evWsklvB0In1kNsc',
@@ -21,33 +21,27 @@ export const supabase = createClient(
   }
 )
 
-// Définissez des interfaces/types appropriés pour remplacer 'any'
-interface UserMetadata {
-  [key: string]: unknown
-}
-
+// Types pour l'authentification
 interface AuthResponse {
   data: {
-    user?: {
-      id: string
-      email?: string
-      user_metadata?: UserMetadata
-    }
-    session?: {
-      access_token: string
-      refresh_token: string
-    }
+    user: User | null
+    session: Session | null
   }
-  error?: Error | null
+  error: Error | null
+}
+
+interface UserResponse {
+  user: User | null
+  error: Error | null
 }
 
 interface AuthCallback {
-  (event: string, session: unknown): void
+  (event: string, session: Session | null): void
 }
 
 // Helper functions pour l'authentification
 export const auth = {
-  signUp: async (email: string, password: string, metadata?: UserMetadata): Promise<AuthResponse> => {
+  signUp: async (email: string, password: string, metadata?: any): Promise<AuthResponse> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -66,12 +60,12 @@ export const auth = {
     return { data, error }
   },
 
-  signOut: async (): Promise<{ error?: Error | null }> => {
+  signOut: async (): Promise<{ error: Error | null }> => {
     const { error } = await supabase.auth.signOut()
     return { error }
   },
 
-  getCurrentUser: async (): Promise<{ user: unknown | null; error?: Error | null }> => {
+  getCurrentUser: async (): Promise<UserResponse> => {
     const { data: { user }, error } = await supabase.auth.getUser()
     return { user, error }
   },
@@ -84,8 +78,8 @@ export const auth = {
 // Helper functions pour la base de données
 export const db = {
   select: (table: string) => supabase.from(table).select(),
-  insert: <T = unknown>(table: string, data: T) => supabase.from(table).insert(data),
-  update: <T = unknown>(table: string, data: T) => supabase.from(table).update(data),
+  insert: <T = any>(table: string, data: T) => supabase.from(table).insert(data),
+  update: <T = any>(table: string, data: T) => supabase.from(table).update(data),
   delete: (table: string) => supabase.from(table).delete(),
 }
 
@@ -113,5 +107,4 @@ export const storage = {
   }
 }
 
-// Export par défaut du client Supabase
 export default supabase
