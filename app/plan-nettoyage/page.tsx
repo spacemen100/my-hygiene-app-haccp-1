@@ -26,7 +26,10 @@ import {
   Paper,
   Chip,
   Alert,
-  IconButton
+  IconButton,
+  Avatar,
+  Grid,
+  Stack
 } from '@mui/material';
 import {
   CleaningServices,
@@ -36,7 +39,11 @@ import {
   Warning,
   Save,
   PhotoCamera,
-  Assignment
+  Assignment,
+  TaskAlt,
+  CalendarToday,
+  TrendingUp,
+  RocketLaunch
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -121,35 +128,160 @@ export default function CleaningPlan() {
     }
   };
 
+  // Calculer les statistiques
+  const stats = {
+    totalTasks: tasks.length,
+    completedToday: records.filter(r => {
+      const today = new Date();
+      const recordDate = new Date(r.scheduled_date);
+      return recordDate.toDateString() === today.toDateString() && r.is_completed;
+    }).length,
+    complianceRate: records.length > 0 ? 
+      Math.round((records.filter(r => r.is_compliant).length / records.length) * 100) : 
+      0,
+    pendingTasks: tasks.length - records.filter(r => r.is_completed).length
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 2, 
-        mb: 4,
-        color: 'primary.main',
-        fontWeight: 'bold'
-      }}>
-        <CleaningServices fontSize="large" />
-        Plan de Nettoyage
-      </Typography>
-      
-      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+    <Box sx={{ flexGrow: 1 }}>
+      {/* Header avec gradient moderne */}
+      <Paper
+        sx={{
+          background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
+          color: 'white',
+          p: 4,
+          mb: 4,
+          borderRadius: 3,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Avatar
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              width: 80,
+              height: 80,
+            }}
+          >
+            <CleaningServices fontSize="large" />
+          </Avatar>
+          <Box>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+              Plan de Nettoyage HACCP
+            </Typography>
+            <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
+              Planification et suivi des tâches de nettoyage
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              {stats.totalTasks} tâche{stats.totalTasks !== 1 ? 's' : ''} planifiée{stats.totalTasks !== 1 ? 's' : ''} • {stats.completedToday} exécutée{stats.completedToday !== 1 ? 's' : ''} aujourd'hui
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+
+      <Container maxWidth="xl">
+        
+        {/* Statistiques rapides */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom variant="body2">
+                      Tâches totales
+                    </Typography>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                      {stats.totalTasks}
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
+                    <Assignment />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom variant="body2">
+                      Complétées aujourd'hui
+                    </Typography>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                      {stats.completedToday}
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: '#ff980020', color: '#ff9800' }}>
+                    <TaskAlt />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom variant="body2">
+                      Taux conformité
+                    </Typography>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                      {stats.complianceRate}%
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: '#2196f320', color: '#2196f3' }}>
+                    <TrendingUp />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom variant="body2">
+                      En attente
+                    </Typography>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                      {stats.pendingTasks}
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: '#9c27b020', color: '#9c27b0' }}>
+                    <CalendarToday />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+      <Grid container spacing={4}>
         {/* Formulaire de nouvelle exécution */}
-        <Box sx={{ flex: 1, minWidth: 400 }}>
-          <Card elevation={3}>
-            <CardContent>
-              <Typography variant="h5" component="h2" gutterBottom sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1,
-                color: 'success.main',
-                mb: 3
-              }}>
-                <Assignment />
-                Nouvelle Exécution
-              </Typography>
+        <Grid item xs={12} lg={6}>
+          <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+                <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
+                  <Assignment />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                    Nouvelle Exécution
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Enregistrer une tâche de nettoyage HACCP
+                  </Typography>
+                </Box>
+              </Box>
               
               <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <FormControl fullWidth required>
