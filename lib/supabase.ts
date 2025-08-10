@@ -1,47 +1,31 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Récupération des variables d'environnement
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-// Vérification que les variables d'environnement sont définies
-if (!supabaseUrl) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required')
-}
-
-if (!supabaseAnonKey) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required')
-}
-
-// Configuration du client Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // Configuration de l'authentification
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    // Optionnel : configuration des redirections
-    // flowType: 'pkce'
-  },
-  // Configuration de la base de données
-  db: {
-    schema: 'public'
-  },
-  // Configuration globale
-  global: {
-    headers: {
-      'x-my-custom-header': 'my-hygiene-app'
+// Configuration du client Supabase avec les valeurs directement intégrées
+export const supabase = createClient(
+  'https://wtxsyzdksnbftlckojuz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0eHN5emRrc25iZnRsY2tvanV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2MTk0NTksImV4cCI6MjA3MDE5NTQ1OX0.PVuWcjTvF7GNgfpjgqXLLM7HvH_evWsklvB0In1kNsc',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+    db: {
+      schema: 'public'
+    },
+    global: {
+      headers: {
+        'x-my-custom-header': 'my-hygiene-app'
+      }
     }
   }
-})
+)
 
-// Export du type Database pour TypeScript (optionnel)
-// Vous pouvez générer ce type avec la CLI Supabase : npx supabase gen types typescript
-export type Database = any // Remplacez par votre type de base de données généré
+// Export du type Database pour TypeScript
+export type Database = any
 
 // Helper functions pour l'authentification
 export const auth = {
-  // Inscription
   signUp: async (email: string, password: string, metadata?: any) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -53,7 +37,6 @@ export const auth = {
     return { data, error }
   },
 
-  // Connexion
   signIn: async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -62,19 +45,16 @@ export const auth = {
     return { data, error }
   },
 
-  // Déconnexion
   signOut: async () => {
     const { error } = await supabase.auth.signOut()
     return { error }
   },
 
-  // Récupérer l'utilisateur actuel
   getCurrentUser: async () => {
     const { data: { user }, error } = await supabase.auth.getUser()
     return { user, error }
   },
 
-  // Écouter les changements d'état d'authentification
   onAuthStateChange: (callback: (event: string, session: any) => void) => {
     return supabase.auth.onAuthStateChange(callback)
   }
@@ -82,22 +62,14 @@ export const auth = {
 
 // Helper functions pour la base de données
 export const db = {
-  // Sélectionner des données
   select: (table: string) => supabase.from(table).select(),
-  
-  // Insérer des données
   insert: (table: string, data: any) => supabase.from(table).insert(data),
-  
-  // Mettre à jour des données
   update: (table: string, data: any) => supabase.from(table).update(data),
-  
-  // Supprimer des données
   delete: (table: string) => supabase.from(table).delete(),
 }
 
 // Helper functions pour le stockage de fichiers
 export const storage = {
-  // Uploader un fichier
   upload: async (bucket: string, path: string, file: File) => {
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -105,7 +77,6 @@ export const storage = {
     return { data, error }
   },
 
-  // Télécharger un fichier
   download: async (bucket: string, path: string) => {
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -113,7 +84,6 @@ export const storage = {
     return { data, error }
   },
 
-  // Obtenir l'URL publique d'un fichier
   getPublicUrl: (bucket: string, path: string) => {
     const { data } = supabase.storage
       .from(bucket)
