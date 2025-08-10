@@ -1,20 +1,48 @@
 // components/Header.tsx
 'use client';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import { Menu as MenuIcon } from '@mui/icons-material';
 import { useAuth } from './AuthProvider'; // Assurez-vous que le chemin est correct
 
-const Header = () => {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+const Header = ({ onMenuClick }: HeaderProps) => {
   const { session, signOut } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
-    <AppBar position="static">
-      <Toolbar>
+    <AppBar 
+      position="fixed" 
+      sx={{ 
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        m: 0,
+        p: 0,
+      }}
+    >
+      <Toolbar sx={{ minHeight: '64px !important' }}>
+        {isMobile && onMenuClick && (
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={onMenuClick}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          Mon Application
+          HACCP Manager
         </Typography>
         {session ? (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body1" sx={{ mr: 2 }}>
+            <Typography variant="body1" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
               {session.user.email}
             </Typography>
             <Button color="inherit" onClick={signOut}>

@@ -1,9 +1,16 @@
 /* Custom styles for Material-UI components */
-body {
+html, body {
   margin: 0;
+  padding: 0;
   font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure no default margins/padding on root elements */
+#__next, [data-reactroot] {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Custom scrollbar */

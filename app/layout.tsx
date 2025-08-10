@@ -8,13 +8,11 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { theme } from '@/theme/theme';
-import { AppProvider } from '@/components/AppProvider';
 import { AuthProvider } from '@/components/AuthProvider';
+import { AppLayout } from '@/components/AppLayout';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import { Session } from '@supabase/auth-helpers-nextjs';
-import Header from '@/components/Header';
-import { usePathname } from 'next/navigation';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,11 +24,6 @@ export default function RootLayout({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClientComponentClient();
-  const pathname = usePathname();
-
-  // Pages qui ne doivent pas afficher le header
-  const noHeaderPages = ['/login'];
-  const shouldShowHeader = !noHeaderPages.includes(pathname);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -66,10 +59,9 @@ export default function RootLayout({
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <AuthProvider session={session}>
-            <AppProvider>
-              {shouldShowHeader && <Header />}
+            <AppLayout>
               {children}
-            </AppProvider>
+            </AppLayout>
           </AuthProvider>
         </ThemeProvider>
       </body>

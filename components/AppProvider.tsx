@@ -1,9 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
-  AppBar,
-  Toolbar,
   Typography,
   Drawer,
   List,
@@ -11,12 +9,10 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  IconButton,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
   AssignmentTurnedIn as ClipboardCheck,
   Label as TagsIcon,
   Print as PrinterIcon,
@@ -42,21 +38,14 @@ const menuItems = [
 
 interface AppProviderProps {
   children: React.ReactNode;
+  mobileOpen?: boolean;
+  onDrawerToggle?: () => void;
 }
 
-export function AppProvider({ children }: AppProviderProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: AppProviderProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const pathname = usePathname();
-
-  // Pages qui ne doivent pas afficher la sidebar
-  const noSidebarPages = ['/login'];
-  const shouldShowSidebar = !noSidebarPages.includes(pathname);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
 
   const drawer = (
     <Box>
@@ -104,7 +93,7 @@ export function AppProvider({ children }: AppProviderProps) {
                 component={Link}
                 href={item.href}
                 selected={isActive}
-                onClick={() => isMobile && setMobileOpen(false)}
+                onClick={() => isMobile && onDrawerToggle && onDrawerToggle()}
                 sx={{
                   '&.Mui-selected': {
                     backgroundColor: 'rgba(25, 118, 210, 0.08)',
@@ -157,38 +146,8 @@ export function AppProvider({ children }: AppProviderProps) {
     </Box>
   );
 
-  // Si on ne doit pas afficher la sidebar, afficher seulement les children
-  if (!shouldShowSidebar) {
-    return <>{children}</>;
-  }
-
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          display: { md: 'none' },
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
-            HACCP Manager
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
+    <Box sx={{ display: 'flex', minHeight: '100vh', pt: 0 }}>
       <Box
         component="nav"
         sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
@@ -196,7 +155,7 @@ export function AppProvider({ children }: AppProviderProps) {
         <Drawer
           variant="temporary"
           open={mobileOpen}
-          onClose={handleDrawerToggle}
+          onClose={onDrawerToggle}
           ModalProps={{
             keepMounted: true,
           }}
@@ -217,6 +176,8 @@ export function AppProvider({ children }: AppProviderProps) {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
+              top: '64px', // Commencer sous le header
+              height: 'calc(100% - 64px)', // Ajuster la hauteur
             },
           }}
           open
@@ -231,7 +192,7 @@ export function AppProvider({ children }: AppProviderProps) {
           flexGrow: 1,
           p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: { xs: 7, md: 0 },
+          mt: '64px', // Espace pour le header fixe
           bgcolor: 'background.default',
           minHeight: '100vh',
         }}
