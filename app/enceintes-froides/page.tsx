@@ -3,6 +3,38 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert } from '@/src/types/database';
+import {
+  Container,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Alert
+} from '@mui/material';
+import {
+  AcUnit,
+  Thermostat,
+  CheckCircle,
+  Cancel,
+  Save
+} from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 
 export default function ColdStorage() {
   const [units, setUnits] = useState<Tables<'cold_storage_units'>[]>([]);
@@ -15,6 +47,7 @@ export default function ColdStorage() {
     comments: null,
     user_id: null,
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     fetchUnits();
@@ -35,6 +68,23 @@ export default function ColdStorage() {
     if (!error && data) setReadings(data);
   };
 
+  const validateTemperature = (temp: number, unitId: string | null | undefined) => {
+    if (!unitId) return true;
+    const unit = units.find(u => u.id === unitId);
+    if (!unit) return true;
+    return temp >= unit.min_temperature && temp <= unit.max_temperature;
+  };
+
+  const handleTemperatureChange = (value: string) => {
+    const temp = Number(value);
+    const isCompliant = validateTemperature(temp, formData.cold_storage_unit_id);
+    setFormData({
+      ...formData, 
+      temperature: temp,
+      is_compliant: isCompliant
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -43,119 +93,218 @@ export default function ColdStorage() {
         .insert([formData]);
       
       if (error) throw error;
-      alert('Lecture enregistrée avec succès!');
+      
+      enqueueSnackbar('Lecture enregistrée avec succès!', { variant: 'success' });
       fetchReadings();
+      // Reset form
+      setFormData({
+        reading_date: new Date().toISOString(),
+        temperature: 0,
+        is_compliant: true,
+        cold_storage_unit_id: null,
+        comments: null,
+        user_id: null,
+      });
     } catch (error) {
       console.error('Error saving reading:', error);
-      alert('Erreur lors de l\'enregistrement');
+      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
     }
   };
 
+  const selectedUnit = units.find(u => u.id === formData.cold_storage_unit_id);
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Enceintes Froides</h1>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2, 
+        mb: 4,
+        color: 'primary.main',
+        fontWeight: 'bold'
+      }}>
+        <AcUnit fontSize="large" />
+        Enceintes Froides
+      </Typography>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Nouvelle Lecture</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block">Unité de stockage</label>
-              <select
-                value={formData.cold_storage_unit_id || ''}
-                onChange={(e) => setFormData({...formData, cold_storage_unit_id: e.target.value})}
-                required
-                className="w-full p-2 border rounded"
-              >
-                <option value="">Sélectionner une unité</option>
-                {units.map(unit => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name} ({unit.location})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block">Température (°C)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={formData.temperature}
-                onChange={(e) => setFormData({...formData, temperature: Number(e.target.value)})}
-                required
-                className="w-full p-2 border rounded"
-              />
-            </div>
-            
-            <div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.is_compliant}
-                  onChange={(e) => setFormData({...formData, is_compliant: e.target.checked})}
-                  className="mr-2"
+      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+        {/* Formulaire de nouvelle lecture */}
+        <Box sx={{ flex: 1, minWidth: 300 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                color: 'info.main',
+                mb: 3
+              }}>
+                <Thermostat />
+                Nouvelle Lecture
+              </Typography>
+              
+              <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Unité de stockage</InputLabel>
+                  <Select
+                    value={formData.cold_storage_unit_id || ''}
+                    label="Unité de stockage"
+                    onChange={(e) => setFormData({...formData, cold_storage_unit_id: e.target.value})}
+                  >
+                    {units.map(unit => (
+                      <MenuItem key={unit.id} value={unit.id}>
+                        {unit.name} ({unit.location}) - {unit.type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {selectedUnit && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Température autorisée: {selectedUnit.min_temperature}°C à {selectedUnit.max_temperature}°C
+                  </Alert>
+                )}
+                
+                <TextField
+                  label="Température (°C)"
+                  type="number"
+                  inputProps={{ step: "0.1" }}
+                  value={formData.temperature}
+                  onChange={(e) => handleTemperatureChange(e.target.value)}
+                  required
+                  fullWidth
+                  error={selectedUnit && !validateTemperature(formData.temperature, formData.cold_storage_unit_id)}
+                  helperText={selectedUnit && !validateTemperature(formData.temperature, formData.cold_storage_unit_id) 
+                    ? "Température hors limites autorisées" 
+                    : ""}
                 />
-                Conforme
-              </label>
-            </div>
-            
-            <div>
-              <label className="block">Commentaires</label>
-              <textarea
-                value={formData.comments || ''}
-                onChange={(e) => setFormData({...formData, comments: e.target.value})}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-            
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-              Enregistrer
-            </button>
-          </form>
-        </div>
+                
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.is_compliant}
+                      onChange={(e) => setFormData({...formData, is_compliant: e.target.checked})}
+                      icon={<Cancel />}
+                      checkedIcon={<CheckCircle />}
+                    />
+                  }
+                  label="Conforme"
+                />
+                
+                <TextField
+                  label="Commentaires"
+                  multiline
+                  rows={3}
+                  value={formData.comments || ''}
+                  onChange={(e) => setFormData({...formData, comments: e.target.value})}
+                  fullWidth
+                />
+                
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  startIcon={<Save />}
+                  fullWidth
+                  sx={{ mt: 2 }}
+                >
+                  Enregistrer
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
         
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Dernières Lectures</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 border">Date</th>
-                  <th className="py-2 px-4 border">Unité</th>
-                  <th className="py-2 px-4 border">Température</th>
-                  <th className="py-2 px-4 border">Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {readings.map(reading => {
-                  const unit = units.find(u => u.id === reading.cold_storage_unit_id);
-                  return (
-                    <tr key={reading.id}>
-                      <td className="py-2 px-4 border">
-                        {new Date(reading.reading_date).toLocaleString()}
-                      </td>
-                      <td className="py-2 px-4 border">
-                        {unit ? unit.name : 'N/A'}
-                      </td>
-                      <td className="py-2 px-4 border">
-                        {reading.temperature}°C
-                      </td>
-                      <td className="py-2 px-4 border">
-                        {reading.is_compliant ? (
-                          <span className="text-green-500">Conforme</span>
-                        ) : (
-                          <span className="text-red-500">Non conforme</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Tableau des dernières lectures */}
+        <Box sx={{ flex: 1, minWidth: 400 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                color: 'info.main',
+                mb: 3
+              }}>
+                <Thermostat />
+                Dernières Lectures
+              </Typography>
+              
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell><strong>Date</strong></TableCell>
+                      <TableCell><strong>Unité</strong></TableCell>
+                      <TableCell><strong>Température</strong></TableCell>
+                      <TableCell><strong>Statut</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {readings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                          <Typography color="text.secondary">
+                            Aucune lecture enregistrée
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      readings.map(reading => {
+                        const unit = units.find(u => u.id === reading.cold_storage_unit_id);
+                        return (
+                          <TableRow key={reading.id} hover>
+                            <TableCell>
+                              {new Date(reading.reading_date).toLocaleString('fr-FR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {unit ? unit.name : 'N/A'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {unit ? unit.location : ''}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography 
+                                variant="body2" 
+                                fontWeight="medium"
+                                color={reading.is_compliant ? 'success.main' : 'error.main'}
+                              >
+                                {reading.temperature}°C
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                size="small"
+                                icon={reading.is_compliant ? <CheckCircle /> : <Cancel />}
+                                label={reading.is_compliant ? 'Conforme' : 'Non conforme'}
+                                color={reading.is_compliant ? 'success' : 'error'}
+                                variant={reading.is_compliant ? 'outlined' : 'filled'}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              
+              {readings.length > 0 && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                  Affichage des 10 dernières lectures
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
+    </Container>
   );
 }

@@ -3,10 +3,47 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert } from '@/src/types/database';
+import {
+  Container,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Alert,
+  IconButton
+} from '@mui/material';
+import {
+  CleaningServices,
+  Schedule,
+  CheckCircle,
+  Cancel,
+  Warning,
+  Save,
+  PhotoCamera,
+  Assignment
+} from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 
 export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<TablesInsert<'cleaning_records'>>({
     scheduled_date: new Date().toISOString(),
     cleaning_task_id: null,
@@ -17,6 +54,7 @@ export default function CleaningPlan() {
     photo_url: null,
     user_id: null,
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     fetchTasks();
@@ -37,164 +75,341 @@ export default function CleaningPlan() {
     if (!error && data) setRecords(data);
   };
 
+  const formatDateTimeForInput = (isoString: string) => {
+    return isoString.substring(0, 16);
+  };
+
+  const getTaskFrequencyColor = (frequency: string) => {
+    switch (frequency?.toLowerCase()) {
+      case 'quotidien': return 'success';
+      case 'hebdomadaire': return 'info';
+      case 'mensuel': return 'warning';
+      default: return 'default';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    
     try {
       const { error } = await supabase
         .from('cleaning_records')
         .insert([formData]);
       
       if (error) throw error;
-      alert('Enregistrement de nettoyage réussi!');
+      
+      enqueueSnackbar('Enregistrement de nettoyage réussi!', { variant: 'success' });
       fetchRecords();
+      
+      // Reset form
+      setFormData({
+        scheduled_date: new Date().toISOString(),
+        cleaning_task_id: null,
+        is_completed: false,
+        is_compliant: false,
+        comments: null,
+        completion_date: null,
+        photo_url: null,
+        user_id: null,
+      });
     } catch (error) {
       console.error('Error saving cleaning record:', error);
-      alert('Erreur lors de l\'enregistrement');
+      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Plan de Nettoyage</h1>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2, 
+        mb: 4,
+        color: 'primary.main',
+        fontWeight: 'bold'
+      }}>
+        <CleaningServices fontSize="large" />
+        Plan de Nettoyage
+      </Typography>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Nouvelle Exécution</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block">Tâche de nettoyage</label>
-              <select
-                value={formData.cleaning_task_id || ''}
-                onChange={(e) => setFormData({...formData, cleaning_task_id: e.target.value})}
-                required
-                className="w-full p-2 border rounded"
-              >
-                <option value="">Sélectionner une tâche</option>
-                {tasks.map(task => (
-                  <option key={task.id} value={task.id}>
-                    {task.name} ({task.frequency})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block">Date prévue</label>
-              <input
-                type="datetime-local"
-                value={formData.scheduled_date ? formData.scheduled_date.substring(0, 16) : ''}
-                onChange={(e) => setFormData({...formData, scheduled_date: new Date(e.target.value).toISOString()})}
-                required
-                className="w-full p-2 border rounded"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_completed || false}
-                    onChange={(e) => setFormData({...formData, is_completed: e.target.checked})}
-                    className="mr-2"
-                  />
-                  Complété
-                </label>
-              </div>
+      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+        {/* Formulaire de nouvelle exécution */}
+        <Box sx={{ flex: 1, minWidth: 400 }}>
+          <Card elevation={3}>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                color: 'success.main',
+                mb: 3
+              }}>
+                <Assignment />
+                Nouvelle Exécution
+              </Typography>
               
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_compliant || false}
-                    onChange={(e) => setFormData({...formData, is_compliant: e.target.checked})}
-                    className="mr-2"
-                  />
-                  Conforme
-                </label>
-              </div>
-            </div>
-            
-            {formData.is_completed && (
-              <>
-                <div>
-                  <label className="block">Date de complétion</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.completion_date ? formData.completion_date.substring(0, 16) : ''}
-                    onChange={(e) => setFormData({...formData, completion_date: e.target.value ? new Date(e.target.value).toISOString() : null})}
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
+              <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Tâche de nettoyage</InputLabel>
+                  <Select
+                    value={formData.cleaning_task_id || ''}
+                    label="Tâche de nettoyage"
+                    onChange={(e) => setFormData({...formData, cleaning_task_id: e.target.value})}
+                  >
+                    {tasks.map(task => (
+                      <MenuItem key={task.id} value={task.id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                          <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                            {task.name}
+                          </Typography>
+                          <Chip 
+                            label={task.frequency}
+                            size="small"
+                            color={getTaskFrequencyColor(task.frequency)}
+                            variant="outlined"
+                          />
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 
-                <div>
-                  <label className="block">URL de la photo</label>
-                  <input
-                    type="text"
-                    value={formData.photo_url || ''}
-                    onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
-                    className="w-full p-2 border rounded"
+                <TextField
+                  label="Date prévue"
+                  type="datetime-local"
+                  value={formatDateTimeForInput(formData.scheduled_date)}
+                  onChange={(e) => setFormData({...formData, scheduled_date: new Date(e.target.value).toISOString()})}
+                  required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+                
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.is_completed || false}
+                        onChange={(e) => setFormData({...formData, is_completed: e.target.checked})}
+                        icon={<Schedule />}
+                        checkedIcon={<CheckCircle />}
+                      />
+                    }
+                    label="Tâche complétée"
                   />
-                </div>
-              </>
-            )}
-            
-            <div>
-              <label className="block">Commentaires</label>
-              <textarea
-                value={formData.comments || ''}
-                onChange={(e) => setFormData({...formData, comments: e.target.value})}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-            
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-              Enregistrer
-            </button>
-          </form>
-        </div>
+                  
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.is_compliant || false}
+                        onChange={(e) => setFormData({...formData, is_compliant: e.target.checked})}
+                        icon={<Warning />}
+                        checkedIcon={<CheckCircle />}
+                        disabled={!formData.is_completed}
+                      />
+                    }
+                    label="Conforme"
+                  />
+                </Box>
+                
+                {formData.is_completed && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Informations de complétion
+                    </Typography>
+                    
+                    <TextField
+                      label="Date de complétion"
+                      type="datetime-local"
+                      value={formData.completion_date ? formatDateTimeForInput(formData.completion_date) : ''}
+                      onChange={(e) => setFormData({...formData, completion_date: e.target.value ? new Date(e.target.value).toISOString() : null})}
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    
+                    <TextField
+                      label="URL de la photo"
+                      value={formData.photo_url || ''}
+                      onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
+                      fullWidth
+                      placeholder="https://..."
+                      InputProps={{
+                        startAdornment: (
+                          <IconButton size="small" disabled>
+                            <PhotoCamera />
+                          </IconButton>
+                        )
+                      }}
+                    />
+                    
+                    {formData.photo_url && (
+                      <Alert severity="info" sx={{ mt: 1 }}>
+                        Photo prête à être enregistrée
+                      </Alert>
+                    )}
+                  </Box>
+                )}
+                
+                <TextField
+                  label="Commentaires"
+                  multiline
+                  rows={3}
+                  value={formData.comments || ''}
+                  onChange={(e) => setFormData({...formData, comments: e.target.value})}
+                  fullWidth
+                  placeholder="Observations, produits utilisés, difficultés rencontrées..."
+                />
+                
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  startIcon={<Save />}
+                  disabled={loading}
+                  fullWidth
+                  sx={{ mt: 2 }}
+                >
+                  {loading ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
         
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Dernières Exécutions</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 border">Tâche</th>
-                  <th className="py-2 px-4 border">Date</th>
-                  <th className="py-2 px-4 border">Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map(record => {
-                  const task = tasks.find(t => t.id === record.cleaning_task_id);
-                  return (
-                    <tr key={record.id}>
-                      <td className="py-2 px-4 border">
-                        {task ? task.name : 'N/A'}
-                      </td>
-                      <td className="py-2 px-4 border">
-                        {new Date(record.scheduled_date).toLocaleString()}
-                      </td>
-                      <td className="py-2 px-4 border">
-                        {record.is_completed ? (
-                          record.is_compliant ? (
-                            <span className="text-green-500">Complété (Conforme)</span>
-                          ) : (
-                            <span className="text-yellow-500">Complété (Non conforme)</span>
-                          )
-                        ) : (
-                          <span className="text-gray-500">En attente</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Tableau des dernières exécutions */}
+        <Box sx={{ flex: 1, minWidth: 400 }}>
+          <Card elevation={3}>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                color: 'info.main',
+                mb: 3
+              }}>
+                <Schedule />
+                Dernières Exécutions
+              </Typography>
+              
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell><strong>Tâche</strong></TableCell>
+                      <TableCell><strong>Date programmée</strong></TableCell>
+                      <TableCell><strong>Statut</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {records.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                          <Typography color="text.secondary">
+                            Aucune exécution enregistrée
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      records.map(record => {
+                        const task = tasks.find(t => t.id === record.cleaning_task_id);
+                        return (
+                          <TableRow key={record.id} hover>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {task ? task.name : 'N/A'}
+                                </Typography>
+                                {task && (
+                                  <Chip 
+                                    label={task.frequency}
+                                    size="small"
+                                    color={getTaskFrequencyColor(task.frequency)}
+                                    variant="outlined"
+                                    sx={{ width: 'fit-content', mt: 0.5 }}
+                                  />
+                                )}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {new Date(record.scheduled_date).toLocaleString('fr-FR', {
+                                  dateStyle: 'short',
+                                  timeStyle: 'short'
+                                })}
+                              </Typography>
+                              {record.completion_date && (
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  Complété le {new Date(record.completion_date).toLocaleString('fr-FR', {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short'
+                                  })}
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {record.is_completed ? (
+                                record.is_compliant ? (
+                                  <Chip
+                                    size="small"
+                                    icon={<CheckCircle />}
+                                    label="Complété (Conforme)"
+                                    color="success"
+                                    variant="filled"
+                                  />
+                                ) : (
+                                  <Chip
+                                    size="small"
+                                    icon={<Warning />}
+                                    label="Complété (Non conforme)"
+                                    color="warning"
+                                    variant="filled"
+                                  />
+                                )
+                              ) : (
+                                <Chip
+                                  size="small"
+                                  icon={<Schedule />}
+                                  label="En attente"
+                                  color="default"
+                                  variant="outlined"
+                                />
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              
+              {records.length > 0 && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                  Affichage des 10 dernières exécutions
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
+
+      {/* Informations sur les bonnes pratiques */}
+      <Card sx={{ mt: 3, bgcolor: 'success.light' }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ color: 'success.dark' }}>
+            🧽 Bonnes Pratiques de Nettoyage HACCP
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'success.dark' }}>
+            • <strong>Planification :</strong> Respecter la fréquence des tâches selon le type de surface et l'activité<br/>
+            • <strong>Documentation :</strong> Enregistrer systématiquement toutes les opérations de nettoyage<br/>
+            • <strong>Vérification :</strong> Contrôler visuellement l'efficacité du nettoyage avant de valider<br/>
+            • <strong>Traçabilité :</strong> Photographier les zones critiques après nettoyage si nécessaire<br/>
+            • <strong>Non-conformité :</strong> Signaler immédiatement tout problème et reprendre l'opération
+          </Typography>
+        </CardContent>
+      </Card>
+    </Container>
   );
 }

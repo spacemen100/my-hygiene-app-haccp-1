@@ -3,60 +3,121 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
-import { Camera, CheckCircle, XCircle, AlertTriangle, FileText, Thermometer, Package } from 'lucide-react';
+import {
+  Box,
+  Container,
+  Typography,
+  Tabs,
+  Tab,
+  Paper,
+  TextField,
+  Button,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Card,
+  CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Alert,
+  Select,
+  MenuItem,
+  InputLabel,
+  List,
+  ListItem,
+  ListItemText
+} from '@mui/material';
+import {
+  CameraAlt,
+  CheckCircle,
+  Cancel,
+  Warning,
+  Description,
+  Thermostat,
+  Inventory,
+  Add,
+  Delete,
+  Close
+} from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 
 export default function DeliveryControlSystem() {
-  const [activeTab, setActiveTab] = useState('ambient');
+  const [activeTab, setActiveTab] = useState(0);
 
-  const tabs = [
-    { id: 'ambient', label: 'Produit Ambiant', icon: Package },
-    { id: 'fresh', label: 'Produit Frais', icon: Thermometer },
-    { id: 'frozen', label: 'Produit Surgelé', icon: Thermometer },
-    { id: 'non-conformities', label: 'Non-conformités', icon: AlertTriangle },
-    { id: 'doc-info', label: 'Doc/Info', icon: FileText }
-  ];
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Contrôle des Livraisons</h1>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2, 
+        mb: 4,
+        color: 'primary.main',
+        fontWeight: 'bold'
+      }}>
+        <Inventory fontSize="large" />
+        Contrôle des Livraisons
+      </Typography>
       
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Navigation tabs */}
-        <div className="flex border-b border-gray-200 overflow-x-auto">
-          {tabs.map((tab) => {
-            const IconComponent = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-4 py-3 min-w-fit whitespace-nowrap font-medium text-sm border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <IconComponent className="w-4 h-4 mr-2" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+      <Paper elevation={3} sx={{ overflow: 'hidden' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+            <Tab 
+              icon={<Inventory />} 
+              label="Produit Ambiant" 
+              iconPosition="start" 
+              sx={{ minHeight: 64 }}
+            />
+            <Tab 
+              icon={<Thermostat />} 
+              label="Produit Frais" 
+              iconPosition="start" 
+              sx={{ minHeight: 64 }}
+            />
+            <Tab 
+              icon={<Thermostat />} 
+              label="Produit Surgelé" 
+              iconPosition="start" 
+              sx={{ minHeight: 64 }}
+            />
+            <Tab 
+              icon={<Warning />} 
+              label="Non-conformités" 
+              iconPosition="start" 
+              sx={{ minHeight: 64 }}
+            />
+            <Tab 
+              icon={<Description />} 
+              label="Doc/Info" 
+              iconPosition="start" 
+              sx={{ minHeight: 64 }}
+            />
+          </Tabs>
+        </Box>
 
-        {/* Contenu des tabs */}
-        <div className="p-6">
-          {activeTab === 'ambient' && <AmbientProductControl />}
-          {activeTab === 'fresh' && <FreshProductControl />}
-          {activeTab === 'frozen' && <FrozenProductControl />}
-          {activeTab === 'non-conformities' && <NonConformitiesControl />}
-          {activeTab === 'doc-info' && <DocInfoControl />}
-        </div>
-      </div>
-    </div>
+        <Box sx={{ p: 3 }}>
+          {activeTab === 0 && <AmbientProductControl />}
+          {activeTab === 1 && <FreshProductControl />}
+          {activeTab === 2 && <FrozenProductControl />}
+          {activeTab === 3 && <NonConformitiesControl />}
+          {activeTab === 4 && <DocInfoControl />}
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
 // Composant pour contrôler un produit ambiant
 const AmbientProductControl = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'ambiant',
@@ -78,119 +139,116 @@ const AmbientProductControl = () => {
         }]);
       
       if (error) throw error;
-      console.log('Contrôle produit ambiant enregistré');
-      // Reset form or show success message
+      enqueueSnackbar('Contrôle produit ambiant enregistré avec succès', { variant: 'success' });
+      // Reset form
+      setFormData({
+        product_name: '',
+        storage_type: 'ambiant',
+        best_before_date: undefined,
+        use_by_date: undefined,
+        is_compliant: false,
+        control_date: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Erreur:', error);
+      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
     }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Package className="w-6 h-6 mr-2 text-amber-600" />
-        Contrôle Produit Ambiant
-      </h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nom du produit *
-          </label>
-          <input
-            type="text"
+    <Card>
+      <CardContent>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          color: 'warning.main',
+          mb: 3
+        }}>
+          <Inventory />
+          Contrôle Produit Ambiant
+        </Typography>
+        
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="Nom du produit"
             value={formData.product_name}
             onChange={(e) => setFormData({...formData, product_name: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
+            fullWidth
+            variant="outlined"
           />
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date limite de consommation
-            </label>
-            <input
-              type="date"
-              value={formData.best_before_date || ''}
-              onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date de péremption
-            </label>
-            <input
-              type="date"
-              value={formData.use_by_date || ''}
-              onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <TextField
+                label="Date limite de consommation"
+                type="date"
+                value={formData.best_before_date || ''}
+                onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+            
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <TextField
+                label="Date de péremption"
+                type="date"
+                value={formData.use_by_date || ''}
+                onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+          </Box>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Conformité du produit *
-          </label>
-          <div className="flex space-x-4">
-            <button
-              type="button"
-              onClick={() => setFormData({...formData, is_compliant: true})}
-              className={`flex items-center px-4 py-2 rounded-md border transition-colors ${
-                formData.is_compliant === true
-                  ? 'bg-green-100 border-green-500 text-green-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Conformité du produit *</FormLabel>
+            <RadioGroup
+              row
+              value={formData.is_compliant}
+              onChange={(e) => setFormData({...formData, is_compliant: e.target.value === 'true'})}
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Conforme
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData({...formData, is_compliant: false})}
-              className={`flex items-center px-4 py-2 rounded-md border transition-colors ${
-                formData.is_compliant === false
-                  ? 'bg-red-100 border-red-500 text-red-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <XCircle className="w-4 h-4 mr-2" />
-              Non conforme
-            </button>
-          </div>
-        </div>
+              <FormControlLabel 
+                value={true} 
+                control={<Radio />} 
+                label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><CheckCircle color="success" />Conforme</Box>} 
+              />
+              <FormControlLabel 
+                value={false} 
+                control={<Radio />} 
+                label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Cancel color="error" />Non conforme</Box>} 
+              />
+            </RadioGroup>
+          </FormControl>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Photo du produit
-          </label>
-          <button
-            type="button"
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          <Button
+            variant="outlined"
+            startIcon={<CameraAlt />}
+            sx={{ alignSelf: 'flex-start' }}
           >
-            <Camera className="w-4 h-4 mr-2" />
             Prendre une photo
-          </button>
-        </div>
+          </Button>
 
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
-        >
-          Enregistrer le contrôle
-        </button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 2 }}
+          >
+            Enregistrer le contrôle
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
 // Composant pour contrôler un produit frais
 const FreshProductControl = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'frais',
@@ -226,121 +284,119 @@ const FreshProductControl = () => {
         }]);
       
       if (error) throw error;
-      console.log('Contrôle produit frais enregistré');
+      enqueueSnackbar('Contrôle produit frais enregistré avec succès', { variant: 'success' });
+      setFormData({
+        product_name: '',
+        storage_type: 'frais',
+        temperature: undefined,
+        best_before_date: undefined,
+        use_by_date: undefined,
+        is_compliant: false,
+        control_date: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Erreur:', error);
+      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
     }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Thermometer className="w-6 h-6 mr-2 text-blue-600" />
-        Contrôle Produit Frais
-      </h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nom du produit *
-          </label>
-          <input
-            type="text"
+    <Card>
+      <CardContent>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          color: 'info.main',
+          mb: 3
+        }}>
+          <Thermostat />
+          Contrôle Produit Frais
+        </Typography>
+        
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="Nom du produit"
             value={formData.product_name}
             onChange={(e) => setFormData({...formData, product_name: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
+            fullWidth
+            variant="outlined"
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Température (°C) *
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              step="0.1"
-              value={formData.temperature || ''}
-              onChange={handleTemperatureChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                formData.temperature !== undefined && formData.temperature !== null
-                  ? isTemperatureCompliant(formData.temperature)
-                    ? 'border-green-500 focus:ring-green-500'
-                    : 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-              placeholder="Entre 0°C et 4°C"
-              required
-            />
-            {formData.temperature !== undefined && formData.temperature !== null && (
-              <div className="absolute right-3 top-2">
-                {isTemperatureCompliant(formData.temperature) ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-500" />
-                )}
-              </div>
-            )}
-          </div>
-          <p className="text-sm text-gray-600 mt-1">
-            Température réglementaire : 0°C à 4°C
-          </p>
-        </div>
+          <TextField
+            label="Température (°C)"
+            type="number"
+            inputProps={{ step: "0.1" }}
+            value={formData.temperature || ''}
+            onChange={handleTemperatureChange}
+            required
+            fullWidth
+            helperText="Température réglementaire : 0°C à 4°C"
+            error={formData.temperature !== undefined && formData.temperature !== null && !isTemperatureCompliant(formData.temperature)}
+          />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date limite de consommation
-            </label>
-            <input
-              type="date"
-              value={formData.best_before_date || ''}
-              onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date de péremption
-            </label>
-            <input
-              type="date"
-              value={formData.use_by_date || ''}
-              onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <TextField
+                label="Date limite de consommation"
+                type="date"
+                value={formData.best_before_date || ''}
+                onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+            
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <TextField
+                label="Date de péremption"
+                type="date"
+                value={formData.use_by_date || ''}
+                onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+          </Box>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Photo du produit
-          </label>
-          <button
-            type="button"
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          {formData.temperature !== undefined && formData.temperature !== null && (
+            <Alert 
+              severity={isTemperatureCompliant(formData.temperature) ? "success" : "error"}
+              sx={{ mt: 1 }}
+            >
+              {isTemperatureCompliant(formData.temperature) 
+                ? "Température conforme" 
+                : "Température non conforme - doit être entre 0°C et 4°C"}
+            </Alert>
+          )}
+
+          <Button
+            variant="outlined"
+            startIcon={<CameraAlt />}
+            sx={{ alignSelf: 'flex-start' }}
           >
-            <Camera className="w-4 h-4 mr-2" />
             Prendre une photo
-          </button>
-        </div>
+          </Button>
 
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
-        >
-          Enregistrer le contrôle
-        </button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 2 }}
+          >
+            Enregistrer le contrôle
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
 // Composant pour contrôler un produit surgelé
 const FrozenProductControl = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'surgelé',
@@ -376,121 +432,119 @@ const FrozenProductControl = () => {
         }]);
       
       if (error) throw error;
-      console.log('Contrôle produit surgelé enregistré');
+      enqueueSnackbar('Contrôle produit surgelé enregistré avec succès', { variant: 'success' });
+      setFormData({
+        product_name: '',
+        storage_type: 'surgelé',
+        temperature: undefined,
+        best_before_date: undefined,
+        use_by_date: undefined,
+        is_compliant: false,
+        control_date: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Erreur:', error);
+      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
     }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Thermometer className="w-6 h-6 mr-2 text-cyan-600" />
-        Contrôle Produit Surgelé
-      </h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nom du produit *
-          </label>
-          <input
-            type="text"
+    <Card>
+      <CardContent>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          color: 'primary.main',
+          mb: 3
+        }}>
+          <Thermostat />
+          Contrôle Produit Surgelé
+        </Typography>
+        
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="Nom du produit"
             value={formData.product_name}
             onChange={(e) => setFormData({...formData, product_name: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
+            fullWidth
+            variant="outlined"
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Température (°C) *
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              step="0.1"
-              value={formData.temperature || ''}
-              onChange={handleTemperatureChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                formData.temperature !== undefined && formData.temperature !== null
-                  ? isTemperatureCompliant(formData.temperature)
-                    ? 'border-green-500 focus:ring-green-500'
-                    : 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-              placeholder="-18°C ou moins"
-              required
-            />
-            {formData.temperature !== undefined && formData.temperature !== null && (
-              <div className="absolute right-3 top-2">
-                {isTemperatureCompliant(formData.temperature) ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-500" />
-                )}
-              </div>
-            )}
-          </div>
-          <p className="text-sm text-gray-600 mt-1">
-            Température réglementaire : -18°C ou moins
-          </p>
-        </div>
+          <TextField
+            label="Température (°C)"
+            type="number"
+            inputProps={{ step: "0.1" }}
+            value={formData.temperature || ''}
+            onChange={handleTemperatureChange}
+            required
+            fullWidth
+            helperText="Température réglementaire : -18°C ou moins"
+            error={formData.temperature !== undefined && formData.temperature !== null && !isTemperatureCompliant(formData.temperature)}
+          />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date limite de consommation
-            </label>
-            <input
-              type="date"
-              value={formData.best_before_date || ''}
-              onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date de péremption
-            </label>
-            <input
-              type="date"
-              value={formData.use_by_date || ''}
-              onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <TextField
+                label="Date limite de consommation"
+                type="date"
+                value={formData.best_before_date || ''}
+                onChange={(e) => setFormData({...formData, best_before_date: e.target.value})}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+            
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <TextField
+                label="Date de péremption"
+                type="date"
+                value={formData.use_by_date || ''}
+                onChange={(e) => setFormData({...formData, use_by_date: e.target.value})}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+          </Box>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Photo du produit
-          </label>
-          <button
-            type="button"
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          {formData.temperature !== undefined && formData.temperature !== null && (
+            <Alert 
+              severity={isTemperatureCompliant(formData.temperature) ? "success" : "error"}
+              sx={{ mt: 1 }}
+            >
+              {isTemperatureCompliant(formData.temperature) 
+                ? "Température conforme" 
+                : "Température non conforme - doit être -18°C ou moins"}
+            </Alert>
+          )}
+
+          <Button
+            variant="outlined"
+            startIcon={<CameraAlt />}
+            sx={{ alignSelf: 'flex-start' }}
           >
-            <Camera className="w-4 h-4 mr-2" />
             Prendre une photo
-          </button>
-        </div>
+          </Button>
 
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
-        >
-          Enregistrer le contrôle
-        </button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 2 }}
+          >
+            Enregistrer le contrôle
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
 // Composant pour gérer les non-conformités
 const NonConformitiesControl = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [nonConformities, setNonConformities] = useState<TablesInsert<'non_conformities'>[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNonConformity, setNewNonConformity] = useState<Partial<TablesInsert<'non_conformities'>>>({
@@ -535,8 +589,10 @@ const NonConformitiesControl = () => {
         other_cause: ''
       });
       setShowAddForm(false);
+      enqueueSnackbar('Non-conformité signalée avec succès', { variant: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      enqueueSnackbar('Erreur lors du signalement', { variant: 'error' });
     }
   };
 
@@ -549,273 +605,329 @@ const NonConformitiesControl = () => {
       
       if (error) throw error;
       setNonConformities(nonConformities.filter(nc => nc.id !== id));
+      enqueueSnackbar('Non-conformité supprimée', { variant: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
     }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-          <AlertTriangle className="w-6 h-6 mr-2 text-red-600" />
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5" component="h2" sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          color: 'error.main'
+        }}>
+          <Warning />
           Non-conformités
-        </h2>
-        <button
+        </Typography>
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={<Add />}
           onClick={() => setShowAddForm(true)}
-          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
         >
           Signaler une non-conformité
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      {/* Liste des non-conformités */}
-      <div className="space-y-4 mb-6">
-        {nonConformities.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Aucune non-conformité signalée</p>
-          </div>
-        ) : (
-          nonConformities.map((nc) => (
-            <div key={nc.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-semibold text-red-800">{nc.non_conformity_type}</h3>
-                  <p className="text-sm text-gray-600">Produit: {nc.product_name}</p>
-                </div>
-                <button
-                  onClick={() => nc.id && handleDeleteNonConformity(nc.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
-              
-              {nc.quantity && (
-                <p className="text-sm text-gray-600 mb-2">
-                  Quantité: {nc.quantity} {nc.quantity_type}
-                </p>
-              )}
-              
-              {nc.description && (
-                <p className="text-sm text-gray-700 mb-2">{nc.description}</p>
-              )}
-              
-              {nc.other_cause && (
-                <p className="text-sm text-gray-700 mb-2">
-                  <strong>Autre cause:</strong> {nc.other_cause}
-                </p>
-              )}
-              
-              <p className="text-xs text-gray-500">
-                Signalé le {nc.created_at ? new Date(nc.created_at).toLocaleDateString('fr-FR') : 'Date inconnue'}
-              </p>
-            </div>
-          ))
-        )}
-      </div>
+      {nonConformities.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Warning sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            Aucune non-conformité signalée
+          </Typography>
+        </Paper>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {nonConformities.map((nc) => (
+            <Card key={nc.id} sx={{ border: '1px solid', borderColor: 'error.main' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" color="error.main">
+                      {nc.non_conformity_type}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Produit: {nc.product_name}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    onClick={() => nc.id && handleDeleteNonConformity(nc.id)}
+                    color="error"
+                    size="small"
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
+                
+                {nc.quantity && (
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Quantité: {nc.quantity} {nc.quantity_type}
+                  </Typography>
+                )}
+                
+                {nc.description && (
+                  <Typography variant="body1" sx={{ mb: 1 }}>
+                    {nc.description}
+                  </Typography>
+                )}
+                
+                {nc.other_cause && (
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Autre cause:</strong> {nc.other_cause}
+                  </Typography>
+                )}
+                
+                <Typography variant="caption" color="text.secondary">
+                  Signalé le {nc.created_at ? new Date(nc.created_at).toLocaleDateString('fr-FR') : 'Date inconnue'}
+                </Typography>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      )}
 
-      {/* Formulaire d'ajout */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Signaler une non-conformité</h3>
-            
-            <form onSubmit={handleAddNonConformity} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type de non-conformité *
-                </label>
-                <select
-                  value={newNonConformity.non_conformity_type || ''}
-                  onChange={(e) => setNewNonConformity({...newNonConformity, non_conformity_type: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
-                >
-                  <option value="">Sélectionner un type</option>
-                  {nonConformityTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
+      <Dialog open={showAddForm} onClose={() => setShowAddForm(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Signaler une non-conformité
+          <IconButton onClick={() => setShowAddForm(false)}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handleAddNonConformity} sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>Type de non-conformité *</InputLabel>
+              <Select
+                value={newNonConformity.non_conformity_type || ''}
+                label="Type de non-conformité *"
+                onChange={(e) => setNewNonConformity({...newNonConformity, non_conformity_type: e.target.value})}
+                required
+              >
+                {nonConformityTypes.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom du produit *
-                </label>
-                <input
-                  type="text"
-                  value={newNonConformity.product_name || ''}
-                  onChange={(e) => setNewNonConformity({...newNonConformity, product_name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+            <TextField
+              label="Nom du produit"
+              value={newNonConformity.product_name || ''}
+              onChange={(e) => setNewNonConformity({...newNonConformity, product_name: e.target.value})}
+              required
+              fullWidth
+            />
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ flex: 2 }}>
+                <TextField
+                  label="Quantité"
+                  type="number"
+                  inputProps={{ step: "0.01" }}
+                  value={newNonConformity.quantity || ''}
+                  onChange={(e) => setNewNonConformity({...newNonConformity, quantity: parseFloat(e.target.value) || undefined})}
+                  fullWidth
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Quantité
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newNonConformity.quantity || ''}
-                    onChange={(e) => setNewNonConformity({...newNonConformity, quantity: parseFloat(e.target.value) || undefined})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Unité
-                  </label>
-                  <select
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Unité</InputLabel>
+                  <Select
                     value={newNonConformity.quantity_type || 'kg'}
+                    label="Unité"
                     onChange={(e) => setNewNonConformity({...newNonConformity, quantity_type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
                     {quantityTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                      <MenuItem key={type} value={type}>{type}</MenuItem>
                     ))}
-                  </select>
-                </div>
-              </div>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={newNonConformity.description || ''}
-                  onChange={(e) => setNewNonConformity({...newNonConformity, description: e.target.value})}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                  placeholder="Décrivez la non-conformité..."
-                />
-              </div>
+            <TextField
+              label="Description"
+              multiline
+              rows={3}
+              value={newNonConformity.description || ''}
+              onChange={(e) => setNewNonConformity({...newNonConformity, description: e.target.value})}
+              fullWidth
+              placeholder="Décrivez la non-conformité..."
+            />
 
-              {newNonConformity.non_conformity_type === 'Autre' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Précisez la cause
-                  </label>
-                  <input
-                    type="text"
-                    value={newNonConformity.other_cause || ''}
-                    onChange={(e) => setNewNonConformity({...newNonConformity, other_cause: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    placeholder="Précisez..."
-                  />
-                </div>
-              )}
+            {newNonConformity.non_conformity_type === 'Autre' && (
+              <TextField
+                label="Précisez la cause"
+                value={newNonConformity.other_cause || ''}
+                onChange={(e) => setNewNonConformity({...newNonConformity, other_cause: e.target.value})}
+                fullWidth
+                placeholder="Précisez..."
+              />
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Photo
-                </label>
-                <button
-                  type="button"
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Prendre une photo
-                </button>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors font-medium"
-                >
-                  Signaler
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors font-medium"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+            <Button
+              variant="outlined"
+              startIcon={<CameraAlt />}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              Prendre une photo
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAddForm(false)}>Annuler</Button>
+          <Button onClick={handleAddNonConformity} variant="contained" color="error">
+            Signaler
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
 // Composant pour la documentation et les informations
 const DocInfoControl = () => {
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-        <FileText className="w-6 h-6 mr-2 text-blue-600" />
+    <Box>
+      <Typography variant="h5" component="h2" gutterBottom sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1,
+        color: 'info.main',
+        mb: 3
+      }}>
+        <Description />
         Documentation & Informations
-      </h2>
+      </Typography>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <h3 className="text-lg font-semibold text-blue-800 mb-3">Températures Réglementaires</h3>
-          <div className="space-y-2 text-sm">
-            <p><strong>Produits frais:</strong> 0°C à 4°C</p>
-            <p><strong>Produits surgelés:</strong> -18°C ou moins</p>
-            <p><strong>Produits ambiants:</strong> Température ambiante</p>
-          </div>
-        </div>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        <Box sx={{ flex: 1, minWidth: 300 }}>
+          <Card sx={{ bgcolor: 'info.light', color: 'info.contrastText' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: 'info.dark' }}>
+                Températures Réglementaires
+              </Typography>
+              <List dense>
+                <ListItem>
+                  <ListItemText primary="Produits frais: 0°C à 4°C" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Produits surgelés: -18°C ou moins" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Produits ambiants: Température ambiante" />
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Box>
         
-        <div className="bg-green-50 p-6 rounded-lg">
-          <h3 className="text-lg font-semibold text-green-800 mb-3">Procédure de Contrôle</h3>
-          <ol className="list-decimal list-inside text-sm space-y-1">
-            <li>Vérifier la température du camion</li>
-            <li>Contrôler chaque produit individuellement</li>
-            <li>Vérifier les dates de péremption</li>
-            <li>Documenter toute non-conformité</li>
-            <li>Prendre des photos si nécessaire</li>
-          </ol>
-        </div>
+        <Box sx={{ flex: 1, minWidth: 300 }}>
+          <Card sx={{ bgcolor: 'success.light', color: 'success.contrastText' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: 'success.dark' }}>
+                Procédure de Contrôle
+              </Typography>
+              <List dense>
+                <ListItem>
+                  <ListItemText primary="1. Vérifier la température du camion" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="2. Contrôler chaque produit individuellement" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="3. Vérifier les dates de péremption" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="4. Documenter toute non-conformité" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="5. Prendre des photos si nécessaire" />
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Box>
         
-        <div className="bg-yellow-50 p-6 rounded-lg">
-          <h3 className="text-lg font-semibold text-yellow-800 mb-3">Types de Non-conformités</h3>
-          <ul className="list-disc list-inside text-sm space-y-1">
-            <li>Température non conforme</li>
-            <li>Date de péremption dépassée</li>
-            <li>Emballage défectueux</li>
-            <li>Produit endommagé</li>
-            <li>Quantité incorrecte</li>
-            <li>Étiquetage manquant</li>
-          </ul>
-        </div>
+        <Box sx={{ flex: 1, minWidth: 300 }}>
+          <Card sx={{ bgcolor: 'warning.light', color: 'warning.contrastText' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: 'warning.dark' }}>
+                Types de Non-conformités
+              </Typography>
+              <List dense>
+                <ListItem>
+                  <ListItemText primary="• Température non conforme" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="• Date de péremption dépassée" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="• Emballage défectueux" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="• Produit endommagé" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="• Quantité incorrecte" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="• Étiquetage manquant" />
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Box>
         
-        <div className="bg-red-50 p-6 rounded-lg">
-          <h3 className="text-lg font-semibold text-red-800 mb-3">Actions en cas de Non-conformité</h3>
-          <ol className="list-decimal list-inside text-sm space-y-1">
-            <li>Signaler immédiatement</li>
-            <li>Isoler le produit concerné</li>
-            <li>Documenter avec photos</li>
-            <li>Contacter le fournisseur</li>
-            <li>Suivre la procédure de retour</li>
-          </ol>
-        </div>
-      </div>
+        <Box sx={{ flex: 1, minWidth: 300 }}>
+          <Card sx={{ bgcolor: 'error.light', color: 'error.contrastText' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: 'error.dark' }}>
+                Actions en cas de Non-conformité
+              </Typography>
+              <List dense>
+                <ListItem>
+                  <ListItemText primary="1. Signaler immédiatement" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="2. Isoler le produit concerné" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="3. Documenter avec photos" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="4. Contacter le fournisseur" />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="5. Suivre la procédure de retour" />
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
       
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-        <h3 className="font-semibold text-gray-800 mb-2">Contacts Utiles</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p><strong>Responsable Qualité:</strong></p>
-            <p>Tel: 01 23 45 67 89</p>
-            <p>Email: qualite@entreprise.com</p>
-          </div>
-          <div>
-            <p><strong>Service Livraisons:</strong></p>
-            <p>Tel: 01 23 45 67 90</p>
-            <p>Email: livraisons@entreprise.com</p>
-          </div>
-        </div>
-      </div>
-    </div>
+      <Paper sx={{ mt: 3, p: 3, bgcolor: 'grey.100' }}>
+        <Typography variant="h6" gutterBottom>
+          Contacts Utiles
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <Typography variant="subtitle2">Responsable Qualité:</Typography>
+            <Typography variant="body2">Tel: 01 23 45 67 89</Typography>
+            <Typography variant="body2">Email: qualite@entreprise.com</Typography>
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <Typography variant="subtitle2">Service Livraisons:</Typography>
+            <Typography variant="body2">Tel: 01 23 45 67 90</Typography>
+            <Typography variant="body2">Email: livraisons@entreprise.com</Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
-
