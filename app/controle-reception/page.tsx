@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Avatar,
   List,
   ListItem,
@@ -174,86 +173,89 @@ export default function ControleReceptionPage() {
       </Paper>
 
       {/* Quick Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Aujourd&apos;hui
-                  </Typography>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                    {stats.today}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    bgcolor: '#2196f320',
-                    color: '#2196f3',
-                    width: 56,
-                    height: 56,
-                  }}
-                >
-                  <Inventory2 />
-                </Avatar>
+      <Box sx={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: 3, 
+        mb: 4,
+        '& > *': {
+          flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 16px)' },
+          minWidth: 0
+        }
+      }}>
+        <Card sx={{ height: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Typography color="text.secondary" gutterBottom variant="body2">
+                  Aujourd&apos;hui
+                </Typography>
+                <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                  {stats.today}
+                </Typography>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Approuvés
-                  </Typography>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                    {stats.approved}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    bgcolor: '#4caf5020',
-                    color: '#4caf50',
-                    width: 56,
-                    height: 56,
-                  }}
-                >
-                  <CheckCircle />
-                </Avatar>
+              <Avatar
+                sx={{
+                  bgcolor: '#2196f320',
+                  color: '#2196f3',
+                  width: 56,
+                  height: 56,
+                }}
+              >
+                <Inventory2 />
+              </Avatar>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card sx={{ height: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Typography color="text.secondary" gutterBottom variant="body2">
+                  Approuvés
+                </Typography>
+                <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                  {stats.approved}
+                </Typography>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    En attente
-                  </Typography>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                    {stats.pending}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    bgcolor: '#ff980020',
-                    color: '#ff9800',
-                    width: 56,
-                    height: 56,
-                  }}
-                >
-                  <Warning />
-                </Avatar>
+              <Avatar
+                sx={{
+                  bgcolor: '#4caf5020',
+                  color: '#4caf50',
+                  width: 56,
+                  height: 56,
+                }}
+              >
+                <CheckCircle />
+              </Avatar>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card sx={{ height: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Typography color="text.secondary" gutterBottom variant="body2">
+                  En attente
+                </Typography>
+                <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                  {stats.pending}
+                </Typography>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              <Avatar
+                sx={{
+                  bgcolor: '#ff980020',
+                  color: '#ff9800',
+                  width: 56,
+                  height: 56,
+                }}
+              >
+                <Warning />
+              </Avatar>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
       {/* New Control Button */}
       <Link href="/controle-reception/nouveau" passHref>

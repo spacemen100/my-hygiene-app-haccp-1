@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Avatar,
   List,
   ListItem,
@@ -103,83 +102,98 @@ export default function Home() {
       </Paper>
 
       {/* Quick Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: 3, 
+        mb: 4,
+        '& > *': {
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' },
+          minWidth: 0
+        }
+      }}>
         {quickStats.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
-                      {stat.label}
-                    </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                      {stat.value}
-                    </Typography>
-                  </Box>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${stat.color}20`,
-                      color: stat.color,
-                      width: 56,
-                      height: 56,
-                    }}
-                  >
-                    <stat.icon />
-                  </Avatar>
+          <Card key={index} sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom variant="body2">
+                    {stat.label}
+                  </Typography>
+                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    {stat.value}
+                  </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                <Avatar
+                  sx={{
+                    bgcolor: `${stat.color}20`,
+                    color: stat.color,
+                    width: 56,
+                    height: 56,
+                  }}
+                >
+                  <stat.icon />
+                </Avatar>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
       {/* Quick Actions */}
       <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
         Actions rapides
       </Typography>
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: 3, 
+        mb: 4,
+        '& > *': {
+          flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' },
+          minWidth: 0
+        }
+      }}>
         {quickActions.map((action, index) => (
-          <Grid item xs={12} md={6} key={index}>
-            <Card
-              component={Link}
-              href={action.href}
-              sx={{
-                textDecoration: 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 6,
-                },
-              }}
-            >
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${action.color}20`,
-                      color: action.color,
-                      width: 56,
-                      height: 56,
-                    }}
-                  >
-                    <action.icon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-                      {action.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {action.description}
-                    </Typography>
-                  </Box>
+          <Card
+            key={index}
+            component={Link}
+            href={action.href}
+            sx={{
+              textDecoration: 'none',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 6,
+              },
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: `${action.color}20`,
+                    color: action.color,
+                    width: 56,
+                    height: 56,
+                  }}
+                >
+                  <action.icon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+                    {action.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {action.description}
+                  </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
       {/* Recent Activity */}
       <Card>
