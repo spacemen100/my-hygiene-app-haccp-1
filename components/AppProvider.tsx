@@ -20,6 +20,7 @@ import {
   Thermostat as ThermometerIcon,
   CleaningServices as SprayCanIcon,
   Home as HomeIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -34,6 +35,7 @@ const menuItems = [
   { href: "/enceintes-froides", icon: SnowflakeIcon, label: "Enceintes froides" },
   { href: "/suivi-refroidissement", icon: ThermometerIcon, label: "Suivi de refroidissement" },
   { href: "/plan-nettoyage", icon: SprayCanIcon, label: "Plan de nettoyage" },
+  { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
 ];
 
 interface AppProviderProps {
