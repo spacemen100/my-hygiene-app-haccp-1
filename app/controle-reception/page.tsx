@@ -3,18 +3,66 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
-import { Camera, CheckCircle, XCircle, AlertTriangle, FileText, Thermometer, Package, Plus, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
+import {
+  CameraAlt,
+  CheckCircle,
+  Cancel,
+  Description,
+  LocalShipping,
+  Add,
+  Close,
+  CloudUpload,
+  ExpandMore,
+  Edit,
+  Delete,
+  Visibility,
+} from '@mui/icons-material';
+import {
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
+  CircularProgress,
+  Avatar,
+  Card,
+  CardContent,
+  CardActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  InputAdornment,
+  Tooltip,
+} from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
+import { useSnackbar } from 'notistack';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 type Delivery = TablesInsert<'deliveries'> & {
   supplier?: {
     name: string;
     contact_person: string;
   };
+  temperature_controls?: any[];
+  non_conformities?: any[];
 };
 
 export default function DeliveryComponent() {
@@ -26,8 +74,10 @@ export default function DeliveryComponent() {
   });
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const { toast } = useToast();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
+  const [expandedDelivery, setExpandedDelivery] = useState<string | false>(false);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     fetchDeliveries();
@@ -39,18 +89,17 @@ export default function DeliveryComponent() {
     try {
       const { data, error } = await supabase
         .from('deliveries')
-        .select(`*, supplier:suppliers(name, contact_person)`)
+        .select(`*, 
+          supplier:suppliers(name, contact_person),
+          temperature_controls:truck_temperature_controls(*),
+          non_conformities:non_conformities(*)`)
         .order('delivery_date', { ascending: false });
 
       if (error) throw error;
       setDeliveries(data || []);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les livraisons',
-        variant: 'destructive',
-      });
+      enqueueSnackbar('Impossible de charger les livraisons', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -63,16 +112,13 @@ export default function DeliveryComponent() {
       setSuppliers(data || []);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
+      enqueueSnackbar('Impossible de charger les fournisseurs', { variant: 'error' });
     }
   };
 
   const handleCreateDelivery = async () => {
     if (!newDelivery.supplier_id || !newDelivery.delivery_date) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez remplir tous les champs obligatoires',
-        variant: 'destructive',
-      });
+      enqueueSnackbar('Veuillez remplir tous les champs obligatoires', { variant: 'warning' });
       return;
     }
 
@@ -82,30 +128,29 @@ export default function DeliveryComponent() {
         .from('deliveries')
         .insert([{
           ...newDelivery,
-          organization_id: 'your-organization-id', // À remplacer par l'ID réel
-          user_id: 'current-user-id', // À remplacer par l'ID utilisateur
+          organization_id: 'your-organization-id',
+          user_id: 'current-user-id',
         }])
         .select();
 
       if (error) throw error;
 
-      toast({
-        title: 'Succès',
-        description: 'Livraison enregistrée avec succès',
+      enqueueSnackbar('Livraison enregistrée avec succès', { 
+        variant: 'success',
+        autoHideDuration: 3000,
       });
 
       setNewDelivery({
         delivery_date: new Date().toISOString(),
         is_compliant: true,
       });
-      setShowForm(false);
+      setOpenDialog(false);
       fetchDeliveries();
     } catch (error) {
       console.error('Error creating delivery:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer la livraison',
-        variant: 'destructive',
+      enqueueSnackbar('Impossible de créer la livraison', { 
+        variant: 'error',
+        autoHideDuration: 4000,
       });
     } finally {
       setIsCreating(false);
@@ -132,225 +177,418 @@ export default function DeliveryComponent() {
         .getPublicUrl(filePath);
 
       setNewDelivery({ ...newDelivery, photo_url: publicUrl });
+      enqueueSnackbar('Photo téléchargée avec succès', { variant: 'success' });
     } catch (error) {
       console.error('Error uploading photo:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger la photo',
-        variant: 'destructive',
-      });
+      enqueueSnackbar('Impossible de télécharger la photo', { variant: 'error' });
     }
   };
 
+  const handleDeleteDelivery = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('deliveries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      enqueueSnackbar('Livraison supprimée avec succès', { variant: 'success' });
+      fetchDeliveries();
+    } catch (error) {
+      console.error('Error deleting delivery:', error);
+      enqueueSnackbar('Impossible de supprimer la livraison', { variant: 'error' });
+    }
+  };
+
+  const handleExpandDelivery = (deliveryId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedDelivery(isExpanded ? deliveryId : false);
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Package className="w-6 h-6" />
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3,
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
+        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LocalShipping fontSize="large" />
           Gestion des Livraisons
-        </h1>
-        <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="w-4 h-4 mr-2" />
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => setOpenDialog(true)}
+          sx={{ ml: 'auto' }}
+        >
           Nouvelle Livraison
         </Button>
-      </div>
+      </Box>
 
-      {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Nouvelle Livraison
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <Label htmlFor="supplier">Fournisseur *</Label>
+      {/* New Delivery Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid rgba(0,0,0,0.12)',
+          py: 2
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Description color="primary" />
+            <Typography variant="h6">Nouvelle Livraison</Typography>
+          </Box>
+          <IconButton onClick={() => setOpenDialog(false)}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
+            gap: 3,
+            mb: 3
+          }}>
+            <FormControl fullWidth>
+              <InputLabel id="supplier-label">Fournisseur *</InputLabel>
               <Select
-                onValueChange={(value) => setNewDelivery({ ...newDelivery, supplier_id: value })}
+                labelId="supplier-label"
+                value={newDelivery.supplier_id || ''}
+                label="Fournisseur"
+                onChange={(e) => setNewDelivery({ ...newDelivery, supplier_id: e.target.value as string })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez un fournisseur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                {suppliers.map((supplier) => (
+                  <MenuItem key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
+            </FormControl>
 
-            <div>
-              <Label htmlFor="date">Date de livraison *</Label>
-              <Input
-                type="datetime-local"
-                value={newDelivery.delivery_date?.substring(0, 16)}
-                onChange={(e) =>
-                  setNewDelivery({
-                    ...newDelivery,
-                    delivery_date: e.target.value ? new Date(e.target.value).toISOString() : '',
-                  })
-                }
-              />
-            </div>
+            <DatePicker
+              label="Date de livraison *"
+              value={newDelivery.delivery_date ? new Date(newDelivery.delivery_date) : null}
+              onChange={(date) =>
+                setNewDelivery({
+                  ...newDelivery,
+                  delivery_date: date ? date.toISOString() : '',
+                })
+              }
+              renderInput={(params) => <TextField {...params} fullWidth />}
+            />
 
-            <div>
-              <Label htmlFor="number">Numéro de livraison</Label>
-              <Input
-                type="text"
-                placeholder="N° livraison"
-                value={newDelivery.delivery_number || ''}
-                onChange={(e) =>
-                  setNewDelivery({ ...newDelivery, delivery_number: e.target.value })
-                }
-              />
-            </div>
+            <TextField
+              label="Numéro de livraison"
+              value={newDelivery.delivery_number || ''}
+              onChange={(e) =>
+                setNewDelivery({ ...newDelivery, delivery_number: e.target.value })
+              }
+              fullWidth
+            />
 
-            <div>
-              <Label htmlFor="compliance">Conformité</Label>
+            <FormControl fullWidth>
+              <InputLabel id="compliance-label">Conformité</InputLabel>
               <Select
-                onValueChange={(value) =>
-                  setNewDelivery({ ...newDelivery, is_compliant: value === 'true' })
-                }
+                labelId="compliance-label"
                 value={newDelivery.is_compliant ? 'true' : 'false'}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Conforme</SelectItem>
-                  <SelectItem value="false">Non conforme</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-2">
-              <Label htmlFor="comments">Commentaires</Label>
-              <Input
-                type="text"
-                placeholder="Commentaires"
-                value={newDelivery.comments || ''}
+                label="Conformité"
                 onChange={(e) =>
-                  setNewDelivery({ ...newDelivery, comments: e.target.value })
+                  setNewDelivery({ ...newDelivery, is_compliant: e.target.value === 'true' })
                 }
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <Label htmlFor="photo">Photo</Label>
-              <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 cursor-pointer border rounded-md p-2 hover:bg-gray-50">
-                  <Camera className="w-4 h-4" />
-                  <span>{newDelivery.photo_url ? 'Photo sélectionnée' : 'Ajouter une photo'}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleUploadPhoto}
-                  />
-                </label>
-                {newDelivery.photo_url && (
-                  <div className="text-sm text-green-600 flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4" />
-                    Photo prête
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowForm(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleCreateDelivery} disabled={isCreating}>
-              {isCreating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                'Enregistrer'
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin" />
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="grid grid-cols-12 bg-gray-100 p-4 font-semibold border-b">
-            <div className="col-span-2">Date</div>
-            <div className="col-span-3">Fournisseur</div>
-            <div className="col-span-2">N° Livraison</div>
-            <div className="col-span-2">Statut</div>
-            <div className="col-span-2">Photo</div>
-            <div className="col-span-1">Actions</div>
-          </div>
-
-          {deliveries.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              Aucune livraison enregistrée
-            </div>
-          ) : (
-            deliveries.map((delivery) => (
-              <div
-                key={delivery.id}
-                className="grid grid-cols-12 p-4 items-center border-b hover:bg-gray-50"
               >
-                <div className="col-span-2">
-                  {new Date(delivery.delivery_date).toLocaleString()}
-                </div>
-                <div className="col-span-3">
-                  <div className="font-medium">{delivery.supplier?.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {delivery.supplier?.contact_person}
-                  </div>
-                </div>
-                <div className="col-span-2">{delivery.delivery_number || '-'}</div>
-                <div className="col-span-2">
-                  {delivery.is_compliant ? (
-                    <span className="inline-flex items-center gap-1 text-green-600">
-                      <CheckCircle className="w-4 h-4" />
-                      Conforme
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-red-600">
-                      <XCircle className="w-4 h-4" />
-                      Non conforme
-                    </span>
-                  )}
-                </div>
-                <div className="col-span-2">
-                  {delivery.photo_url ? (
-                    <a
-                      href={delivery.photo_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Voir
-                    </a>
-                  ) : (
-                    <span className="text-gray-400">Aucune</span>
-                  )}
-                </div>
-                <div className="col-span-1">
-                  <Button variant="ghost" size="sm">
-                    Détails
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                <MenuItem value="true">Conforme</MenuItem>
+                <MenuItem value="false">Non conforme</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Commentaires"
+              value={newDelivery.comments || ''}
+              onChange={(e) =>
+                setNewDelivery({ ...newDelivery, comments: e.target.value })
+              }
+              fullWidth
+              multiline
+              rows={2}
+              sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}
+            />
+
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="delivery-photo-upload"
+                type="file"
+                onChange={handleUploadPhoto}
+              />
+              <label htmlFor="delivery-photo-upload">
+                <Button
+                  component="span"
+                  variant="outlined"
+                  startIcon={<CloudUpload />}
+                  fullWidth
+                  sx={{ py: 2 }}
+                >
+                  {newDelivery.photo_url ? 'Photo sélectionnée' : 'Ajouter une photo'}
+                </Button>
+              </label>
+              {newDelivery.photo_url && (
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircle color="success" fontSize="small" />
+                  <Typography variant="body2" color="text.secondary">
+                    Photo prête à être enregistrée
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: '1px solid rgba(0,0,0,0.12)',
+          px: 3,
+          py: 2
+        }}>
+          <Button 
+            onClick={() => setOpenDialog(false)} 
+            color="inherit"
+            sx={{ mr: 2 }}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleCreateDelivery}
+            color="primary"
+            variant="contained"
+            disabled={isCreating}
+            startIcon={isCreating ? <CircularProgress size={20} /> : null}
+          >
+            {isCreating ? 'Enregistrement...' : 'Enregistrer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Deliveries List */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+          <CircularProgress size={60} />
+        </Box>
+      ) : deliveries.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary">
+            Aucune livraison enregistrée
+          </Typography>
+          <Button 
+            variant="outlined" 
+            startIcon={<Add />}
+            onClick={() => setOpenDialog(true)}
+            sx={{ mt: 2 }}
+          >
+            Créer une livraison
+          </Button>
+        </Paper>
+      ) : (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 2 
+        }}>
+          {deliveries.map((delivery) => (
+            <Accordion
+              key={delivery.id}
+              expanded={expandedDelivery === delivery.id}
+              onChange={handleExpandDelivery(delivery.id)}
+              elevation={3}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMore />}
+                sx={{
+                  backgroundColor: expandedDelivery === delivery.id ? 'action.selected' : 'background.paper',
+                  '&:hover': {
+                    backgroundColor: 'action.hover'
+                  }
+                }}
+              >
+                <Box sx={{ 
+                  width: '100%', 
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr', md: '1.5fr 1fr 1fr 1fr 0.5fr' },
+                  gap: 1,
+                  alignItems: 'center'
+                }}>
+                  <Box>
+                    <Typography variant="subtitle1" noWrap>
+                      {delivery.supplier?.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {format(new Date(delivery.delivery_date), 'PPPp', { locale: fr })}
+                    </Typography>
+                  </Box>
+                  
+                  <Typography variant="body1" noWrap>
+                    {delivery.delivery_number || 'N/A'}
+                  </Typography>
+                  
+                  <Box>
+                    {delivery.is_compliant ? (
+                      <Chip 
+                        label="Conforme" 
+                        color="success" 
+                        size="small" 
+                        icon={<CheckCircle fontSize="small" />}
+                      />
+                    ) : (
+                      <Chip 
+                        label="Non conforme" 
+                        color="error" 
+                        size="small" 
+                        icon={<Cancel fontSize="small" />}
+                      />
+                    )}
+                  </Box>
+                  
+                  <Box>
+                    {delivery.photo_url ? (
+                      <Button
+                        href={delivery.photo_url}
+                        target="_blank"
+                        rel="noopener"
+                        size="small"
+                        startIcon={<CameraAlt fontSize="small" />}
+                      >
+                        Voir photo
+                      </Button>
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">
+                        Aucune photo
+                      </Typography>
+                    )}
+                  </Box>
+                  
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end',
+                    gap: 1
+                  }}>
+                    <Tooltip title="Supprimer">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDelivery(delivery.id);
+                        }}
+                      >
+                        <Delete fontSize="small" color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ 
+                borderTop: '1px solid rgba(0,0,0,0.12)',
+                pt: 2
+              }}>
+                <Box sx={{ 
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 3
+                }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Détails de la livraison
+                      </Typography>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Fournisseur:
+                        </Typography>
+                        <Typography variant="body1">
+                          {delivery.supplier?.name}
+                        </Typography>
+                        <Typography variant="body2">
+                          {delivery.supplier?.contact_person}
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Commentaires:
+                        </Typography>
+                        <Typography variant="body1">
+                          {delivery.comments || 'Aucun commentaire'}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: 'flex-end' }}>
+                      <Button 
+                        size="small"
+                        startIcon={<Edit fontSize="small" />}
+                      >
+                        Modifier
+                      </Button>
+                    </CardActions>
+                  </Card>
+                  
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Contrôles associés
+                    </Typography>
+                    
+                    {delivery.temperature_controls?.length ? (
+                      <Card variant="outlined" sx={{ mb: 2 }}>
+                        <CardContent>
+                          <Typography variant="body2" color="text.secondary">
+                            Température camion:
+                          </Typography>
+                          {delivery.temperature_controls.map((control) => (
+                            <Box key={control.id} sx={{ mt: 1 }}>
+                              <Typography variant="body1">
+                                {control.truck_temperature}°C ({control.storage_type})
+                              </Typography>
+                              <Typography variant="body2">
+                                {control.is_compliant ? 'Conforme' : 'Non conforme'}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                    
+                    {delivery.non_conformities?.length ? (
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Typography variant="body2" color="text.secondary">
+                            Non-conformités:
+                          </Typography>
+                          {delivery.non_conformities.map((nc) => (
+                            <Box key={nc.id} sx={{ mt: 1 }}>
+                              <Typography variant="body1">
+                                {nc.product_name} - {nc.non_conformity_type}
+                              </Typography>
+                              <Typography variant="body2">
+                                {nc.description}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                  </Box>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
