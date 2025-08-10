@@ -18,36 +18,56 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          employee_id: string | null
           id: string
           is_active: boolean | null
           name: string
           organization_id: string | null
           type: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           name: string
           organization_id?: string | null
           type?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
           organization_id?: string | null
           type?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cleaning_equipment_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cleaning_equipment_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_equipment_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -56,33 +76,53 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string
+          employee_id: string | null
           id: string
           name: string
           organization_id: string | null
           steps: string[] | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           description: string
+          employee_id?: string | null
           id?: string
           name: string
           organization_id?: string | null
           steps?: string[] | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string
+          employee_id?: string | null
           id?: string
           name?: string
           organization_id?: string | null
           steps?: string[] | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cleaning_methods_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cleaning_methods_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -91,6 +131,7 @@ export type Database = {
         Row: {
           brand: string | null
           created_at: string | null
+          employee_id: string | null
           id: string
           is_active: boolean | null
           name: string
@@ -98,10 +139,12 @@ export type Database = {
           safety_instructions: string | null
           type: string | null
           usage_instructions: string | null
+          user_id: string | null
         }
         Insert: {
           brand?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -109,10 +152,12 @@ export type Database = {
           safety_instructions?: string | null
           type?: string | null
           usage_instructions?: string | null
+          user_id?: string | null
         }
         Update: {
           brand?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
@@ -120,13 +165,28 @@ export type Database = {
           safety_instructions?: string | null
           type?: string | null
           usage_instructions?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cleaning_products_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cleaning_products_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_products_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -137,6 +197,7 @@ export type Database = {
           comments: string | null
           completion_date: string | null
           created_at: string | null
+          employee_id: string | null
           id: string
           is_completed: boolean | null
           is_compliant: boolean | null
@@ -150,6 +211,7 @@ export type Database = {
           comments?: string | null
           completion_date?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_completed?: boolean | null
           is_compliant?: boolean | null
@@ -163,6 +225,7 @@ export type Database = {
           comments?: string | null
           completion_date?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_completed?: boolean | null
           is_compliant?: boolean | null
@@ -180,6 +243,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cleaning_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cleaning_records_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -193,22 +263,28 @@ export type Database = {
           cleaning_zone_id: string | null
           created_at: string | null
           description: string | null
+          employee_id: string | null
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           cleaning_zone_id?: string | null
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           cleaning_zone_id?: string | null
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -216,6 +292,20 @@ export type Database = {
             columns: ["cleaning_zone_id"]
             isOneToOne: false
             referencedRelation: "cleaning_zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_sub_zones_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_sub_zones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -229,6 +319,7 @@ export type Database = {
           cleaning_sub_zone_id: string | null
           cleaning_zone_id: string | null
           created_at: string | null
+          employee_id: string | null
           frequency: string
           frequency_days: number | null
           id: string
@@ -237,6 +328,7 @@ export type Database = {
           organization_id: string | null
           responsible_role: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           action_to_perform: string
@@ -246,6 +338,7 @@ export type Database = {
           cleaning_sub_zone_id?: string | null
           cleaning_zone_id?: string | null
           created_at?: string | null
+          employee_id?: string | null
           frequency: string
           frequency_days?: number | null
           id?: string
@@ -254,6 +347,7 @@ export type Database = {
           organization_id?: string | null
           responsible_role?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           action_to_perform?: string
@@ -263,6 +357,7 @@ export type Database = {
           cleaning_sub_zone_id?: string | null
           cleaning_zone_id?: string | null
           created_at?: string | null
+          employee_id?: string | null
           frequency?: string
           frequency_days?: number | null
           id?: string
@@ -271,6 +366,7 @@ export type Database = {
           organization_id?: string | null
           responsible_role?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -309,10 +405,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cleaning_tasks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cleaning_tasks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -321,30 +431,50 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          employee_id: string | null
           id: string
           name: string
           organization_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           name: string
           organization_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           name?: string
           organization_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cleaning_zones_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cleaning_zones_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_zones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -354,6 +484,7 @@ export type Database = {
           cold_storage_unit_id: string | null
           comments: string | null
           created_at: string | null
+          employee_id: string | null
           id: string
           is_compliant: boolean
           reading_date: string
@@ -364,6 +495,7 @@ export type Database = {
           cold_storage_unit_id?: string | null
           comments?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant: boolean
           reading_date: string
@@ -374,6 +506,7 @@ export type Database = {
           cold_storage_unit_id?: string | null
           comments?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant?: boolean
           reading_date?: string
@@ -381,6 +514,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cold_storage_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cold_storage_temperature_readings_cold_storage_unit_id_fkey"
             columns: ["cold_storage_unit_id"]
@@ -400,6 +540,7 @@ export type Database = {
       cold_storage_units: {
         Row: {
           created_at: string | null
+          employee_id: string | null
           id: string
           is_active: boolean | null
           location: string
@@ -409,9 +550,11 @@ export type Database = {
           organization_id: string | null
           type: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           location: string
@@ -421,9 +564,11 @@ export type Database = {
           organization_id?: string | null
           type: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           location?: string
@@ -433,13 +578,28 @@ export type Database = {
           organization_id?: string | null
           type?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cold_storage_units_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cold_storage_units_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cold_storage_units_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -448,6 +608,7 @@ export type Database = {
         Row: {
           comments: string | null
           created_at: string | null
+          employee_id: string | null
           end_core_temperature: number | null
           end_date: string | null
           id: string
@@ -463,6 +624,7 @@ export type Database = {
         Insert: {
           comments?: string | null
           created_at?: string | null
+          employee_id?: string | null
           end_core_temperature?: number | null
           end_date?: string | null
           id?: string
@@ -478,6 +640,7 @@ export type Database = {
         Update: {
           comments?: string | null
           created_at?: string | null
+          employee_id?: string | null
           end_core_temperature?: number | null
           end_date?: string | null
           id?: string
@@ -491,6 +654,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cooling_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cooling_records_organization_id_fkey"
             columns: ["organization_id"]
@@ -513,6 +683,7 @@ export type Database = {
           created_at: string | null
           delivery_date: string
           delivery_number: string | null
+          employee_id: string | null
           id: string
           is_compliant: boolean | null
           organization_id: string | null
@@ -526,6 +697,7 @@ export type Database = {
           created_at?: string | null
           delivery_date: string
           delivery_number?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant?: boolean | null
           organization_id?: string | null
@@ -539,6 +711,7 @@ export type Database = {
           created_at?: string | null
           delivery_date?: string
           delivery_number?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant?: boolean | null
           organization_id?: string | null
@@ -548,6 +721,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "deliveries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deliveries_organization_id_fkey"
             columns: ["organization_id"]
@@ -571,9 +751,61 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          created_at: string | null
+          first_name: string
+          id: string
+          is_active: boolean | null
+          last_name: string
+          organization_id: string
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_name: string
+          id?: string
+          is_active?: boolean | null
+          last_name: string
+          organization_id: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          first_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_name?: string
+          organization_id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       label_printings: {
         Row: {
           created_at: string | null
+          employee_id: string | null
           expiry_date: string
           id: string
           label_count: number
@@ -584,6 +816,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          employee_id?: string | null
           expiry_date: string
           id?: string
           label_count: number
@@ -594,6 +827,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          employee_id?: string | null
           expiry_date?: string
           id?: string
           label_count?: number
@@ -603,6 +837,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "label_printings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "label_printings_organization_id_fkey"
             columns: ["organization_id"]
@@ -630,6 +871,7 @@ export type Database = {
         Row: {
           batch_number: string | null
           created_at: string | null
+          employee_id: string | null
           id: string
           organization_id: string | null
           photo_url: string
@@ -641,6 +883,7 @@ export type Database = {
         Insert: {
           batch_number?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           organization_id?: string | null
           photo_url: string
@@ -652,6 +895,7 @@ export type Database = {
         Update: {
           batch_number?: string | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           organization_id?: string | null
           photo_url?: string
@@ -661,6 +905,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "label_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "label_records_organization_id_fkey"
             columns: ["organization_id"]
@@ -682,6 +933,7 @@ export type Database = {
           created_at: string | null
           delivery_id: string | null
           description: string | null
+          employee_id: string | null
           id: string
           non_conformity_type: string
           other_cause: string | null
@@ -690,11 +942,13 @@ export type Database = {
           product_reception_control_id: string | null
           quantity: number | null
           quantity_type: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           delivery_id?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           non_conformity_type: string
           other_cause?: string | null
@@ -703,11 +957,13 @@ export type Database = {
           product_reception_control_id?: string | null
           quantity?: number | null
           quantity_type?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           delivery_id?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           non_conformity_type?: string
           other_cause?: string | null
@@ -716,6 +972,7 @@ export type Database = {
           product_reception_control_id?: string | null
           quantity?: number | null
           quantity_type?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -726,10 +983,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "non_conformities_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "non_conformities_product_reception_control_id_fkey"
             columns: ["product_reception_control_id"]
             isOneToOne: false
             referencedRelation: "product_reception_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "non_conformities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -741,6 +1012,7 @@ export type Database = {
           control_date: string
           control_type: string
           created_at: string | null
+          employee_id: string | null
           equipment_name: string | null
           id: string
           next_control_date: string | null
@@ -757,6 +1029,7 @@ export type Database = {
           control_date: string
           control_type: string
           created_at?: string | null
+          employee_id?: string | null
           equipment_name?: string | null
           id?: string
           next_control_date?: string | null
@@ -773,6 +1046,7 @@ export type Database = {
           control_date?: string
           control_type?: string
           created_at?: string | null
+          employee_id?: string | null
           equipment_name?: string | null
           id?: string
           next_control_date?: string | null
@@ -784,6 +1058,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "oil_quality_controls_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "oil_quality_controls_organization_id_fkey"
             columns: ["organization_id"]
@@ -811,6 +1092,7 @@ export type Database = {
           name: string
           phone: string | null
           updated_at: string | null
+          user_id: string | null
           zip_code: string | null
         }
         Insert: {
@@ -823,6 +1105,7 @@ export type Database = {
           name: string
           phone?: string | null
           updated_at?: string | null
+          user_id?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -835,44 +1118,73 @@ export type Database = {
           name?: string
           phone?: string | null
           updated_at?: string | null
+          user_id?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_label_types: {
         Row: {
           category: string
           created_at: string | null
+          employee_id: string | null
           id: string
           is_active: boolean | null
           organization_id: string | null
           shelf_life_days: number
           sub_category: string
+          user_id: string | null
         }
         Insert: {
           category: string
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           organization_id?: string | null
           shelf_life_days: number
           sub_category: string
+          user_id?: string | null
         }
         Update: {
           category?: string
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           organization_id?: string | null
           shelf_life_days?: number
           sub_category?: string
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "product_label_types_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_label_types_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_label_types_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -883,6 +1195,7 @@ export type Database = {
           control_date: string
           created_at: string | null
           delivery_id: string | null
+          employee_id: string | null
           id: string
           is_compliant: boolean
           product_id: string | null
@@ -890,12 +1203,14 @@ export type Database = {
           storage_type: string
           temperature: number | null
           use_by_date: string | null
+          user_id: string | null
         }
         Insert: {
           best_before_date?: string | null
           control_date: string
           created_at?: string | null
           delivery_id?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant: boolean
           product_id?: string | null
@@ -903,12 +1218,14 @@ export type Database = {
           storage_type?: string
           temperature?: number | null
           use_by_date?: string | null
+          user_id?: string | null
         }
         Update: {
           best_before_date?: string | null
           control_date?: string
           created_at?: string | null
           delivery_id?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant?: boolean
           product_id?: string | null
@@ -916,6 +1233,7 @@ export type Database = {
           storage_type?: string
           temperature?: number | null
           use_by_date?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -926,10 +1244,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "product_reception_controls_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "product_reception_controls_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reception_controls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -939,6 +1271,7 @@ export type Database = {
           category: string
           created_at: string | null
           description: string | null
+          employee_id: string | null
           id: string
           name: string
           organization_id: string | null
@@ -947,11 +1280,13 @@ export type Database = {
           sub_category: string | null
           unit_of_measure: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           category: string
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           name: string
           organization_id?: string | null
@@ -960,11 +1295,13 @@ export type Database = {
           sub_category?: string | null
           unit_of_measure?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           category?: string
           created_at?: string | null
           description?: string | null
+          employee_id?: string | null
           id?: string
           name?: string
           organization_id?: string | null
@@ -973,13 +1310,28 @@ export type Database = {
           sub_category?: string | null
           unit_of_measure?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -988,6 +1340,7 @@ export type Database = {
         Row: {
           battery_level: number | null
           created_at: string | null
+          employee_id: string | null
           humidity: number | null
           id: string
           is_alert: boolean | null
@@ -995,10 +1348,12 @@ export type Database = {
           sensor_id: string | null
           signal_strength: number | null
           temperature: number
+          user_id: string | null
         }
         Insert: {
           battery_level?: number | null
           created_at?: string | null
+          employee_id?: string | null
           humidity?: number | null
           id?: string
           is_alert?: boolean | null
@@ -1006,10 +1361,12 @@ export type Database = {
           sensor_id?: string | null
           signal_strength?: number | null
           temperature: number
+          user_id?: string | null
         }
         Update: {
           battery_level?: number | null
           created_at?: string | null
+          employee_id?: string | null
           humidity?: number | null
           id?: string
           is_alert?: boolean | null
@@ -1017,8 +1374,23 @@ export type Database = {
           sensor_id?: string | null
           signal_strength?: number | null
           temperature?: number
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sensor_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensor_readings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sensor_temperature_readings_sensor_id_fkey"
             columns: ["sensor_id"]
@@ -1034,40 +1406,60 @@ export type Database = {
           contact_person: string | null
           created_at: string | null
           email: string | null
+          employee_id: string | null
           id: string
           name: string
           organization_id: string | null
           phone: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           address?: string | null
           contact_person?: string | null
           created_at?: string | null
           email?: string | null
+          employee_id?: string | null
           id?: string
           name: string
           organization_id?: string | null
           phone?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string | null
           contact_person?: string | null
           created_at?: string | null
           email?: string | null
+          employee_id?: string | null
           id?: string
           name?: string
           organization_id?: string | null
           phone?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "suppliers_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "suppliers_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1078,6 +1470,7 @@ export type Database = {
           alert_time: string
           alert_type: string
           created_at: string | null
+          employee_id: string | null
           id: string
           is_resolved: boolean | null
           resolution_comment: string | null
@@ -1087,12 +1480,14 @@ export type Database = {
           temperature_reading_id: string | null
           threshold_value: number | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           actual_value?: number | null
           alert_time: string
           alert_type: string
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_resolved?: boolean | null
           resolution_comment?: string | null
@@ -1102,12 +1497,14 @@ export type Database = {
           temperature_reading_id?: string | null
           threshold_value?: number | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           actual_value?: number | null
           alert_time?: string
           alert_type?: string
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_resolved?: boolean | null
           resolution_comment?: string | null
@@ -1117,8 +1514,16 @@ export type Database = {
           temperature_reading_id?: string | null
           threshold_value?: number | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "temperature_alerts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "temperature_alerts_resolved_by_user_id_fkey"
             columns: ["resolved_by_user_id"]
@@ -1140,6 +1545,13 @@ export type Database = {
             referencedRelation: "sensor_temperature_readings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "temperature_alerts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       temperature_sensors: {
@@ -1147,6 +1559,7 @@ export type Database = {
           alert_max_temperature: number | null
           alert_min_temperature: number | null
           created_at: string | null
+          employee_id: string | null
           id: string
           is_active: boolean | null
           last_calibration_date: string | null
@@ -1159,11 +1572,13 @@ export type Database = {
           organization_id: string | null
           sensor_type: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           alert_max_temperature?: number | null
           alert_min_temperature?: number | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           last_calibration_date?: string | null
@@ -1176,11 +1591,13 @@ export type Database = {
           organization_id?: string | null
           sensor_type: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           alert_max_temperature?: number | null
           alert_min_temperature?: number | null
           created_at?: string | null
+          employee_id?: string | null
           id?: string
           is_active?: boolean | null
           last_calibration_date?: string | null
@@ -1193,13 +1610,28 @@ export type Database = {
           organization_id?: string | null
           sensor_type?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "temperature_sensors_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "temperature_sensors_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temperature_sensors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1209,30 +1641,50 @@ export type Database = {
           control_date: string
           created_at: string | null
           delivery_id: string | null
+          employee_id: string | null
           id: string
           is_compliant: boolean
           storage_type: string
           truck_temperature: number
+          user_id: string | null
         }
         Insert: {
           control_date: string
           created_at?: string | null
           delivery_id?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant: boolean
           storage_type: string
           truck_temperature: number
+          user_id?: string | null
         }
         Update: {
           control_date?: string
           created_at?: string | null
           delivery_id?: string | null
+          employee_id?: string | null
           id?: string
           is_compliant?: boolean
           storage_type?: string
           truck_temperature?: number
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "truck_temp_controls_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "truck_temp_controls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "truck_temperature_controls_delivery_id_fkey"
             columns: ["delivery_id"]
@@ -1294,7 +1746,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_authenticated: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
