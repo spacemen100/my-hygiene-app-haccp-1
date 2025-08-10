@@ -12,7 +12,7 @@ export default function TemperatureControl() {
   const [truckControl, setTruckControl] = useState<TablesInsert<'truck_temperature_controls'>>({
     delivery_id: null,
     storage_type: '',
-    truck_temperature: null,
+    truck_temperature: 0,
     control_date: new Date().toISOString(),
     is_compliant: true,
   });
@@ -169,8 +169,8 @@ export default function TemperatureControl() {
             <label className="block">Température du camion (°C)</label>
             <input
               type="number"
-              value={truckControl.truck_temperature || ''}
-              onChange={(e) => setTruckControl({...truckControl, truck_temperature: Number(e.target.value)})}
+              value={truckControl.truck_temperature}
+              onChange={(e) => setTruckControl({...truckControl, truck_temperature: Number(e.target.value) || 0})}
               required
               className="w-full p-2 border rounded"
               step="0.1"
