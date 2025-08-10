@@ -39,11 +39,11 @@ const menuItems = [
   { href: "/enceintes-froides", icon: SnowflakeIcon, label: "Enceintes froides" },
   { href: "/suivi-refroidissement", icon: ThermometerIcon, label: "Suivi de refroidissement" },
   { href: "/plan-nettoyage", icon: SprayCanIcon, label: "Plan de nettoyage" },
+  { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
-  { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
 ];
 
 interface AppProviderProps {
@@ -58,7 +58,8 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
   const pathname = usePathname();
 
   const drawer = (
-    <Box>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Header fixe */}
       <Box
         sx={{
           p: 3,
@@ -67,6 +68,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
           display: 'flex',
           alignItems: 'center',
           gap: 2,
+          flexShrink: 0,
         }}
       >
         <Box
@@ -92,60 +94,78 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         </Box>
       </Box>
 
-      <List sx={{ mt: 1 }}>
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          
-          return (
-            <ListItem key={item.href} disablePadding>
-              <ListItemButton
-                component={Link}
-                href={item.href}
-                selected={isActive}
-                onClick={() => isMobile && onDrawerToggle && onDrawerToggle()}
-                sx={{
-                  '&.Mui-selected': {
-                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: 'primary.main',
-                    },
-                    '& .MuiListItemText-primary': {
-                      color: 'primary.main',
-                      fontWeight: 600,
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <Icon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
+      {/* Zone scrollable pour le menu */}
+      <Box sx={{ 
+        flex: 1, 
+        overflow: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f1f1',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#c1c1c1',
+          borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: '#a8a8a8',
+        },
+      }}>
+        <List sx={{ mt: 1, pb: 2 }}>
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            
+            return (
+              <ListItem key={item.href} disablePadding>
+                <ListItemButton
+                  component={Link}
+                  href={item.href}
+                  selected={isActive}
+                  onClick={() => isMobile && onDrawerToggle && onDrawerToggle()}
                   sx={{
-                    '& .MuiListItemText-primary': {
-                      fontSize: '0.875rem',
-                      fontWeight: isActive ? 600 : 400,
-                    }
+                    '&.Mui-selected': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      },
+                      '& .MuiListItemText-primary': {
+                        color: 'primary.main',
+                        fontWeight: 600,
+                      },
+                    },
                   }}
-                />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
-      </List>
+                >
+                  <ListItemIcon>
+                    <Icon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    sx={{
+                      '& .MuiListItemText-primary': {
+                        fontSize: '0.875rem',
+                        fontWeight: isActive ? 600 : 400,
+                      }
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+      </Box>
 
+      {/* Footer fixe */}
       <Box
         sx={{
-          position: 'absolute',
-          bottom: 0,
-          width: '100%',
           p: 2,
           borderTop: '1px solid rgba(0, 0, 0, 0.08)',
           bgcolor: 'grey.50',
+          flexShrink: 0,
         }}
       >
         <Typography variant="body2" color="text.secondary" align="center">
@@ -176,6 +196,8 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
+              height: '100vh',
+              overflow: 'hidden',
             },
           }}
         >
@@ -188,8 +210,9 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              top: 0, // Touche le haut de l'écran
-              height: '100%', // Prend toute la hauteur
+              top: 0,
+              height: '100vh',
+              overflow: 'hidden',
             },
           }}
           open

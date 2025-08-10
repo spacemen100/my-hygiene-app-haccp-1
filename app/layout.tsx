@@ -12,6 +12,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
 import { theme } from '@/theme/theme';
 import { AuthProvider } from '@/components/AuthProvider';
+import { EmployeeProvider } from '@/contexts/EmployeeContext';
 import { AppLayout } from '@/components/AppLayout';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
@@ -63,9 +64,11 @@ export default function RootLayout({
           <CssBaseline />
           <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
             <AuthProvider session={session}>
-              <AppLayout>
-                {children}
-              </AppLayout>
+              <EmployeeProvider>
+                <AppLayout>
+                  {children}
+                </AppLayout>
+              </EmployeeProvider>
             </AuthProvider>
           </LocalizationProvider>
         </ThemeProvider>
