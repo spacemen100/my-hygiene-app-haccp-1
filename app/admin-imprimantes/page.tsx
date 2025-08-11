@@ -13,7 +13,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
   Paper,
   Stack,
   Avatar,
@@ -459,7 +458,7 @@ export default function PrintersAdmin() {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={formData.is_active}
+                      checked={formData.is_active ?? true}
                       onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
                     />
                   }

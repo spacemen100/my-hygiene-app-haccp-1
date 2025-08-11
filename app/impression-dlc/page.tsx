@@ -40,6 +40,43 @@ import {
   HelpOutline
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import JsBarcode from 'jsbarcode';
+import { useRef, useEffect as useEffectBarcode } from 'react';
+
+// Composant pour afficher le code-barres
+function BarcodeDisplay({ value }: { value: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffectBarcode(() => {
+    if (canvasRef.current && value) {
+      try {
+        JsBarcode(canvasRef.current, value, {
+          format: 'CODE128',
+          width: 2,
+          height: 50,
+          displayValue: true,
+          fontSize: 12,
+          textMargin: 8,
+          fontOptions: 'bold',
+          textAlign: 'center'
+        });
+      } catch (error) {
+        console.error('Erreur génération code-barres:', error);
+      }
+    }
+  }, [value]);
+
+  if (!value) return null;
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+      <Typography variant="caption" color="text.secondary">
+        CODE-BARRES
+      </Typography>
+      <canvas ref={canvasRef} />
+    </Box>
+  );
+}
 
 export default function LabelPrinting() {
   const [formData, setFormData] = useState<TablesInsert<'label_printings'>>({
@@ -49,6 +86,7 @@ export default function LabelPrinting() {
     product_label_type_id: null,
     organization_id: null,
   });
+  const [barcodeValue, setBarcodeValue] = useState('');
   const [labelTypes, setLabelTypes] = useState<Tables<'product_label_types'>[]>([]);
   const [loading, setLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{
@@ -63,9 +101,25 @@ export default function LabelPrinting() {
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
+  // Fonction pour générer un code-barres unique
+  const generateBarcode = () => {
+    const timestamp = Date.now().toString();
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `DLC${timestamp.slice(-8)}${random}`;
+  };
+
   useEffect(() => {
     fetchLabelTypes();
+    // Générer un code-barres unique au chargement
+    setBarcodeValue(generateBarcode());
   }, []);
+
+  // Regénérer le code-barres quand on change la date d'expiration ou le type
+  useEffect(() => {
+    if (formData.expiry_date && formData.product_label_type_id) {
+      setBarcodeValue(generateBarcode());
+    }
+  }, [formData.expiry_date, formData.product_label_type_id]);
 
   useEffect(() => {
     if (formData.expiry_date) {
@@ -260,15 +314,15 @@ export default function LabelPrinting() {
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
+                  <Box sx={{ flex: 1 }}>
                     <Typography color="text.secondary" gutterBottom variant="body2">
-                      Type d&apos;étiquette
+                      Code-barres généré
                     </Typography>
-                    <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-                      {labelTypes.find(t => t.id === formData.product_label_type_id)?.category || 'Non défini'}
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                      {barcodeValue || 'En attente...'}
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
+                  <Avatar sx={{ bgcolor: '#9c27b020', color: '#9c27b0' }}>
                     <Category />
                   </Avatar>
                 </Box>
@@ -480,6 +534,11 @@ export default function LabelPrinting() {
                         }
                       </Typography>
                     </Box>
+
+                    {/* Code-barres */}
+                    {barcodeValue && (
+                      <BarcodeDisplay value={barcodeValue} />
+                    )}
                     
                     {previewData.urgencyLevel && (
                       <Chip
