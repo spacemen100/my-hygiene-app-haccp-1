@@ -90,6 +90,10 @@ export default function AdminFournisseursPage() {
   };
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
+    // Réinitialiser les alertes au moment d'ouvrir le dialogue
+    setError(null);
+    setSuccess(null);
+    
     if (supplier) {
       setEditingSupplier(supplier);
       setFormData({
@@ -115,8 +119,7 @@ export default function AdminFournisseursPage() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingSupplier(null);
-    setError(null);
-    setSuccess(null);
+    // Ne pas réinitialiser les alertes ici pour les laisser visibles
   };
 
   const handleSave = async () => {
@@ -158,9 +161,13 @@ export default function AdminFournisseursPage() {
       }
 
       await loadSuppliers();
+      // Fermer le modal immédiatement après le succès
+      handleCloseDialog();
+      
+      // Auto-masquer l'alerte de succès après 3 secondes
       setTimeout(() => {
-        handleCloseDialog();
-      }, 1500);
+        setSuccess(null);
+      }, 3000);
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');
@@ -185,6 +192,11 @@ export default function AdminFournisseursPage() {
       await loadSuppliers();
       setDeleteDialogOpen(false);
       setSupplierToDelete(null);
+      
+      // Auto-masquer l'alerte de succès après 3 secondes
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
       setError('Erreur lors de la suppression');
