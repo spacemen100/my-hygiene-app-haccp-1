@@ -74,6 +74,7 @@ export default function AdminEmployesPage() {
   const [defaultOrganization, setDefaultOrganization] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<Tables<'organizations'>[]>([]);
   const [saving, setSaving] = useState(false);
+  const [customRole, setCustomRole] = useState('');
   const { employee: currentEmployee, loading: employeeLoading } = useEmployee();
   // const router = useRouter();
   
@@ -213,13 +214,15 @@ export default function AdminEmployesPage() {
     
     if (employee) {
       setEditingEmployee(employee);
+      const isCustomRole = employee.role && !ROLES.includes(employee.role);
       setFormData({
         first_name: employee.first_name,
         last_name: employee.last_name,
-        role: employee.role,
+        role: isCustomRole ? 'Autre' : employee.role,
         is_active: employee.is_active ?? true,
         organization_id: employee.organization_id,
       });
+      setCustomRole(isCustomRole ? employee.role : '');
     } else {
       setEditingEmployee(null);
       setFormData({
@@ -229,6 +232,7 @@ export default function AdminEmployesPage() {
         is_active: true,
         organization_id: currentEmployee?.organization_id || defaultOrganization || '',
       });
+      setCustomRole('');
     }
     setDialogOpen(true);
   };
@@ -237,6 +241,7 @@ export default function AdminEmployesPage() {
     setDialogOpen(false);
     setEditingEmployee(null);
     setError(null);
+    setCustomRole('');
     // Ne pas nettoyer setSuccess(null) ici pour garder le message visible après fermeture
     
     // Réinitialiser le formData pour éviter des conflits futurs
@@ -286,13 +291,28 @@ export default function AdminEmployesPage() {
         return;
       }
 
+      if (formData.role === 'Autre' && !customRole.trim()) {
+        setError('Veuillez spécifier le rôle personnalisé');
+        setSaving(false);
+        return;
+      }
+
       const organizationId = formData.organization_id;
+      
+      // Déterminer le rôle final : utiliser le rôle personnalisé si "Autre" est sélectionné
+      const finalRole = formData.role === 'Autre' ? customRole.trim() || null : formData.role;
+      
+      const employeeData = {
+        ...formData,
+        role: finalRole,
+        organization_id: organizationId
+      };
 
       if (editingEmployee) {
         // Update existing employee
         const { error } = await supabase
           .from('employees')
-          .update({ ...formData, organization_id: organizationId } as EmployeeUpdate)
+          .update(employeeData as EmployeeUpdate)
           .eq('id', editingEmployee.id);
 
         if (error) throw error;
@@ -301,7 +321,7 @@ export default function AdminEmployesPage() {
         // Create new employee
         const { error } = await supabase
           .from('employees')
-          .insert([{ ...formData, organization_id: organizationId }]);
+          .insert([employeeData]);
 
         if (error) throw error;
         setSuccess('Employé créé avec succès');
@@ -675,7 +695,13 @@ export default function AdminEmployesPage() {
               <InputLabel>Rôle</InputLabel>
               <Select
                 value={formData.role || ''}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value || null })}
+                onChange={(e) => {
+                  const selectedRole = e.target.value || null;
+                  setFormData({ ...formData, role: selectedRole });
+                  if (selectedRole !== 'Autre') {
+                    setCustomRole(''); // Reset custom role if not "Autre"
+                  }
+                }}
                 label="Rôle"
               >
                 <MenuItem value="">
@@ -688,6 +714,21 @@ export default function AdminEmployesPage() {
                 ))}
               </Select>
             </FormControl>
+
+            {/* Champ texte conditionnel pour rôle personnalisé */}
+            {formData.role === 'Autre' && (
+              <TextField
+                label="Spécifiez le rôle *"
+                value={customRole}
+                onChange={(e) => setCustomRole(e.target.value)}
+                fullWidth
+                placeholder="Saisissez le rôle personnalisé"
+                helperText="Veuillez spécifier le rôle de l'employé"
+                sx={{
+                  gridColumn: { xs: 'span 1', md: 'span 2' }, // Prend toute la largeur
+                }}
+              />
+            )}
 
             <FormControl fullWidth>
               <InputLabel>Organisation *</InputLabel>
