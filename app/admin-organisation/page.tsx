@@ -463,7 +463,7 @@ export default function AdminOrganisationPage() {
                         Aucune organisation trouvée
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Cliquez sur "Nouvelle Organisation" pour créer votre première organisation
+                        Cliquez sur &quot;Nouvelle Organisation&quot; pour créer votre première organisation
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -562,7 +562,7 @@ export default function AdminOrganisationPage() {
         <DialogTitle>Confirmer la suppression</DialogTitle>
         <DialogContent>
           <Typography>
-            Êtes-vous sûr de vouloir supprimer l&apos;organisation &quot;{organizationToDelete?.name}&quot; ?
+            {`Êtes-vous sûr de vouloir supprimer l'organisation "${organizationToDelete?.name}" ?`}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Cette action est irréversible et supprimera également toutes les données liées à cette organisation.
