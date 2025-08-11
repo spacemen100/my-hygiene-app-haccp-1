@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useRouter } from 'next/navigation';
 import {
   Container,
   Typography,
@@ -69,7 +70,9 @@ export default function AdminEmployesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [defaultOrganization, setDefaultOrganization] = useState<string | null>(null);
   const { employee: currentEmployee } = useEmployee();
+  const router = useRouter();
   
   console.log('[AdminEmployes] Current employee:', currentEmployee);
   console.log('[AdminEmployes] Loading state:', loading);
@@ -90,15 +93,32 @@ export default function AdminEmployesPage() {
     organization_id: '',
   });
 
+  const loadDefaultOrganization = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id')
+        .order('created_at')
+        .limit(1)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      setDefaultOrganization(data?.id || null);
+    } catch (err) {
+      console.error('[AdminEmployes] Error loading default organization:', err);
+    }
+  }, []);
+
   const loadEmployees = useCallback(async () => {
-    console.log('[AdminEmployes] loadEmployees called with org ID:', currentEmployee?.organization_id);
+    console.log('[AdminEmployes] loadEmployees called with org ID:', currentEmployee?.organization_id || defaultOrganization);
     
     try {
       console.log('[AdminEmployes] Starting to load employees...');
       setLoading(true);
       setError(null);
 
-      if (!currentEmployee?.organization_id) {
+      const organizationId = currentEmployee?.organization_id || defaultOrganization;
+      if (!organizationId) {
         console.log('[AdminEmployes] No organization ID, setting empty employees list');
         setEmployees([]);
         return;
@@ -107,7 +127,7 @@ export default function AdminEmployesPage() {
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('organization_id', currentEmployee.organization_id)
+        .eq('organization_id', organizationId)
         .order('last_name')
         .order('first_name');
 
@@ -123,24 +143,31 @@ export default function AdminEmployesPage() {
       console.log('[AdminEmployes] Setting loading to false');
       setLoading(false);
     }
-  }, [currentEmployee?.organization_id]);
+  }, [currentEmployee?.organization_id, defaultOrganization]);
 
   useEffect(() => {
     console.log('[AdminEmployes] useEffect triggered with:', {
       organizationId: currentEmployee?.organization_id,
-      hasCurrentEmployee: !!currentEmployee
+      hasCurrentEmployee: !!currentEmployee,
+      defaultOrganization
     });
     
-    // Toujours charger les employés, même sans organisation
-    loadEmployees();
-    
-    if (currentEmployee?.organization_id) {
-      console.log('[AdminEmployes] Setting form data with org ID');
-      setFormData(prev => ({ ...prev, organization_id: currentEmployee.organization_id }));
-    } else {
-      console.log('[AdminEmployes] No organization ID available, will need to create first employee');
+    loadDefaultOrganization();
+  }, [loadDefaultOrganization]);
+
+  useEffect(() => {
+    if (defaultOrganization !== null) {
+      loadEmployees();
+      
+      const organizationId = currentEmployee?.organization_id || defaultOrganization;
+      if (organizationId) {
+        console.log('[AdminEmployes] Setting form data with org ID');
+        setFormData(prev => ({ ...prev, organization_id: organizationId }));
+      } else {
+        console.log('[AdminEmployes] No organization ID available, will need to create first employee');
+      }
     }
-  }, [currentEmployee?.organization_id, loadEmployees, currentEmployee]);
+  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, currentEmployee]);
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
@@ -173,6 +200,17 @@ export default function AdminEmployesPage() {
     setSuccess(null);
   };
 
+  const handleRedirectToCreateOrganization = () => {
+    // Stocker un message dans localStorage pour l'afficher sur la page organisation
+    localStorage.setItem('organizationMessage', JSON.stringify({
+      type: 'info',
+      message: 'Vous devez créer une organisation avant de pouvoir ajouter des employés. Cette organisation sera utilisée par défaut pour tous les employés.'
+    }));
+    
+    // Rediriger vers la page de création d'organisation
+    router.push('/admin-organisation');
+  };
+
   const handleSave = async () => {
     try {
       setError(null);
@@ -188,15 +226,11 @@ export default function AdminEmployesPage() {
         return;
       }
 
-      // Si pas d'organisation, utiliser un UUID par défaut
+      // Si pas d'organisation, rediriger vers la création d'organisation
       let organizationId = formData.organization_id;
       if (!organizationId) {
-        console.log('[AdminEmployes] No organization, using default UUID');
-        organizationId = '00000000-0000-0000-0000-000000000000';
-        console.log('[AdminEmployes] Using default organization ID:', organizationId);
-        
-        // Afficher un message d'aide à l'utilisateur
-        setError('Organisation par défaut requise. Veuillez créer l\'organisation avec l\'UUID: 00000000-0000-0000-0000-000000000000');
+        console.log('[AdminEmployes] No organization, redirecting to create organization');
+        handleRedirectToCreateOrganization();
         return;
       }
 

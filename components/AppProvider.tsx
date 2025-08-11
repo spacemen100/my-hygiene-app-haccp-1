@@ -25,6 +25,7 @@ import {
   Kitchen as StorageIcon,
   LocalOffer as LabelsIcon,
   People as PeopleIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -39,6 +40,7 @@ const menuItems = [
   { href: "/enceintes-froides", icon: SnowflakeIcon, label: "Enceintes froides" },
   { href: "/suivi-refroidissement", icon: ThermometerIcon, label: "Suivi de refroidissement" },
   { href: "/plan-nettoyage", icon: SprayCanIcon, label: "Plan de nettoyage" },
+  { href: "/admin-organisation", icon: BusinessIcon, label: "Administrateur Organisation" },
   { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
