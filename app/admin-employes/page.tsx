@@ -207,6 +207,10 @@ export default function AdminEmployesPage() {
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
+    // Nettoyer les messages précédents quand on ouvre le modal
+    setError(null);
+    setSuccess(null);
+    
     if (employee) {
       setEditingEmployee(employee);
       setFormData({
@@ -223,7 +227,7 @@ export default function AdminEmployesPage() {
         last_name: '',
         role: null,
         is_active: true,
-        organization_id: currentEmployee?.organization_id || '', // Peut être vide
+        organization_id: currentEmployee?.organization_id || defaultOrganization || '',
       });
     }
     setDialogOpen(true);
@@ -233,7 +237,7 @@ export default function AdminEmployesPage() {
     setDialogOpen(false);
     setEditingEmployee(null);
     setError(null);
-    setSuccess(null);
+    // Ne pas nettoyer setSuccess(null) ici pour garder le message visible après fermeture
     
     // Réinitialiser le formData pour éviter des conflits futurs
     setFormData({
@@ -305,11 +309,13 @@ export default function AdminEmployesPage() {
 
       await loadEmployees();
       
-      // Fermer le modal immédiatement après succès
+      // Fermer le modal immédiatement mais garder le message visible
+      handleCloseDialog();
+      
+      // Nettoyer le message de succès après un délai pour que l'utilisateur le voie
       setTimeout(() => {
-        setSuccess(null); // Nettoyer le message de succès
-        handleCloseDialog();
-      }, 0); // Un peu plus de temps pour que l'utilisateur voie le message
+        setSuccess(null);
+      }, 3000);
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');
