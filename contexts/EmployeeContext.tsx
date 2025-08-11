@@ -34,8 +34,8 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   const loadCurrentEmployee = async () => {
     console.log('[EmployeeProvider] loadCurrentEmployee called with user:', user?.id);
     
-    if (!user) {
-      console.log('[EmployeeProvider] No user, setting employee to null');
+    if (!user?.id) {
+      console.log('[EmployeeProvider] No user ID, setting employee to null');
       setEmployee(null);
       return;
     }
@@ -49,11 +49,11 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle(); // Utilise maybeSingle au lieu de single pour éviter l'erreur PGRST116
 
       console.log('[EmployeeProvider] Employee query result:', { data, error });
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error) {
         console.error('[EmployeeProvider] Error loading employee:', error);
         throw error;
       }
@@ -136,21 +136,26 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
     const loadData = async () => {
       console.log('[EmployeeProvider] Starting to load data');
       setLoading(true);
-      await loadCurrentEmployee();
-      console.log('[EmployeeProvider] Data loaded, setting loading to false');
-      setLoading(false);
+      try {
+        await loadCurrentEmployee();
+      } catch (err) {
+        console.error('[EmployeeProvider] Error in loadData:', err);
+      } finally {
+        console.log('[EmployeeProvider] Data loaded, setting loading to false');
+        setLoading(false);
+      }
     };
 
-    if (session && user) {
-      console.log('[EmployeeProvider] Session and user exist, loading data');
+    if (session && user?.id) {
+      console.log('[EmployeeProvider] Session and user ID exist, loading data');
       loadData();
     } else {
-      console.log('[EmployeeProvider] No session or user, clearing data and stopping loading');
+      console.log('[EmployeeProvider] No session or user ID, clearing data and stopping loading');
       setEmployee(null);
       setEmployees([]);
       setLoading(false);
     }
-  }, [user, session]);
+  }, [user?.id, session?.access_token]);
 
   // Load employees when current employee is loaded
   useEffect(() => {

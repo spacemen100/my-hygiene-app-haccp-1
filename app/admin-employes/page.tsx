@@ -153,7 +153,17 @@ export default function AdminEmployesPage() {
     });
     
     loadDefaultOrganization();
-  }, [loadDefaultOrganization]);
+    
+    // Timeout de sécurité pour éviter le chargement infini
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.log('[AdminEmployes] Timeout reached, forcing loading to false');
+        setLoading(false);
+      }
+    }, 5000); // 5 secondes
+    
+    return () => clearTimeout(timeoutId);
+  }, [loadDefaultOrganization, loading]);
 
   useEffect(() => {
     if (defaultOrganization !== null) {
