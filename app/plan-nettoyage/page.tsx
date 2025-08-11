@@ -509,7 +509,7 @@ export default function CleaningPlan() {
                   <TextField
                     label="Commentaires"
                     multiline
-                    rows={{ xs: 2, sm: 3 }}
+                    rows={3}
                     value={formData.comments || ''}
                     onChange={(e) => setFormData({...formData, comments: e.target.value})}
                     fullWidth

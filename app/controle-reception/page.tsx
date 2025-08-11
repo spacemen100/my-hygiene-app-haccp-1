@@ -41,6 +41,8 @@ import {
   AccordionDetails,
   Tooltip,
   Avatar,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useSnackbar } from 'notistack';
@@ -57,6 +59,9 @@ type Delivery = TablesInsert<'deliveries'> & {
 };
 
 export default function DeliveryComponent() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [newDelivery, setNewDelivery] = useState<Partial<Delivery>>({
@@ -284,7 +289,7 @@ export default function DeliveryComponent() {
         onClose={() => setOpenDialog(false)}
         fullWidth
         maxWidth="md"
-        fullScreen={{ xs: true, sm: false }}
+        fullScreen={isMobile}
         sx={{
           '& .MuiDialog-paper': {
             borderRadius: { xs: 0, sm: 3 },

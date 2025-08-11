@@ -44,7 +44,8 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     employees: employees.map(e => ({ id: e.id, name: getEmployeeFullName(e) }))
   });
 
-  const drawerWidth = 280;
+  const tabletDrawerWidth = 260;
+  const desktopDrawerWidth = 280;
 
   // const handleEmployeeChange = (employeeId: string) => {
   //   const selectedEmployee = employees.find(emp => emp.id === employeeId) || null;
@@ -56,20 +57,29 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       position="fixed" 
       sx={{ 
         top: 0,
-        left: { xs: 0, md: `${drawerWidth}px` },
-        width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
+        left: { 
+          xs: 0, 
+          md: `${tabletDrawerWidth}px`,
+          lg: `${desktopDrawerWidth}px`
+        },
+        width: { 
+          xs: '100%', 
+          md: `calc(100% - ${tabletDrawerWidth}px)`,
+          lg: `calc(100% - ${desktopDrawerWidth}px)`
+        },
         zIndex: 1300,
         m: 0,
         p: 0,
         '& .MuiToolbar-root': {
           minHeight: { xs: '56px', sm: '64px' },
-          px: { xs: 1, sm: 2, md: 3 },
+          px: { xs: '0.75rem', sm: '1rem', md: '1.5rem', lg: '2rem' },
         }
       }}
     >
       <Toolbar sx={{ 
         minHeight: { xs: '56px !important', sm: '64px !important' },
-        px: { xs: 1, sm: 2, md: 3 }
+        px: { xs: '0.75rem', sm: '1rem', md: '1.5rem', lg: '2rem' },
+        gap: { xs: 1, sm: 1.5, md: 2 }
       }}>
         {isMobile && onMenuClick && (
           <IconButton
@@ -86,17 +96,20 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         
         {session ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Employee Selector - Always show for debug */}
+            {/* Employee Selector - Responsive */}
             {session && (
               <FormControl 
                 size="small" 
                 sx={{ 
-                  minWidth: { sm: 180, md: 200 },
+                  minWidth: { sm: 160, md: 180, lg: 200 },
+                  maxWidth: { sm: 180, md: 200, lg: 240 },
                   display: { xs: 'none', sm: 'block' },
+                  flex: { sm: '0 1 180px', md: '0 1 200px' },
                   zIndex: 9999,
                   '& .MuiOutlinedInput-root': {
                     color: 'white',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    fontSize: { sm: '0.875rem', md: '1rem' },
                     '& fieldset': {
                       borderColor: 'rgba(255, 255, 255, 0.3)',
                     },
@@ -109,6 +122,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   },
                   '& .MuiInputLabel-root': {
                     color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: { sm: '0.8rem', md: '0.875rem' },
                     '&.Mui-focused': {
                       color: 'white',
                     },

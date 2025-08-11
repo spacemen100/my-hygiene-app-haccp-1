@@ -30,8 +30,10 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const drawerWidth = 280;
-const mobileDrawerWidth = 260;
+// Responsive drawer widths
+const mobileDrawerWidth = 280;
+const tabletDrawerWidth = 260;
+const desktopDrawerWidth = 280;
 
 const menuItems = [
   { href: "/", icon: HomeIcon, label: "Accueil" },
@@ -59,26 +61,35 @@ interface AppProviderProps {
 export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: AppProviderProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const pathname = usePathname();
+  
+  // Dynamic drawer width based on screen size
+  const getDrawerWidth = () => {
+    if (isMobile) return mobileDrawerWidth;
+    if (isTablet) return tabletDrawerWidth;
+    return desktopDrawerWidth;
+  };
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header fixe - caché sur mobile car recouvert par le header principal */}
+      {/* Header desktop - responsive */}
       <Box
         sx={{
-          p: { xs: 2, md: 3 },
+          p: { md: 2, lg: 3 },
           background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
           color: 'white',
           display: { xs: 'none', md: 'flex' },
           alignItems: 'center',
-          gap: { xs: 1.5, md: 2 },
+          gap: { md: 1.5, lg: 2 },
           flexShrink: 0,
+          minHeight: '4rem',
         }}
       >
         <Box
           sx={{
-            width: 40,
-            height: 40,
+            width: { md: 36, lg: 40 },
+            height: { md: 36, lg: 40 },
             bgcolor: 'rgba(255,255,255,0.2)',
             borderRadius: 2,
             display: 'flex',
@@ -86,13 +97,34 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             justifyContent: 'center',
           }}
         >
-          <ClipboardCheck />
+          <ClipboardCheck sx={{ fontSize: { md: '1.25rem', lg: '1.5rem' } }} />
         </Box>
-        <Box>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 700 }}>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              fontWeight: 700,
+              fontSize: { md: '1.1rem', lg: '1.25rem' },
+              lineHeight: 1.2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
             HACCP Manager
           </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              opacity: 0.8,
+              fontSize: { md: '0.8rem', lg: '0.875rem' },
+              lineHeight: 1.3,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
             Gestion Qualité & Admin
           </Typography>
         </Box>
@@ -224,7 +256,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
     <Box sx={{ display: 'flex', minHeight: '100vh', pt: 0 }}>
       <Box
         component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+        sx={{ width: { md: getDrawerWidth() }, flexShrink: { md: 0 } }}
       >
         <Drawer
           variant="temporary"
@@ -237,14 +269,15 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: { xs: mobileDrawerWidth, sm: drawerWidth },
+              width: `min(${mobileDrawerWidth}px, 85vw)`,
+              maxWidth: '100vw',
               height: '100vh',
               overflow: 'hidden',
               zIndex: 1400,
               paddingTop: '64px',
             },
             '& .MuiBackdrop-root': {
-              zIndex: 1350, // Entre header et drawer
+              zIndex: 1350,
             },
           }}
         >
@@ -256,7 +289,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             display: { xs: 'none', md: 'block' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: { md: tabletDrawerWidth, lg: desktopDrawerWidth },
               top: 0,
               height: '100vh',
               overflow: 'hidden',
@@ -272,17 +305,38 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 1, sm: 2, md: 3 },
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: { xs: '64px', md: '64px' },
+          p: { 
+            xs: '0.75rem',
+            sm: '1rem', 
+            md: '1.5rem',
+            lg: '2rem'
+          },
+          width: { 
+            xs: '100%',
+            md: `calc(100% - ${tabletDrawerWidth}px)`,
+            lg: `calc(100% - ${desktopDrawerWidth}px)`
+          },
+          mt: { xs: '56px', sm: '64px' },
           bgcolor: 'background.default',
-          minHeight: 'calc(100vh - 64px)',
+          minHeight: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
           maxWidth: '100vw',
-          overflow: 'hidden',
+          overflow: 'auto',
           position: 'relative',
+          // Better content container
+          '& > *': {
+            maxWidth: '100%',
+          }
         }}
       >
-        {children}
+        <Box
+          sx={{
+            maxWidth: { xs: '100%', xl: '1400px' },
+            mx: 'auto',
+            width: '100%'
+          }}
+        >
+          {children}
+        </Box>
       </Box>
     </Box>
   );
