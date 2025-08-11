@@ -243,8 +243,7 @@ export default function AdminEtiquettesPage() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingRecord(null);
-    setError(null);
-    setSuccess(null);
+    // Ne pas réinitialiser les messages d'erreur/succès ici pour qu'ils restent visibles
     setPreviewUrl('');
     stopCamera();
     if (fileInputRef.current) {
@@ -282,9 +281,7 @@ export default function AdminEtiquettesPage() {
       }
 
       await loadRecords();
-      setTimeout(() => {
-        handleCloseDialog();
-      }, 1500);
+      handleCloseDialog();
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');

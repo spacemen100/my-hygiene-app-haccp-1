@@ -175,8 +175,7 @@ export default function AdminPlanNettoyagePage() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingTask(null);
-    setError(null);
-    setSuccess(null);
+    // Ne pas réinitialiser les messages d'erreur/succès ici pour qu'ils restent visibles
   };
 
   const handleSave = async () => {
@@ -209,9 +208,7 @@ export default function AdminPlanNettoyagePage() {
       }
 
       await loadData();
-      setTimeout(() => {
-        handleCloseDialog();
-      }, 1500);
+      handleCloseDialog();
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');
