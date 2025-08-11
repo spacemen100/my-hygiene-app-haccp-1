@@ -84,10 +84,6 @@ export default function PrintersAdmin() {
     'custom'
   ];
 
-  useEffect(() => {
-    fetchPrinters();
-  }, [fetchPrinters]);
-
   const fetchPrinters = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -102,6 +98,10 @@ export default function PrintersAdmin() {
       enqueueSnackbar('Erreur lors du chargement des imprimantes', { variant: 'error' });
     }
   }, []);
+
+  useEffect(() => {
+    fetchPrinters();
+  }, [fetchPrinters]);
 
   const handleOpenModal = (printer?: Printer) => {
     if (printer) {
