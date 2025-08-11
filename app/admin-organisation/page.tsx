@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
-import { useEmployee } from '@/contexts/EmployeeContext';
+// import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -50,7 +50,7 @@ export default function AdminOrganisationPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [incomingMessage, setIncomingMessage] = useState<{type: 'info' | 'error' | 'success', message: string} | null>(null);
-  const { employee: currentEmployee } = useEmployee();
+  // const { employee: currentEmployee } = useEmployee();
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);

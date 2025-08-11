@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import {
   Container,
   Typography,
@@ -72,9 +72,9 @@ export default function AdminEmployesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [defaultOrganization, setDefaultOrganization] = useState<string | null>(null);
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<Tables<'organizations'>[]>([]);
   const { employee: currentEmployee, loading: employeeLoading } = useEmployee();
-  const router = useRouter();
+  // const router = useRouter();
   
   console.log('[AdminEmployes] States:', { loading, employeeLoading, currentEmployee: !!currentEmployee, defaultOrganization });
   
@@ -199,7 +199,7 @@ export default function AdminEmployesPage() {
         console.log('[AdminEmployes] No organization ID available, will need to create first employee');
       }
     }
-  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, employeeLoading]);
+  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, employeeLoading, currentEmployee]);
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
@@ -232,16 +232,16 @@ export default function AdminEmployesPage() {
     setSuccess(null);
   };
 
-  const handleRedirectToCreateOrganization = () => {
-    // Stocker un message dans localStorage pour l'afficher sur la page organisation
-    localStorage.setItem('organizationMessage', JSON.stringify({
-      type: 'info',
-      message: 'Vous devez créer une organisation avant de pouvoir ajouter des employés. Cette organisation sera utilisée par défaut pour tous les employés.'
-    }));
-    
-    // Rediriger vers la page de création d'organisation
-    router.push('/admin-organisation');
-  };
+  // const handleRedirectToCreateOrganization = () => {
+  //   // Stocker un message dans localStorage pour l'afficher sur la page organisation
+  //   localStorage.setItem('organizationMessage', JSON.stringify({
+  //     type: 'info',
+  //     message: 'Vous devez créer une organisation avant de pouvoir ajouter des employés. Cette organisation sera utilisée par défaut pour tous les employés.'
+  //   }));
+  //   
+  //   // Rediriger vers la page de création d'organisation
+  //   router.push('/admin-organisation');
+  // };
 
   const handleSave = async () => {
     try {
@@ -533,11 +533,11 @@ export default function AdminEmployesPage() {
                         <BusinessIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {(employee as any).organizations?.name || 'Organisation inconnue'}
+                            {(employee as Employee & { organizations?: { name: string; city?: string } }).organizations?.name || 'Organisation inconnue'}
                           </Typography>
-                          {(employee as any).organizations?.city && (
+                          {(employee as Employee & { organizations?: { name: string; city?: string } }).organizations?.city && (
                             <Typography variant="caption" color="text.secondary">
-                              {(employee as any).organizations.city}
+                              {(employee as Employee & { organizations?: { name: string; city?: string } }).organizations?.city}
                             </Typography>
                           )}
                         </Box>

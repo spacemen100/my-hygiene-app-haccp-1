@@ -46,10 +46,10 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
   const drawerWidth = 280;
 
-  const handleEmployeeChange = (employeeId: string) => {
-    const selectedEmployee = employees.find(emp => emp.id === employeeId) || null;
-    setCurrentEmployee(selectedEmployee);
-  };
+  // const handleEmployeeChange = (employeeId: string) => {
+  //   const selectedEmployee = employees.find(emp => emp.id === employeeId) || null;
+  //   setCurrentEmployee(selectedEmployee);
+  // };
 
   return (
     <AppBar 

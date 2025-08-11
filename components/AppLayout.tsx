@@ -13,7 +13,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const { session, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   // Pages qui ne doivent pas afficher le header et sidebar
   const noLayoutPages = ['/login'];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -86,9 +86,9 @@ export default function PrintersAdmin() {
 
   useEffect(() => {
     fetchPrinters();
-  }, []);
+  }, [fetchPrinters]);
 
-  const fetchPrinters = async () => {
+  const fetchPrinters = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('printers')
@@ -101,7 +101,7 @@ export default function PrintersAdmin() {
       console.error('Error fetching printers:', error);
       enqueueSnackbar('Erreur lors du chargement des imprimantes', { variant: 'error' });
     }
-  };
+  }, []);
 
   const handleOpenModal = (printer?: Printer) => {
     if (printer) {
