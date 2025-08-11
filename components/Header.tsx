@@ -132,7 +132,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   },
                 }}
               >
-                <InputLabel>Employé actuel</InputLabel>
+                <InputLabel></InputLabel>
                 <Select
                   value={currentEmployee?.id || ''}
                   onChange={(e) => {
