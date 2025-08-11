@@ -811,6 +811,7 @@ export type Database = {
           label_count: number
           organization_id: string | null
           print_date: string | null
+          printer_id: string | null
           product_label_type_id: string | null
           user_id: string | null
         }
@@ -822,6 +823,7 @@ export type Database = {
           label_count: number
           organization_id?: string | null
           print_date?: string | null
+          printer_id?: string | null
           product_label_type_id?: string | null
           user_id?: string | null
         }
@@ -833,6 +835,7 @@ export type Database = {
           label_count?: number
           organization_id?: string | null
           print_date?: string | null
+          printer_id?: string | null
           product_label_type_id?: string | null
           user_id?: string | null
         }
@@ -849,6 +852,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "label_printings_printer_id_fkey"
+            columns: ["printer_id"]
+            isOneToOne: false
+            referencedRelation: "printers"
             referencedColumns: ["id"]
           },
           {
@@ -1124,6 +1134,76 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organizations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      printers: {
+        Row: {
+          address: string | null
+          connection_type: string
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          is_active: boolean | null
+          label_size: string | null
+          model: string
+          name: string
+          organization_id: string | null
+          print_format: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          connection_type: string
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          label_size?: string | null
+          model: string
+          name: string
+          organization_id?: string | null
+          print_format?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          connection_type?: string
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          label_size?: string | null
+          model?: string
+          name?: string
+          organization_id?: string | null
+          print_format?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "printers_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "printers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "printers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"

@@ -568,16 +568,12 @@ export default function LabelPrinting() {
                   2️⃣ Règles générales
                 </Typography>
                 <Stack spacing={1} sx={{ pl: 2 }}>
-                  <Typography variant="body2">• En l&apos;absence d&apos;analyse microbiologique, un produit transformé se conserve maximum 3 jours (J+3).</Typography>
-                  <Typography variant="body2">• La DLC secondaire ne peut jamais dépasser la DLC initiale du produit.</Typography>
-                  <Typography variant="body2">• Pour les produits ouverts, suivre strictement les recommandations du fabricant.</Typography>
-                  <Typography variant="body2">• Tous les produits ouverts, déconditionnés, ou préparés doivent être étiquetés avec :</Typography>
-                  <Box sx={{ pl: 2 }}>
-                    <Typography variant="body2">- Date de fabrication / ouverture</Typography>
-                    <Typography variant="body2">- DLC secondaire</Typography>
-                  </Box>
+                  <Typography variant="body2">• En l&apos;absence d&apos;analyse microbiologique, vous devez conserver vos préparations 3 jours maximum après la date de transformation (J+3). Mais cela dépend des produits, certains se conservent moins longtemps.</Typography>
+                  <Typography variant="body2">• Pour les produits ouverts, il faut se fier aux indications du fabricant.</Typography>
+                  <Typography variant="body2">• La DLC secondaire ne peut pas être supérieure à la DLC du produit avant transformation.</Typography>
+                  <Typography variant="body2">• <strong>Étiquetage obligatoire :</strong> Tous les produits conservés en enceinte froide, ouverts, déconditionnés, ou préparés doivent être étiquetés avec la date de fabrication/ouverture et la DLC secondaire au minimum.</Typography>
                   <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'warning.main' }}>
-                    ⚠️ Écrire uniquement la date du jour n&apos;est pas suffisant.
+                    ⚠️ Écrire la date du jour au marqueur n&apos;est pas suffisant, cela n&apos;indique pas jusqu&apos;à quand le produit peut être consommé.
                   </Typography>
                 </Stack>
               </Box>
@@ -618,21 +614,24 @@ export default function LabelPrinting() {
 
               <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
-                  4️⃣ Interdictions
+                  4️⃣ Interdictions 🔥
                 </Typography>
                 <Stack spacing={1} sx={{ pl: 2 }}>
-                  <Typography variant="body2">❌ Ne jamais cuire ou surgeler un produit dont la DLC secondaire est dépassée.</Typography>
-                  <Typography variant="body2">❌ Ne pas prolonger la durée de vie d&apos;un produit par une nouvelle transformation.</Typography>
-                  <Typography variant="body2">❌ Ne pas conserver un produit transformé, décongelé ou déconditionné au-delà de sa DLC secondaire.</Typography>
+                  <Typography variant="body2">❌ <strong>Produits à DLC dépassée :</strong> Vous ne devez en aucun cas conserver des produits à DLC secondaire dépassée.</Typography>
+                  <Typography variant="body2">❌ <strong>Cuisson/Surgélation interdite :</strong> Cuire ou surgeler un produit dont la DLC secondaire est dépassée pour lui donner une nouvelle durée de vie est strictement interdit.</Typography>
+                  <Typography variant="body2">❌ <strong>Sensibilité accrue :</strong> Un produit ayant été transformé, décongelé, déconditionné ou cuisiné devient plus sensible à la contamination microbiologique.</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+                    ⚠️ Il faut donc impérativement respecter la DLC secondaire et la chaîne du froid.
+                  </Typography>
                 </Stack>
               </Box>
 
               <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'warning.main' }}>
-                  5️⃣ Assemblage de plusieurs produits
+                  5️⃣ Assemblage de plusieurs produits 🥗
                 </Typography>
                 <Typography variant="body2" sx={{ pl: 2 }}>
-                  En cas de mélange, c&apos;est la DLC secondaire la plus courte qui s&apos;applique, même si c&apos;est un seul ingrédient parmi plusieurs.
+                  <strong>Règle de la DLC la plus courte :</strong> C&apos;est la DLC ou la DLC secondaire la plus courte qui doit être indiquée, même s&apos;il ne s&apos;agit que d&apos;un ingrédient parmi 10 !
                 </Typography>
               </Box>
 
