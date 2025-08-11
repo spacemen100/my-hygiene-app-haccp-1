@@ -73,6 +73,7 @@ export default function AdminEmployesPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [defaultOrganization, setDefaultOrganization] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<Tables<'organizations'>[]>([]);
+  const [saving, setSaving] = useState(false);
   const { employee: currentEmployee, loading: employeeLoading } = useEmployee();
   // const router = useRouter();
   
@@ -191,15 +192,18 @@ export default function AdminEmployesPage() {
       console.log('[AdminEmployes] Both employee loading finished and default org loaded');
       loadEmployees();
       
-      const organizationId = currentEmployee?.organization_id || defaultOrganization;
-      if (organizationId) {
-        console.log('[AdminEmployes] Setting form data with org ID');
-        setFormData(prev => ({ ...prev, organization_id: organizationId }));
-      } else {
-        console.log('[AdminEmployes] No organization ID available, will need to create first employee');
+      // Ne pas modifier le formData si le modal est ouvert pour éviter les conflits
+      if (!dialogOpen) {
+        const organizationId = currentEmployee?.organization_id || defaultOrganization;
+        if (organizationId) {
+          console.log('[AdminEmployes] Setting form data with org ID');
+          setFormData(prev => ({ ...prev, organization_id: organizationId }));
+        } else {
+          console.log('[AdminEmployes] No organization ID available, will need to create first employee');
+        }
       }
     }
-  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, employeeLoading, currentEmployee]);
+  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, employeeLoading, currentEmployee, dialogOpen]);
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
@@ -230,6 +234,15 @@ export default function AdminEmployesPage() {
     setEditingEmployee(null);
     setError(null);
     setSuccess(null);
+    
+    // Réinitialiser le formData pour éviter des conflits futurs
+    setFormData({
+      first_name: '',
+      last_name: '',
+      role: null,
+      is_active: true,
+      organization_id: currentEmployee?.organization_id || defaultOrganization || '',
+    });
   };
 
   // const handleRedirectToCreateOrganization = () => {
@@ -244,22 +257,28 @@ export default function AdminEmployesPage() {
   // };
 
   const handleSave = async () => {
+    if (saving) return; // Éviter les appels multiples
+    
     try {
+      setSaving(true);
       setError(null);
       setSuccess(null);
 
       if (!formData.first_name.trim()) {
         setError('Le prénom est obligatoire');
+        setSaving(false);
         return;
       }
 
       if (!formData.last_name.trim()) {
         setError('Le nom de famille est obligatoire');
+        setSaving(false);
         return;
       }
 
       if (!formData.organization_id) {
         setError('L\'organisation est obligatoire');
+        setSaving(false);
         return;
       }
 
@@ -285,12 +304,17 @@ export default function AdminEmployesPage() {
       }
 
       await loadEmployees();
+      
+      // Fermer le modal immédiatement après succès
       setTimeout(() => {
+        setSuccess(null); // Nettoyer le message de succès
         handleCloseDialog();
-      }, 1500);
+      }, 2000); // Un peu plus de temps pour que l'utilisateur voie le message
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');
+    } finally {
+      setSaving(false); // Réinitialiser l'état de sauvegarde
     }
   };
 
@@ -712,8 +736,13 @@ export default function AdminEmployesPage() {
           <Button onClick={handleCloseDialog} startIcon={<CancelIcon />}>
             Annuler
           </Button>
-          <Button variant="contained" onClick={handleSave} startIcon={<SaveIcon />}>
-            {editingEmployee ? 'Mettre à jour' : 'Créer'}
+          <Button 
+            variant="contained" 
+            onClick={handleSave} 
+            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            disabled={saving}
+          >
+            {saving ? 'Sauvegarde...' : (editingEmployee ? 'Mettre à jour' : 'Créer')}
           </Button>
         </DialogActions>
       </Dialog>
