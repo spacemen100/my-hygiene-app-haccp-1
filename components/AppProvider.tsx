@@ -26,6 +26,7 @@ import {
   LocalOffer as LabelsIcon,
   People as PeopleIcon,
   Business as BusinessIcon,
+  Room as ZoneIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,6 +47,7 @@ const menuItems = [
   { href: "/admin-organisation", icon: BusinessIcon, label: "Administrateur Organisation" },
   { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
+  { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Administrateur Zones et Sous-zones de Nettoyage" },
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
