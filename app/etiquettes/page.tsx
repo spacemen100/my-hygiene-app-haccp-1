@@ -322,7 +322,6 @@ export default function LabelRecording() {
               value={formData.product_name || ''}
               onChange={(e) => setFormData({...formData, product_name: e.target.value})}
               fullWidth
-              required
             />
 
             <TextField
@@ -330,11 +329,10 @@ export default function LabelRecording() {
               value={formData.supplier_name || ''}
               onChange={(e) => setFormData({...formData, supplier_name: e.target.value})}
               fullWidth
-              required
             />
 
             <TextField
-              label="Numéro de lot"
+              label="Numéro de lot (optionnel)"
               value={formData.batch_number || ''}
               onChange={(e) => setFormData({...formData, batch_number: e.target.value})}
               fullWidth
