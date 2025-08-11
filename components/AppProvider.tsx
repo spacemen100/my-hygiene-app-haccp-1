@@ -44,6 +44,7 @@ const menuItems = [
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
+  { href: "/admin-imprimantes", icon: PrinterIcon, label: "Administrateur des Imprimantes" },
 ];
 
 interface AppProviderProps {
