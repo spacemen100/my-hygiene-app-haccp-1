@@ -309,7 +309,7 @@ export default function AdminEmployesPage() {
       setTimeout(() => {
         setSuccess(null); // Nettoyer le message de succès
         handleCloseDialog();
-      }, 2000); // Un peu plus de temps pour que l'utilisateur voie le message
+      }, 0); // Un peu plus de temps pour que l'utilisateur voie le message
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');
