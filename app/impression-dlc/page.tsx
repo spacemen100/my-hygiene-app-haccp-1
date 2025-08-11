@@ -547,38 +547,113 @@ export default function LabelPrinting() {
             </IconButton>
           </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
+              Procédure interne – Gestion des DLC secondaires
+            </Typography>
+
+            <Stack spacing={4}>
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-                  🎯 Usage et Réglementation
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'info.main' }}>
+                  1️⃣ Définitions
                 </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">• Les étiquettes DLC secondaires sont obligatoires pour tous les produits transformés en interne</Typography>
-                  <Typography variant="body2">• Elles permettent de respecter la traçabilité alimentaire selon la réglementation HACCP</Typography>
-                  <Typography variant="body2">• La date limite de consommation doit être clairement visible et lisible</Typography>
+                <Stack spacing={1} sx={{ pl: 2 }}>
+                  <Typography variant="body2"><strong>DLC (Date Limite de Consommation) :</strong> Date au-delà de laquelle le produit ne doit plus être consommé.</Typography>
+                  <Typography variant="body2"><strong>DLC secondaire :</strong> Date limite après ouverture, transformation ou préparation d&apos;un produit.</Typography>
+                  <Typography variant="body2"><strong>J+X :</strong> Nombre de jours après la transformation ou l&apos;ouverture.</Typography>
                 </Stack>
               </Box>
-              
+
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'success.main' }}>
+                  2️⃣ Règles générales
+                </Typography>
+                <Stack spacing={1} sx={{ pl: 2 }}>
+                  <Typography variant="body2">• En l&apos;absence d&apos;analyse microbiologique, un produit transformé se conserve maximum 3 jours (J+3).</Typography>
+                  <Typography variant="body2">• La DLC secondaire ne peut jamais dépasser la DLC initiale du produit.</Typography>
+                  <Typography variant="body2">• Pour les produits ouverts, suivre strictement les recommandations du fabricant.</Typography>
+                  <Typography variant="body2">• Tous les produits ouverts, déconditionnés, ou préparés doivent être étiquetés avec :</Typography>
+                  <Box sx={{ pl: 2 }}>
+                    <Typography variant="body2">- Date de fabrication / ouverture</Typography>
+                    <Typography variant="body2">- DLC secondaire</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'warning.main' }}>
+                    ⚠️ Écrire uniquement la date du jour n&apos;est pas suffisant.
+                  </Typography>
+                </Stack>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'secondary.main' }}>
+                  3️⃣ Bonnes pratiques par catégorie
+                </Typography>
+                <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: 1, borderColor: 'divider', pb: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>Catégorie</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>DLC secondaire</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2">Viande hachée destinée à la cuisson</Typography>
+                      <Typography variant="body2">J+1</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2">Charcuterie crue ou cuite tranchée sur place</Typography>
+                      <Typography variant="body2">Jour J</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2">Produits de la mer crus</Typography>
+                      <Typography variant="body2">J+1</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2">Ovo-produits (œufs liquides, etc.)</Typography>
+                      <Typography variant="body2">J+1 à J+2</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2">Mayonnaise maison</Typography>
+                      <Typography variant="body2">Jour J</Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
+                  4️⃣ Interdictions
+                </Typography>
+                <Stack spacing={1} sx={{ pl: 2 }}>
+                  <Typography variant="body2">❌ Ne jamais cuire ou surgeler un produit dont la DLC secondaire est dépassée.</Typography>
+                  <Typography variant="body2">❌ Ne pas prolonger la durée de vie d&apos;un produit par une nouvelle transformation.</Typography>
+                  <Typography variant="body2">❌ Ne pas conserver un produit transformé, décongelé ou déconditionné au-delà de sa DLC secondaire.</Typography>
+                </Stack>
+              </Box>
+
               <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'warning.main' }}>
-                  ⚠️ Codes Couleur d&apos;urgence
+                  5️⃣ Assemblage de plusieurs produits
                 </Typography>
-                <Stack spacing={1}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="Rouge" color="error" size="small" />
-                    <Typography variant="body2">Urgent (≤ 2 jours)</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="Orange" color="warning" size="small" />
-                    <Typography variant="body2">Attention (≤ 7 jours)</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="Vert" color="success" size="small" />
-                    <Typography variant="body2">Normal (&gt; 7 jours)</Typography>
-                  </Box>
+                <Typography variant="body2" sx={{ pl: 2 }}>
+                  En cas de mélange, c&apos;est la DLC secondaire la plus courte qui s&apos;applique, même si c&apos;est un seul ingrédient parmi plusieurs.
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'info.main' }}>
+                  6️⃣ Contrôles et suivi
+                </Typography>
+                <Stack spacing={1} sx={{ pl: 2 }}>
+                  <Typography variant="body2">• Utiliser des étiquettes claires (imprimées ou manuscrites lisibles).</Typography>
+                  <Typography variant="body2">• Noter jour/mois/année et heure si nécessaire.</Typography>
+                  <Typography variant="body2">• Effectuer un contrôle quotidien des DLC secondaires en stock.</Typography>
+                  <Typography variant="body2">• Retirer immédiatement tout produit dont la DLC secondaire est dépassée.</Typography>
                 </Stack>
               </Box>
-            </Box>
+
+              <Paper sx={{ p: 2, bgcolor: 'primary.light', color: 'primary.contrastText', mt: 3 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  💡 Rappel : Le respect des DLC secondaires est essentiel pour garantir la sécurité alimentaire et éviter les risques de contamination microbiologique.
+                </Typography>
+              </Paper>
+            </Stack>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setGuideModalOpen(false)} variant="contained">
