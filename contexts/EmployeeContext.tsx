@@ -141,11 +141,11 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     };
 
-    if (session) {
-      console.log('[EmployeeProvider] Session exists, loading data');
+    if (session && user) {
+      console.log('[EmployeeProvider] Session and user exist, loading data');
       loadData();
     } else {
-      console.log('[EmployeeProvider] No session, clearing data');
+      console.log('[EmployeeProvider] No session or user, clearing data and stopping loading');
       setEmployee(null);
       setEmployees([]);
       setLoading(false);
