@@ -35,6 +35,14 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
+  
+  // Debug logs
+  console.log('[Header] Employee data:', { 
+    currentEmployee: !!currentEmployee, 
+    employeesCount: employees.length, 
+    employeeLoading,
+    employees: employees.map(e => ({ id: e.id, name: getEmployeeFullName(e) }))
+  });
 
   const drawerWidth = 280;
 
@@ -50,7 +58,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         top: 0,
         left: { xs: 0, md: `${drawerWidth}px` }, // Laisse l'espace pour le sidebar sur desktop
         width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, // Ajuste la largeur
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        zIndex: 1300, // Valeur explicite élevée
         m: 0,
         p: 0,
       }}
@@ -71,15 +79,17 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         
         {session ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Employee Selector - Only show if there are multiple employees */}
-            {employees.length > 0 && (
+            {/* Employee Selector - Always show for debug */}
+            {session && (
               <FormControl 
                 size="small" 
                 sx={{ 
                   minWidth: 200,
                   display: { xs: 'none', sm: 'block' },
+                  zIndex: 9999,
                   '& .MuiOutlinedInput-root': {
                     color: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     '& fieldset': {
                       borderColor: 'rgba(255, 255, 255, 0.3)',
                     },
@@ -113,6 +123,33 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   onOpen={() => setEmployeeSelectOpen(true)}
                   onClose={() => setEmployeeSelectOpen(false)}
                   displayEmpty
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        zIndex: 9999,
+                        maxHeight: 300,
+                        mt: 1,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                        '& .MuiMenuItem-root': {
+                          minHeight: 'auto',
+                          py: 1,
+                        },
+                      },
+                    },
+                    MenuListProps: {
+                      sx: {
+                        py: 1,
+                      }
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                  }}
                   renderValue={(selected) => {
                     if (!selected) {
                       return (
