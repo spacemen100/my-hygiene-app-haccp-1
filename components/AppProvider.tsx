@@ -28,6 +28,7 @@ import {
   Business as BusinessIcon,
   Room as ZoneIcon,
   Science as ProductsIcon,
+  Build as EquipmentIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -50,6 +51,7 @@ const menuItems = [
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
   { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Administrateur Zones et Sous-zones de Nettoyage" },
   { href: "/admin-produits-nettoyage", icon: ProductsIcon, label: "Administrateur des Produits de Nettoyage" },
+  { href: "/admin-equipements", icon: EquipmentIcon, label: "Administrateur des Équipements" },
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
