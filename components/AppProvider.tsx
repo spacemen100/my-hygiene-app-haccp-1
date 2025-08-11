@@ -62,13 +62,13 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header fixe */}
+      {/* Header fixe - caché sur mobile car recouvert par le header principal */}
       <Box
         sx={{
           p: 3,
           background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
           color: 'white',
-          display: 'flex',
+          display: { xs: 'none', md: 'flex' }, // Caché sur mobile
           alignItems: 'center',
           gap: 2,
           flexShrink: 0,
@@ -97,10 +97,47 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         </Box>
       </Box>
 
+      {/* Header mobile - visible uniquement sur mobile */}
+      <Box
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          p: 2,
+          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+          color: 'white',
+          alignItems: 'center',
+          gap: 2,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '64px',
+          zIndex: 1,
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            bgcolor: 'rgba(255,255,255,0.2)',
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ClipboardCheck sx={{ fontSize: 20 }} />
+        </Box>
+        <Typography variant="h6" component="div" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+          HACCP Manager
+        </Typography>
+      </Box>
+
       {/* Zone scrollable pour le menu */}
       <Box sx={{ 
         flex: 1, 
         overflow: 'auto',
+        marginTop: { xs: 0, md: 0 }, // Pas de marge supplémentaire
         '&::-webkit-scrollbar': {
           width: '6px',
         },
@@ -115,7 +152,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
           background: '#a8a8a8',
         },
       }}>
-        <List sx={{ mt: 1, pb: 2 }}>
+        <List sx={{ mt: { xs: 0, md: 1 }, pb: 2, pt: { xs: 1, md: 0 } }}>
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -150,8 +187,9 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
                     primary={item.label}
                     sx={{
                       '& .MuiListItemText-primary': {
-                        fontSize: '0.875rem',
+                        fontSize: { xs: '0.8rem', md: '0.875rem' },
                         fontWeight: isActive ? 600 : 400,
+                        lineHeight: { xs: 1.3, md: 1.5 },
                       }
                     }}
                   />
@@ -165,16 +203,16 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
       {/* Footer fixe */}
       <Box
         sx={{
-          p: 2,
+          p: { xs: 1.5, md: 2 },
           borderTop: '1px solid rgba(0, 0, 0, 0.08)',
           bgcolor: 'grey.50',
           flexShrink: 0,
         }}
       >
-        <Typography variant="body2" color="text.secondary" align="center">
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
           <strong>Version 1.0</strong>
         </Typography>
-        <Typography variant="body2" color="text.secondary" align="center">
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
           Système HACCP
         </Typography>
       </Box>
@@ -201,6 +239,11 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
               width: drawerWidth,
               height: '100vh',
               overflow: 'hidden',
+              zIndex: 1400, // Plus élevé que le header (1300)
+              paddingTop: '64px', // Espace pour le header
+            },
+            '& .MuiBackdrop-root': {
+              zIndex: 1350, // Entre header et drawer
             },
           }}
         >
@@ -228,7 +271,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 2, md: 3 }, // Moins de padding sur mobile
           width: { md: `calc(100% - ${drawerWidth}px)` },
           mt: { xs: '64px', md: '64px' }, // Espace pour le header fixe sur toutes les tailles
           bgcolor: 'background.default',
