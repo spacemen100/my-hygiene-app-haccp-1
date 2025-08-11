@@ -71,8 +71,10 @@ export default function AdminEmployesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [defaultOrganization, setDefaultOrganization] = useState<string | null>(null);
-  const { employee: currentEmployee } = useEmployee();
+  const { employee: currentEmployee, loading: employeeLoading } = useEmployee();
   const router = useRouter();
+  
+  console.log('[AdminEmployes] States:', { loading, employeeLoading, currentEmployee: !!currentEmployee, defaultOrganization });
   
   console.log('[AdminEmployes] Current employee:', currentEmployee);
   console.log('[AdminEmployes] Loading state:', loading);
@@ -166,7 +168,9 @@ export default function AdminEmployesPage() {
   }, [loadDefaultOrganization, loading]);
 
   useEffect(() => {
-    if (defaultOrganization !== null) {
+    // Attendre que l'EmployeeProvider ait fini de charger ET que nous ayons vérifié l'organisation par défaut
+    if (!employeeLoading && defaultOrganization !== null) {
+      console.log('[AdminEmployes] Both employee loading finished and default org loaded');
       loadEmployees();
       
       const organizationId = currentEmployee?.organization_id || defaultOrganization;
@@ -177,7 +181,7 @@ export default function AdminEmployesPage() {
         console.log('[AdminEmployes] No organization ID available, will need to create first employee');
       }
     }
-  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees]);
+  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, employeeLoading]);
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
@@ -306,8 +310,8 @@ export default function AdminEmployesPage() {
     return `${employee.first_name} ${employee.last_name}`;
   };
 
-  if (loading) {
-    console.log('[AdminEmployes] Rendering loading state');
+  if (loading || employeeLoading) {
+    console.log('[AdminEmployes] Rendering loading state', { loading, employeeLoading });
     return (
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>

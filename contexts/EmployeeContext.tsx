@@ -30,6 +30,18 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   
   console.log('[EmployeeProvider] Auth state:', { user: !!user, userId: user?.id, session: !!session });
 
+  // Timeout de sécurité pour forcer l'arrêt du loading après 10 secondes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.log('[EmployeeProvider] TIMEOUT: Forcing loading to false after 10 seconds');
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading]);
+
   // Load current user's employee record
   const loadCurrentEmployee = async () => {
     console.log('[EmployeeProvider] loadCurrentEmployee called with user:', user?.id);
@@ -131,7 +143,13 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
 
   // Load employee data when user changes
   useEffect(() => {
-    console.log('[EmployeeProvider] useEffect triggered with session:', !!session, 'user:', !!user);
+    console.log('[EmployeeProvider] useEffect triggered with:', {
+      session: !!session,
+      user: !!user,
+      userId: user?.id,
+      accessToken: !!session?.access_token,
+      loading
+    });
     
     const loadData = async () => {
       console.log('[EmployeeProvider] Starting to load data');
