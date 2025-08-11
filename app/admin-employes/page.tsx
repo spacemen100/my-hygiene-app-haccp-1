@@ -167,7 +167,7 @@ export default function AdminEmployesPage() {
         console.log('[AdminEmployes] No organization ID available, will need to create first employee');
       }
     }
-  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, currentEmployee]);
+  }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees]);
 
 
   const handleOpenDialog = (employee: Employee | null = null) => {
@@ -227,7 +227,7 @@ export default function AdminEmployesPage() {
       }
 
       // Si pas d'organisation, rediriger vers la création d'organisation
-      let organizationId = formData.organization_id;
+      const organizationId = formData.organization_id;
       if (!organizationId) {
         console.log('[AdminEmployes] No organization, redirecting to create organization');
         handleRedirectToCreateOrganization();
