@@ -178,6 +178,13 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                       <Typography>Aucun employé sélectionné</Typography>
                     </Box>
                   </MenuItem>
+                  {employees.length === 0 && (
+                    <MenuItem disabled>
+                      <Typography color="text.secondary" style={{ fontStyle: 'italic' }}>
+                        Aucun employé trouvé
+                      </Typography>
+                    </MenuItem>
+                  )}
                   {employees.map((employee) => (
                     <MenuItem key={employee.id} value={employee.id}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>

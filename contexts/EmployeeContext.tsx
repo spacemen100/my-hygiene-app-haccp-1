@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables } from '@/src/types/database';
 import { useAuth } from '@/components/AuthProvider';
@@ -80,32 +80,46 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Load all employees for the organization
-  const loadEmployees = async () => {
-    if (!user) {
+  const loadEmployees = useCallback(async () => {
+    console.log('[EmployeeProvider] loadEmployees called');
+    
+    if (!user?.id) {
+      console.log('[EmployeeProvider] No user ID, clearing employees');
       setEmployees([]);
       return;
     }
 
     try {
       setError(null);
+      console.log('[EmployeeProvider] Loading all employees...');
 
-      // Get user's organization from the current employee record or user profile
+      // First, try to get organization ID from current employee
       let organizationId: string | null = null;
 
       if (employee?.organization_id) {
         organizationId = employee.organization_id;
+        console.log('[EmployeeProvider] Using org ID from current employee:', organizationId);
       } else {
-        // Try to get organization from users table
-        const { data: userData } = await supabase
-          .from('users')
-          .select('organization_id')
-          .eq('id', user.id)
+        // If no current employee, get all organizations and use the first one (default behavior)
+        console.log('[EmployeeProvider] No current employee, loading default organization');
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id')
+          .order('created_at')
+          .limit(1)
           .single();
         
-        organizationId = userData?.organization_id || null;
+        if (orgError && orgError.code !== 'PGRST116') {
+          console.error('[EmployeeProvider] Error loading organization:', orgError);
+          throw orgError;
+        }
+        
+        organizationId = orgData?.id || null;
+        console.log('[EmployeeProvider] Using default org ID:', organizationId);
       }
 
       if (!organizationId) {
+        console.log('[EmployeeProvider] No organization ID found, clearing employees');
         setEmployees([]);
         return;
       }
@@ -117,15 +131,18 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
         .order('last_name', { ascending: true })
         .order('first_name', { ascending: true });
 
+      console.log('[EmployeeProvider] Employees query result:', { data, error, count: data?.length });
+
       if (error) throw error;
 
       setEmployees(data || []);
+      console.log('[EmployeeProvider] Employees loaded successfully:', data?.length || 0);
     } catch (err) {
-      console.error('Error loading employees:', err);
+      console.error('[EmployeeProvider] Error loading employees:', err);
       setError('Erreur lors du chargement des employés');
       setEmployees([]);
     }
-  };
+  }, [user?.id, employee?.organization_id]);
 
   const refreshEmployee = async () => {
     setLoading(true);
@@ -175,12 +192,13 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, session?.access_token]);
 
-  // Load employees when current employee is loaded
+  // Load employees when user is loaded (independent of current employee)
   useEffect(() => {
-    if (employee) {
+    if (user?.id && !loading) {
+      console.log('[EmployeeProvider] Loading employees for user:', user.id);
       loadEmployees();
     }
-  }, [employee]);
+  }, [user?.id, loading, loadEmployees]);
 
   return (
     <EmployeeContext.Provider
