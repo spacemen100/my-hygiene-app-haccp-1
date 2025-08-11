@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { AppProvider } from './AppProvider';
 import Header from './Header';
 import { usePathname } from 'next/navigation';
+import { useAuth } from './AuthProvider';
+import { Box, CircularProgress } from '@mui/material';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -11,6 +13,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { session, isLoading } = useAuth();
 
   // Pages qui ne doivent pas afficher le header et sidebar
   const noLayoutPages = ['/login'];
@@ -19,6 +22,15 @@ export function AppLayout({ children }: AppLayoutProps) {
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+
+  // Afficher un loader pendant la vérification de l'authentification
+  if (isLoading && shouldShowLayout) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!shouldShowLayout) {
     return <>{children}</>;
