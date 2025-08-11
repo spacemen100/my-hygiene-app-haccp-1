@@ -56,14 +56,21 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       position="fixed" 
       sx={{ 
         top: 0,
-        left: { xs: 0, md: `${drawerWidth}px` }, // Laisse l'espace pour le sidebar sur desktop
-        width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, // Ajuste la largeur
-        zIndex: 1300, // Valeur explicite élevée
+        left: { xs: 0, md: `${drawerWidth}px` },
+        width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
+        zIndex: 1300,
         m: 0,
         p: 0,
+        '& .MuiToolbar-root': {
+          minHeight: { xs: '56px', sm: '64px' },
+          px: { xs: 1, sm: 2, md: 3 },
+        }
       }}
     >
-      <Toolbar sx={{ minHeight: '64px !important' }}>
+      <Toolbar sx={{ 
+        minHeight: { xs: '56px !important', sm: '64px !important' },
+        px: { xs: 1, sm: 2, md: 3 }
+      }}>
         {isMobile && onMenuClick && (
           <IconButton
             color="inherit"
@@ -84,7 +91,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               <FormControl 
                 size="small" 
                 sx={{ 
-                  minWidth: 200,
+                  minWidth: { sm: 180, md: 200 },
                   display: { xs: 'none', sm: 'block' },
                   zIndex: 9999,
                   '& .MuiOutlinedInput-root': {
@@ -230,12 +237,31 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             )}
             
             {/* User Email */}
-            <Typography variant="body1" sx={{ mr: 1, display: { xs: 'none', md: 'block' } }}>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                mr: 1, 
+                display: { xs: 'none', lg: 'block' },
+                fontSize: { md: '0.875rem', lg: '1rem' },
+                maxWidth: { md: '150px', lg: 'none' },
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {session.user.email}
             </Typography>
             
-            <Button color="inherit" onClick={signOut} size="small">
-              Déconnexion
+            <Button 
+              color="inherit" 
+              onClick={signOut} 
+              size={isMobile ? "small" : "medium"}
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                px: { xs: 1, sm: 2 }
+              }}
+            >
+              {isMobile ? 'Déco' : 'Déconnexion'}
             </Button>
           </Box>
         ) : (

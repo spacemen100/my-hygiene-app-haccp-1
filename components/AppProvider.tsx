@@ -31,6 +31,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const drawerWidth = 280;
+const mobileDrawerWidth = 260;
 
 const menuItems = [
   { href: "/", icon: HomeIcon, label: "Accueil" },
@@ -65,12 +66,12 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
       {/* Header fixe - caché sur mobile car recouvert par le header principal */}
       <Box
         sx={{
-          p: 3,
+          p: { xs: 2, md: 3 },
           background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
           color: 'white',
-          display: { xs: 'none', md: 'flex' }, // Caché sur mobile
+          display: { xs: 'none', md: 'flex' },
           alignItems: 'center',
-          gap: 2,
+          gap: { xs: 1.5, md: 2 },
           flexShrink: 0,
         }}
       >
@@ -187,7 +188,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
                     primary={item.label}
                     sx={{
                       '& .MuiListItemText-primary': {
-                        fontSize: { xs: '0.8rem', md: '0.875rem' },
+                        fontSize: { xs: '0.875rem', sm: '0.9rem', md: '1rem' },
                         fontWeight: isActive ? 600 : 400,
                         lineHeight: { xs: 1.3, md: 1.5 },
                       }
@@ -236,11 +237,11 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: { xs: mobileDrawerWidth, sm: drawerWidth },
               height: '100vh',
               overflow: 'hidden',
-              zIndex: 1400, // Plus élevé que le header (1300)
-              paddingTop: '64px', // Espace pour le header
+              zIndex: 1400,
+              paddingTop: '64px',
             },
             '& .MuiBackdrop-root': {
               zIndex: 1350, // Entre header et drawer
@@ -271,11 +272,14 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, md: 3 }, // Moins de padding sur mobile
+          p: { xs: 1, sm: 2, md: 3 },
           width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: { xs: '64px', md: '64px' }, // Espace pour le header fixe sur toutes les tailles
+          mt: { xs: '64px', md: '64px' },
           bgcolor: 'background.default',
-          minHeight: '100vh',
+          minHeight: 'calc(100vh - 64px)',
+          maxWidth: '100vw',
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
         {children}

@@ -134,36 +134,70 @@ export default function ColdStorage() {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ 
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: { xs: '100vw', lg: '1400px' },
+      mx: 'auto'
+    }}>
       {/* Header avec gradient moderne */}
       <Paper
         sx={{
           background: 'linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)',
           color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
+          p: { xs: 2, sm: 3, md: 4 },
+          mb: { xs: 2, sm: 3, md: 4 },
+          borderRadius: { xs: 0, sm: 2, md: 3 },
+          mx: { xs: -1, sm: 0 },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: { xs: 'flex-start', sm: 'center' }, 
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 3 }
+        }}>
           <Avatar
             sx={{
               bgcolor: 'rgba(255,255,255,0.2)',
               color: 'white',
-              width: 80,
-              height: 80,
+              width: { xs: 56, md: 80 },
+              height: { xs: 56, md: 80 },
             }}
           >
             <AcUnit fontSize="large" />
           </Avatar>
           <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1,
+                fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
+                lineHeight: 1.2
+              }}
+            >
               Enceintes Froides
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                opacity: 0.9, 
+                mb: 1,
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                display: { xs: 'none', sm: 'block' }
+              }}
+            >
               Surveillance et contrôle des températures de stockage
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                opacity: 0.8,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
               Dernière lecture : {readings.length > 0 ? 
                 new Date(readings[0].reading_date).toLocaleDateString('fr-FR', { 
                   weekday: 'short', 
@@ -178,19 +212,36 @@ export default function ColdStorage() {
         </Box>
       </Paper>
 
-      <Container maxWidth="xl">
+      <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         
         {/* Statistiques rapides */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, 
+          gap: { xs: 2, sm: 3 }, 
+          mb: { xs: 3, md: 4 }
+        }}>
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Unités actives
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.totalUnits}
                     </Typography>
                   </Box>
@@ -204,13 +255,25 @@ export default function ColdStorage() {
           
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Lectures récentes
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.recentReadings}
                     </Typography>
                   </Box>
@@ -224,13 +287,25 @@ export default function ColdStorage() {
           
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Conformité
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.recentReadings > 0 ? 
                         Math.round((stats.compliantReadings / stats.recentReadings) * 100) + '%' : 
                         'N/A'
@@ -248,13 +323,25 @@ export default function ColdStorage() {
           
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Température moy.
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.averageTemp}°C
                     </Typography>
                   </Box>
@@ -267,11 +354,21 @@ export default function ColdStorage() {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, 
+          gap: { xs: 3, md: 4 }
+        }}>
           {/* Formulaire de nouvelle lecture */}
           <Box>
-            <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
-              <CardContent sx={{ p: 4 }}>
+            <Card sx={{ 
+              height: 'fit-content', 
+              transition: 'all 0.3s', 
+              '&:hover': { boxShadow: 6 },
+              mx: { xs: -1, sm: 0 },
+              borderRadius: { xs: 0, sm: 1 }
+            }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
                   <Avatar sx={{ bgcolor: '#00bcd420', color: '#00bcd4' }}>
                     <Thermostat />

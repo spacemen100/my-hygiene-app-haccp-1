@@ -139,54 +139,105 @@ export default function CleaningPlan() {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ 
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: { xs: '100vw', lg: '1400px' },
+      mx: 'auto'
+    }}>
       {/* Header avec gradient moderne */}
       <Paper
         sx={{
           background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
           color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
+          p: { xs: 2, sm: 3, md: 4 },
+          mb: { xs: 2, sm: 3, md: 4 },
+          borderRadius: { xs: 0, sm: 2, md: 3 },
+          mx: { xs: -1, sm: 0 },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: { xs: 'flex-start', sm: 'center' }, 
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 3 }
+        }}>
           <Avatar
             sx={{
               bgcolor: 'rgba(255,255,255,0.2)',
               color: 'white',
-              width: 80,
-              height: 80,
+              width: { xs: 56, md: 80 },
+              height: { xs: 56, md: 80 },
             }}
           >
             <CleaningServices fontSize="large" />
           </Avatar>
           <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1,
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.75rem' },
+                lineHeight: 1.2
+              }}
+            >
               Plan de Nettoyage HACCP
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                opacity: 0.9, 
+                mb: 1,
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                display: { xs: 'none', sm: 'block' }
+              }}
+            >
               Planification et suivi des tâches de nettoyage
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                opacity: 0.8,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
               {stats.totalTasks} tâche{stats.totalTasks !== 1 ? 's' : ''} planifiée{stats.totalTasks !== 1 ? 's' : ''} • {stats.completedToday} exécutée{stats.completedToday !== 1 ? 's' : ''} aujourd&apos;hui
             </Typography>
           </Box>
         </Box>
       </Paper>
 
-      <Container maxWidth="xl">
+      <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         {/* Statistiques rapides */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, 
+          gap: { xs: 2, sm: 3 }, 
+          mb: { xs: 3, md: 4 }
+        }}>
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Tâches totales
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.totalTasks}
                     </Typography>
                   </Box>
@@ -200,13 +251,25 @@ export default function CleaningPlan() {
           
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Complétées aujourd&apos;hui
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.completedToday}
                     </Typography>
                   </Box>
@@ -220,13 +283,25 @@ export default function CleaningPlan() {
           
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       Taux conformité
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.complianceRate}%
                     </Typography>
                   </Box>
@@ -240,13 +315,25 @@ export default function CleaningPlan() {
           
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography color="text.secondary" gutterBottom variant="body2">
+                    <Typography 
+                      color="text.secondary" 
+                      gutterBottom 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       En attente
                     </Typography>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                      }}
+                    >
                       {stats.pendingTasks}
                     </Typography>
                   </Box>
@@ -259,27 +346,56 @@ export default function CleaningPlan() {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, 
+          gap: { xs: 3, md: 4 }
+        }}>
           {/* Formulaire de nouvelle exécution */}
           <Box>
-            <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+            <Card sx={{ 
+              height: 'fit-content', 
+              transition: 'all 0.3s', 
+              '&:hover': { boxShadow: 6 },
+              mx: { xs: -1, sm: 0 },
+              borderRadius: { xs: 0, sm: 1 }
+            }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: { xs: 1.5, sm: 2 }, 
+                  mb: { xs: 3, md: 4 }
+                }}>
                   <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
                     <Assignment />
                   </Avatar>
                   <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontWeight: 600,
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                      }}
+                    >
                       Nouvelle Exécution
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                    >
                       Enregistrer une tâche de nettoyage HACCP
                     </Typography>
                   </Box>
                 </Box>
                 
-                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  <FormControl fullWidth required>
+                <Box component="form" onSubmit={handleSubmit} sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: { xs: 2.5, sm: 3 }
+                }}>
+                  <FormControl fullWidth required sx={{ minHeight: '56px' }}>
                     <InputLabel>Tâche de nettoyage</InputLabel>
                     <Select
                       value={formData.cleaning_task_id || ''}
@@ -289,7 +405,13 @@ export default function CleaningPlan() {
                       {tasks.map(task => (
                         <MenuItem key={task.id} value={task.id}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                            <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                            <Typography 
+                              variant="body1" 
+                              sx={{ 
+                                flexGrow: 1,
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                              }}
+                            >
                               {task.name}
                             </Typography>
                             <Chip 
@@ -314,7 +436,12 @@ export default function CleaningPlan() {
                     InputLabelProps={{ shrink: true }}
                   />
                   
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: { xs: 1, sm: 2 }, 
+                    flexWrap: 'wrap',
+                    flexDirection: { xs: 'column', sm: 'row' }
+                  }}>
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -382,7 +509,7 @@ export default function CleaningPlan() {
                   <TextField
                     label="Commentaires"
                     multiline
-                    rows={3}
+                    rows={{ xs: 2, sm: 3 }}
                     value={formData.comments || ''}
                     onChange={(e) => setFormData({...formData, comments: e.target.value})}
                     fullWidth
@@ -396,7 +523,12 @@ export default function CleaningPlan() {
                     startIcon={<Save />}
                     disabled={loading}
                     fullWidth
-                    sx={{ mt: 2 }}
+                    sx={{ 
+                      mt: { xs: 1.5, sm: 2 },
+                      py: { xs: 1.5, sm: 2 },
+                      minHeight: '48px',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}
                   >
                     {loading ? 'Enregistrement...' : 'Enregistrer'}
                   </Button>
@@ -407,15 +539,25 @@ export default function CleaningPlan() {
           
           {/* Tableau des dernières exécutions */}
           <Box>
-            <Card elevation={3}>
-              <CardContent>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1,
-                  color: 'info.main',
-                  mb: 3
-                }}>
+            <Card elevation={3} sx={{
+              mx: { xs: -1, sm: 0 },
+              borderRadius: { xs: 0, sm: 1 },
+              overflow: { xs: 'hidden', sm: 'visible' }
+            }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Typography 
+                  variant="h5" 
+                  component="h2" 
+                  gutterBottom 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: { xs: 1, sm: 1.5 },
+                    color: 'info.main',
+                    mb: { xs: 2, sm: 3 },
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                  }}
+                >
                   <Schedule />
                   Dernières Exécutions
                 </Typography>

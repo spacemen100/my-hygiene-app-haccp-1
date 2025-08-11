@@ -40,6 +40,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
+  Avatar,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useSnackbar } from 'notistack';
@@ -195,29 +196,87 @@ export default function DeliveryComponent() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: { xs: '100vw', lg: '1400px' },
+      mx: 'auto',
+      px: { xs: 0, sm: 1, md: 2 }
+    }}>
       {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3,
-        flexWrap: 'wrap',
-        gap: 2
-      }}>
-        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <LocalShipping fontSize="large" />
-          Gestion des Livraisons
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => setOpenDialog(true)}
-          sx={{ ml: 'auto' }}
-        >
-          Nouvelle Livraison
-        </Button>
-      </Box>
+      <Paper
+        sx={{
+          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+          color: 'white',
+          p: { xs: 2, sm: 3, md: 4 },
+          mb: { xs: 2, sm: 3, md: 4 },
+          borderRadius: { xs: 0, sm: 2, md: 3 },
+          mx: { xs: -1, sm: 0 },
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 1 }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 3 } }}>
+            <Avatar
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                width: { xs: 56, md: 80 },
+                height: { xs: 56, md: 80 },
+              }}
+            >
+              <LocalShipping fontSize="large" />
+            </Avatar>
+            <Box>
+              <Typography 
+                variant="h4" 
+                component="h1" 
+                sx={{ 
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                  lineHeight: 1.2,
+                  mb: 1
+                }}
+              >
+                Gestion des Livraisons
+              </Typography>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  opacity: 0.9,
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                  display: { xs: 'none', sm: 'block' }
+                }}
+              >
+                Contrôle qualité des réceptions
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setOpenDialog(true)}
+            sx={{ 
+              bgcolor: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              fontSize: { xs: '0.875rem', md: '1rem' },
+              px: { xs: 2, md: 3 },
+              py: { xs: 1, md: 1.5 },
+              minHeight: '44px',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.3)'
+              }
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Nouvelle </Box>Livraison
+          </Button>
+        </Box>
+      </Paper>
 
       {/* New Delivery Dialog */}
       <Dialog
@@ -225,28 +284,48 @@ export default function DeliveryComponent() {
         onClose={() => setOpenDialog(false)}
         fullWidth
         maxWidth="md"
+        fullScreen={{ xs: true, sm: false }}
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: { xs: 0, sm: 3 },
+            margin: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100vh', sm: 'calc(100vh - 64px)' }
+          }
+        }}
       >
         <DialogTitle sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
           borderBottom: '1px solid rgba(0,0,0,0.12)',
-          py: 2
+          py: { xs: 1.5, sm: 2 },
+          px: { xs: 2, sm: 3 }
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Description color="primary" />
-            <Typography variant="h6">Nouvelle Livraison</Typography>
+            <Typography 
+              variant="h6"
+              sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}
+            >
+              Nouvelle Livraison
+            </Typography>
           </Box>
-          <IconButton onClick={() => setOpenDialog(false)}>
+          <IconButton 
+            onClick={() => setOpenDialog(false)}
+            sx={{ minHeight: '44px', minWidth: '44px' }}
+          >
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ py: 3 }}>
+        <DialogContent sx={{ 
+          py: { xs: 2, sm: 3 },
+          px: { xs: 2, sm: 3 }
+        }}>
           <Box sx={{ 
             display: 'grid', 
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
-            gap: 3,
-            mb: 3
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, 
+            gap: { xs: 2, sm: 3 },
+            mb: { xs: 2, sm: 3 }
           }}>
             <FormControl fullWidth>
               <InputLabel id="supplier-label">Fournisseur *</InputLabel>
@@ -311,10 +390,10 @@ export default function DeliveryComponent() {
               fullWidth
               multiline
               rows={2}
-              sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}
+              sx={{ gridColumn: '1 / -1' }}
             />
 
-            <Box sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <input
                 accept="image/*"
                 style={{ display: 'none' }}
@@ -328,7 +407,10 @@ export default function DeliveryComponent() {
                   variant="outlined"
                   startIcon={<CloudUpload />}
                   fullWidth
-                  sx={{ py: 2 }}
+                  sx={{ 
+                    py: { xs: 1.5, sm: 2 },
+                    minHeight: '44px'
+                  }}
                 >
                   {newDelivery.photo_url ? 'Photo sélectionnée' : 'Ajouter une photo'}
                 </Button>
@@ -346,13 +428,19 @@ export default function DeliveryComponent() {
         </DialogContent>
         <DialogActions sx={{ 
           borderTop: '1px solid rgba(0,0,0,0.12)',
-          px: 3,
-          py: 2
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
+          gap: { xs: 1, sm: 0 },
+          flexDirection: { xs: 'column-reverse', sm: 'row' }
         }}>
           <Button 
             onClick={() => setOpenDialog(false)} 
             color="inherit"
-            sx={{ mr: 2 }}
+            sx={{ 
+              mr: { xs: 0, sm: 2 },
+              minHeight: '44px',
+              width: { xs: '100%', sm: 'auto' }
+            }}
           >
             Annuler
           </Button>
@@ -362,6 +450,10 @@ export default function DeliveryComponent() {
             variant="contained"
             disabled={isCreating}
             startIcon={isCreating ? <CircularProgress size={20} /> : null}
+            sx={{
+              minHeight: '44px',
+              width: { xs: '100%', sm: 'auto' }
+            }}
           >
             {isCreating ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
@@ -374,15 +466,28 @@ export default function DeliveryComponent() {
           <CircularProgress size={60} />
         </Box>
       ) : deliveries.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h6" color="text.secondary">
+        <Paper sx={{ 
+          p: { xs: 2, sm: 4 }, 
+          textAlign: 'center',
+          mx: { xs: -1, sm: 0 },
+          borderRadius: { xs: 0, sm: 1 }
+        }}>
+          <Typography 
+            variant="h6" 
+            color="text.secondary"
+            sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}
+          >
             Aucune livraison enregistrée
           </Typography>
           <Button 
             variant="outlined" 
             startIcon={<Add />}
             onClick={() => setOpenDialog(true)}
-            sx={{ mt: 2 }}
+            sx={{ 
+              mt: 2,
+              minHeight: '44px',
+              px: { xs: 2, sm: 3 }
+            }}
           >
             Créer une livraison
           </Button>
@@ -391,7 +496,7 @@ export default function DeliveryComponent() {
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'column', 
-          gap: 2 
+          gap: { xs: 1.5, sm: 2 }
         }}>
           {deliveries.map((delivery) => (
             <Accordion
@@ -406,36 +511,61 @@ export default function DeliveryComponent() {
                   backgroundColor: expandedDelivery === delivery.id ? 'action.selected' : 'background.paper',
                   '&:hover': {
                     backgroundColor: 'action.hover'
-                  }
+                  },
+                  px: { xs: 1, sm: 2 },
+                  py: { xs: 0.5, sm: 1 }
                 }}
               >
                 <Box sx={{ 
                   width: '100%', 
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr', md: '1.5fr 1fr 1fr 1fr 0.5fr' },
-                  gap: 1,
+                  gridTemplateColumns: { 
+                    xs: '1fr', 
+                    sm: '2fr 1fr', 
+                    md: '1.5fr 1fr 1fr 1fr 0.5fr' 
+                  },
+                  gap: { xs: 1, sm: 2 },
                   alignItems: 'center'
                 }}>
                   <Box>
-                    <Typography variant="subtitle1" noWrap>
+                    <Typography 
+                      variant="subtitle1" 
+                      sx={{ 
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        fontWeight: 600
+                      }}
+                      noWrap
+                    >
                       {delivery.supplier?.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
                       {format(new Date(delivery.delivery_date), 'PPPp', { locale: fr })}
                     </Typography>
                   </Box>
                   
-                  <Typography variant="body1" noWrap>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      display: { xs: 'none', md: 'block' }
+                    }}
+                    noWrap
+                  >
                     {delivery.delivery_number || 'N/A'}
                   </Typography>
                   
-                  <Box>
+                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                     {delivery.is_compliant ? (
                       <Chip 
                         label="Conforme" 
                         color="success" 
                         size="small" 
                         icon={<CheckCircle fontSize="small" />}
+                        sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
                       />
                     ) : (
                       <Chip 
@@ -443,11 +573,12 @@ export default function DeliveryComponent() {
                         color="error" 
                         size="small" 
                         icon={<Cancel fontSize="small" />}
+                        sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
                       />
                     )}
                   </Box>
                   
-                  <Box>
+                  <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                     {delivery.photo_url ? (
                       <Button
                         href={delivery.photo_url}
@@ -455,18 +586,26 @@ export default function DeliveryComponent() {
                         rel="noopener"
                         size="small"
                         startIcon={<CameraAlt fontSize="small" />}
+                        sx={{ 
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          minHeight: '32px'
+                        }}
                       >
-                        Voir photo
+                        <Box component="span" sx={{ display: { xs: 'none', lg: 'inline' } }}>Voir </Box>Photo
                       </Button>
                     ) : (
-                      <Typography variant="body2" color="text.disabled">
+                      <Typography 
+                        variant="body2" 
+                        color="text.disabled"
+                        sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                      >
                         Aucune photo
                       </Typography>
                     )}
                   </Box>
                   
                   <Box sx={{ 
-                    display: 'flex', 
+                    display: { xs: 'none', sm: 'flex' }, 
                     justifyContent: 'flex-end',
                     gap: 1
                   }}>
@@ -477,6 +616,7 @@ export default function DeliveryComponent() {
                           e.stopPropagation();
                           if (delivery.id) handleDeleteDelivery(delivery.id);
                         }}
+                        sx={{ minHeight: '40px', minWidth: '40px' }}
                       >
                         <Delete fontSize="small" color="error" />
                       </IconButton>
@@ -486,13 +626,68 @@ export default function DeliveryComponent() {
               </AccordionSummary>
               <AccordionDetails sx={{ 
                 borderTop: '1px solid rgba(0,0,0,0.12)',
-                pt: 2
+                pt: { xs: 1.5, sm: 2 },
+                px: { xs: 1, sm: 2 }
               }}>
                 <Box sx={{ 
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                  gap: 3
+                  gap: { xs: 2, sm: 3 }
                 }}>
+                  
+                  {/* Mobile-specific status and actions */}
+                  <Box sx={{ 
+                    display: { xs: 'block', sm: 'none' },
+                    gridColumn: '1 / -1',
+                    pb: 2,
+                    borderBottom: '1px solid rgba(0,0,0,0.12)'
+                  }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      gap: 2
+                    }}>
+                      <Box>
+                        {delivery.is_compliant ? (
+                          <Chip 
+                            label="Conforme" 
+                            color="success" 
+                            size="small" 
+                            icon={<CheckCircle fontSize="small" />}
+                          />
+                        ) : (
+                          <Chip 
+                            label="Non conforme" 
+                            color="error" 
+                            size="small" 
+                            icon={<Cancel fontSize="small" />}
+                          />
+                        )}
+                        {delivery.photo_url && (
+                          <Button
+                            href={delivery.photo_url}
+                            target="_blank"
+                            rel="noopener"
+                            size="small"
+                            startIcon={<CameraAlt fontSize="small" />}
+                            sx={{ ml: 1, fontSize: '0.75rem' }}
+                          >
+                            Photo
+                          </Button>
+                        )}
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          if (delivery.id) handleDeleteDelivery(delivery.id);
+                        }}
+                        sx={{ minHeight: '44px', minWidth: '44px' }}
+                      >
+                        <Delete fontSize="small" color="error" />
+                      </IconButton>
+                    </Box>
+                  </Box>
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="subtitle2" gutterBottom>

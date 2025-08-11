@@ -72,24 +72,55 @@ export default function Home() {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ 
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: { xs: '100vw', lg: '1400px' },
+      mx: 'auto',
+      px: { xs: 0, sm: 1, md: 2 }
+    }}>
       {/* Header */}
       <Paper
         sx={{
           background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
           color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
+          p: { xs: 2, sm: 3, md: 4 },
+          mb: { xs: 2, sm: 3, md: 4 },
+          borderRadius: { xs: 0, sm: 2, md: 3 },
+          mx: { xs: -1, sm: 0 },
         }}
       >
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
+        <Typography 
+          variant="h3" 
+          component="h1" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 700,
+            fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+            lineHeight: 1.2
+          }}
+        >
           Tableau de Bord HACCP
         </Typography>
-        <Typography variant="h6" sx={{ opacity: 0.9 }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            opacity: 0.9,
+            fontSize: { xs: '1rem', sm: '1.25rem' },
+            mb: { xs: 1, md: 0 }
+          }}
+        >
           Bienvenue dans votre système de gestion qualité
         </Typography>
-        <Typography variant="body2" sx={{ mt: 2, opacity: 0.8 }}>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            mt: { xs: 1, md: 2 }, 
+            opacity: 0.8,
+            fontSize: { xs: '0.8rem', sm: '0.875rem' },
+            display: { xs: 'none', sm: 'block' }
+          }}
+        >
           Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -103,24 +134,36 @@ export default function Home() {
 
       {/* Quick Stats */}
       <Box sx={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        gap: 3, 
-        mb: 4,
-        '& > *': {
-          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' },
-          minWidth: 0
-        }
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(4, 1fr)'
+        },
+        gap: { xs: 2, sm: 3 },
+        mb: { xs: 3, md: 4 }
       }}>
         {quickStats.map((stat, index) => (
           <Card key={index} sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
+                  <Typography 
+                    color="text.secondary" 
+                    gutterBottom 
+                    variant="body2"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                  >
                     {stat.label}
                   </Typography>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                  <Typography 
+                    variant="h4" 
+                    component="div" 
+                    sx={{ 
+                      fontWeight: 700,
+                      fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                    }}
+                  >
                     {stat.value}
                   </Typography>
                 </Box>
@@ -128,8 +171,11 @@ export default function Home() {
                   sx={{
                     bgcolor: `${stat.color}20`,
                     color: stat.color,
-                    width: 56,
-                    height: 56,
+                    width: { xs: 40, sm: 48, md: 56 },
+                    height: { xs: 40, sm: 48, md: 56 },
+                    '& .MuiSvgIcon-root': {
+                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' }
+                    }
                   }}
                 >
                   <stat.icon />
@@ -141,18 +187,27 @@ export default function Home() {
       </Box>
 
       {/* Quick Actions */}
-      <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+      <Typography 
+        variant="h5" 
+        component="h2" 
+        gutterBottom 
+        sx={{ 
+          fontWeight: 600,
+          mb: { xs: 2, md: 3 },
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          px: { xs: 1, sm: 0 }
+        }}
+      >
         Actions rapides
       </Typography>
       <Box sx={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        gap: 3, 
-        mb: 4,
-        '& > *': {
-          flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' },
-          minWidth: 0
-        }
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          md: 'repeat(2, 1fr)'
+        },
+        gap: { xs: 2, sm: 3 },
+        mb: { xs: 3, md: 4 }
       }}>
         {quickActions.map((action, index) => (
           <Card
@@ -175,17 +230,35 @@ export default function Home() {
                   sx={{
                     bgcolor: `${action.color}20`,
                     color: action.color,
-                    width: 56,
-                    height: 56,
+                    width: { xs: 48, md: 56 },
+                    height: { xs: 48, md: 56 },
+                    '& .MuiSvgIcon-root': {
+                      fontSize: { xs: '1.5rem', md: '2rem' }
+                    }
                   }}
                 >
                   <action.icon />
                 </Avatar>
                 <Box>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+                  <Typography 
+                    variant="h6" 
+                    component="div" 
+                    sx={{ 
+                      fontWeight: 600,
+                      fontSize: { xs: '1rem', md: '1.25rem' },
+                      lineHeight: 1.3
+                    }}
+                  >
                     {action.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: { xs: '0.8rem', md: '0.875rem' },
+                      lineHeight: 1.4
+                    }}
+                  >
                     {action.description}
                   </Typography>
                 </Box>
@@ -196,17 +269,32 @@ export default function Home() {
       </Box>
 
       {/* Recent Activity */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
+      <Card sx={{ mx: { xs: -1, sm: 0 }, borderRadius: { xs: 0, sm: 1 } }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography 
+            variant="h6" 
+            component="h3" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 600,
+              fontSize: { xs: '1.125rem', md: '1.25rem' }
+            }}
+          >
             Activité récente
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              mb: { xs: 2, md: 3 },
+              fontSize: { xs: '0.8rem', md: '0.875rem' }
+            }}
+          >
             Dernières actions effectuées dans le système
           </Typography>
           <List>
             {recentActivities.map((activity, index) => (
-              <ListItem key={index} sx={{ px: 0 }}>
+              <ListItem key={index} sx={{ px: 0, py: { xs: 1, md: 1.5 } }}>
                 <ListItemIcon sx={{ minWidth: 24 }}>
                   <Circle
                     sx={{
@@ -219,12 +307,29 @@ export default function Home() {
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      gap: { xs: 1, sm: 0 }
+                    }}>
                       <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            fontWeight: 500,
+                            fontSize: { xs: '0.875rem', md: '1rem' },
+                            lineHeight: 1.3
+                          }}
+                        >
                           {activity.action}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+                        >
                           {activity.item}
                         </Typography>
                       </Box>
@@ -232,7 +337,10 @@ export default function Home() {
                         label={activity.time} 
                         size="small" 
                         variant="outlined" 
-                        sx={{ fontSize: '0.75rem' }}
+                        sx={{ 
+                          fontSize: { xs: '0.65rem', md: '0.75rem' },
+                          height: { xs: '24px', md: '28px' }
+                        }}
                       />
                     </Box>
                   }

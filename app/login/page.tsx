@@ -40,34 +40,67 @@ export default function LoginPage() {
         alignItems: 'center',
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-        p: 2,
+        p: { xs: 1, sm: 2 },
+        px: { xs: 2, sm: 3 },
       }}
     >
       <Box
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          maxWidth: 420,
+          maxWidth: { xs: '100%', sm: 420 },
           width: '100%',
-          p: 5,
-          boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-          borderRadius: 3,
+          p: { xs: 3, sm: 4, md: 5 },
+          boxShadow: { xs: 'none', sm: '0 20px 40px rgba(0,0,0,0.15)' },
+          borderRadius: { xs: 0, sm: 3 },
           bgcolor: 'background.paper',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: { xs: 'none', sm: '1px solid rgba(255,255,255,0.1)' },
+          minHeight: { xs: '100vh', sm: 'auto' },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: { xs: 'center', sm: 'flex-start' },
         }}
       >
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
+        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+          <Typography 
+            variant="h3" 
+            component="h1" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 700, 
+              color: 'primary.main',
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+              lineHeight: 1.2
+            }}
+          >
             HACCP Manager
           </Typography>
-          <Typography variant="h6" component="h2" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+          <Typography 
+            variant="h6" 
+            component="h2" 
+            sx={{ 
+              color: 'text.secondary', 
+              fontWeight: 400,
+              fontSize: { xs: '1.1rem', md: '1.25rem' }
+            }}
+          >
             Connexion à votre espace
           </Typography>
         </Box>
         
         {error && (
-          <Typography color="error" sx={{ mb: 3, textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+          <Typography 
+            color="error" 
+            sx={{ 
+              mb: { xs: 2, md: 3 }, 
+              textAlign: 'center', 
+              p: { xs: 1.5, md: 2 }, 
+              bgcolor: 'error.light', 
+              borderRadius: 1,
+              fontSize: { xs: '0.875rem', md: '1rem' }
+            }}
+          >
             {error}
           </Typography>
         )}
@@ -80,7 +113,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           margin="normal"
           required
-          sx={{ mb: 2 }}
+          sx={{ mb: { xs: 1.5, md: 2 } }}
         />
 
         <TextField
@@ -91,7 +124,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           margin="normal"
           required
-          sx={{ mb: 3 }}
+          sx={{ mb: { xs: 2, md: 3 } }}
         />
 
         <Button
@@ -100,12 +133,13 @@ export default function LoginPage() {
           type="submit"
           size="large"
           sx={{ 
-            mt: 2, 
-            mb: 2, 
-            py: 1.5,
+            mt: { xs: 1, md: 2 }, 
+            mb: { xs: 1, md: 2 }, 
+            py: { xs: 1.25, md: 1.5 },
             fontWeight: 600,
-            fontSize: '1.1rem',
+            fontSize: { xs: '1rem', md: '1.1rem' },
             background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+            minHeight: '48px',
             '&:hover': {
               background: 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
             }
@@ -115,8 +149,12 @@ export default function LoginPage() {
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
         </Button>
 
-        <Box sx={{ textAlign: 'center', mt: 3 }}>
-          <Typography variant="body2" color="text.secondary">
+        <Box sx={{ textAlign: 'center', mt: { xs: 2, md: 3 } }}>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+          >
             Système de gestion HACCP - Version 1.0
           </Typography>
         </Box>
