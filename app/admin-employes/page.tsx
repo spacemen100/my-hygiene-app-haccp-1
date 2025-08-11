@@ -45,6 +45,7 @@ import {
   Work as WorkIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelledIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 
 type Employee = Tables<'employees'>;
@@ -71,6 +72,7 @@ export default function AdminEmployesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [defaultOrganization, setDefaultOrganization] = useState<string | null>(null);
+  const [organizations, setOrganizations] = useState<any[]>([]);
   const { employee: currentEmployee, loading: employeeLoading } = useEmployee();
   const router = useRouter();
   
@@ -95,19 +97,28 @@ export default function AdminEmployesPage() {
     organization_id: '',
   });
 
-  const loadDefaultOrganization = useCallback(async () => {
+  const loadOrganizations = useCallback(async () => {
     try {
       const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      setOrganizations(data || []);
+      
+      // Set default organization (first one created)
+      const { data: defaultData, error: defaultError } = await supabase
         .from('organizations')
         .select('id')
         .order('created_at')
         .limit(1)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error;
-      setDefaultOrganization(data?.id || null);
+      if (defaultError && defaultError.code !== 'PGRST116') throw defaultError;
+      setDefaultOrganization(defaultData?.id || null);
     } catch (err) {
-      console.error('[AdminEmployes] Error loading default organization:', err);
+      console.error('[AdminEmployes] Error loading organizations:', err);
     }
   }, []);
 
@@ -128,7 +139,14 @@ export default function AdminEmployesPage() {
 
       const { data, error } = await supabase
         .from('employees')
-        .select('*')
+        .select(`
+          *,
+          organizations (
+            id,
+            name,
+            city
+          )
+        `)
         .eq('organization_id', organizationId)
         .order('last_name')
         .order('first_name');
@@ -154,7 +172,7 @@ export default function AdminEmployesPage() {
       defaultOrganization
     });
     
-    loadDefaultOrganization();
+    loadOrganizations();
     
     // Timeout de sécurité pour éviter le chargement infini
     const timeoutId = setTimeout(() => {
@@ -165,7 +183,7 @@ export default function AdminEmployesPage() {
     }, 5000); // 5 secondes
     
     return () => clearTimeout(timeoutId);
-  }, [loadDefaultOrganization, loading]);
+  }, [loadOrganizations, loading]);
 
   useEffect(() => {
     // Attendre que l'EmployeeProvider ait fini de charger ET que nous ayons vérifié l'organisation par défaut
@@ -240,13 +258,12 @@ export default function AdminEmployesPage() {
         return;
       }
 
-      // Si pas d'organisation, rediriger vers la création d'organisation
-      const organizationId = formData.organization_id;
-      if (!organizationId) {
-        console.log('[AdminEmployes] No organization, redirecting to create organization');
-        handleRedirectToCreateOrganization();
+      if (!formData.organization_id) {
+        setError('L\'organisation est obligatoire');
         return;
       }
+
+      const organizationId = formData.organization_id;
 
       if (editingEmployee) {
         // Update existing employee
@@ -484,6 +501,7 @@ export default function AdminEmployesPage() {
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
                   <TableCell sx={{ fontWeight: 600 }}>Employé</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Organisation</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Rôle</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Date de création</TableCell>
@@ -505,6 +523,21 @@ export default function AdminEmployesPage() {
                           {employee.user_id && (
                             <Typography variant="caption" color="text.secondary">
                               Compte utilisateur lié
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <BusinessIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {(employee as any).organizations?.name || 'Organisation inconnue'}
+                          </Typography>
+                          {(employee as any).organizations?.city && (
+                            <Typography variant="caption" color="text.secondary">
+                              {(employee as any).organizations.city}
                             </Typography>
                           )}
                         </Box>
@@ -559,7 +592,7 @@ export default function AdminEmployesPage() {
                 ))}
                 {employees.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary" sx={{ mb: 2 }}>
                         Aucun employé trouvé
                       </Typography>
@@ -623,6 +656,42 @@ export default function AdminEmployesPage() {
                     {role}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Organisation *</InputLabel>
+              <Select
+                value={formData.organization_id || ''}
+                onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
+                label="Organisation *"
+                required
+              >
+                {organizations.length === 0 ? (
+                  <MenuItem disabled>
+                    <Typography color="text.secondary" style={{ fontStyle: 'italic' }}>
+                      Aucune organisation disponible
+                    </Typography>
+                  </MenuItem>
+                ) : (
+                  organizations.map((org) => (
+                    <MenuItem key={org.id} value={org.id}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                        <BusinessIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {org.name}
+                          </Typography>
+                          {org.city && (
+                            <Typography variant="caption" color="text.secondary">
+                              {org.city}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
 
