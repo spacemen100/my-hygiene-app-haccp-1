@@ -222,7 +222,7 @@ export default function AdminEmployesPage() {
         is_active: employee.is_active ?? true,
         organization_id: employee.organization_id,
       });
-      setCustomRole(isCustomRole ? employee.role : '');
+      setCustomRole(isCustomRole ? (employee.role || '') : '');
     } else {
       setEditingEmployee(null);
       setFormData({
