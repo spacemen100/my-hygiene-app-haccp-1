@@ -20,7 +20,12 @@ import {
   Chip,
   Paper,
   Stack,
-  Avatar
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
 } from '@mui/material';
 import {
   Print,
@@ -30,7 +35,9 @@ import {
   Schedule,
   Info,
   CalendarMonth,
-  Category
+  Category,
+  Close,
+  HelpOutline
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -53,6 +60,7 @@ export default function LabelPrinting() {
     daysRemaining: null,
     urgencyLevel: null
   });
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -156,34 +164,51 @@ export default function LabelPrinting() {
           borderRadius: 3,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-          <Avatar
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Avatar
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                width: 80,
+                height: 80,
+              }}
+            >
+              <Print fontSize="large" />
+            </Avatar>
+            <Box>
+              <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+                Impression des DLC Secondaires
+              </Typography>
+              <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
+                Génération d&apos;étiquettes avec dates limites de consommation
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                Dernière impression : {new Date().toLocaleDateString('fr-FR', { 
+                  weekday: 'long', 
+                  day: 'numeric',
+                  month: 'long',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<HelpOutline />}
+            onClick={() => setGuideModalOpen(true)}
             sx={{
-              bgcolor: 'rgba(255,255,255,0.2)',
               color: 'white',
-              width: 80,
-              height: 80,
+              borderColor: 'rgba(255,255,255,0.5)',
+              '&:hover': {
+                borderColor: 'white',
+                bgcolor: 'rgba(255,255,255,0.1)'
+              }
             }}
           >
-            <Print fontSize="large" />
-          </Avatar>
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-              Impression des DLC Secondaires
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
-              Génération d&apos;étiquettes avec dates limites de consommation
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              Dernière impression : {new Date().toLocaleDateString('fr-FR', { 
-                weekday: 'long', 
-                day: 'numeric',
-                month: 'long',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </Typography>
-          </Box>
+            Mode d&apos;emploi
+          </Button>
         </Box>
       </Paper>
 
@@ -490,13 +515,19 @@ export default function LabelPrinting() {
           </Box>
         </Box>
 
-        {/* Guide et informations */}
-        <Card sx={{ mt: 4, overflow: 'hidden' }}>
-          <Box sx={{ 
-            background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)', 
-            p: 3, 
-            borderBottom: '1px solid', 
-            borderColor: 'divider' 
+        {/* Modal Guide */}
+        <Dialog 
+          open={guideModalOpen} 
+          onClose={() => setGuideModalOpen(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+            pb: 2
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'info.main' }}>
@@ -511,8 +542,11 @@ export default function LabelPrinting() {
                 </Typography>
               </Box>
             </Box>
-          </Box>
-          <CardContent>
+            <IconButton onClick={() => setGuideModalOpen(false)}>
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
               <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
@@ -545,8 +579,13 @@ export default function LabelPrinting() {
                 </Stack>
               </Box>
             </Box>
-          </CardContent>
-        </Card>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setGuideModalOpen(false)} variant="contained">
+              Compris
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
