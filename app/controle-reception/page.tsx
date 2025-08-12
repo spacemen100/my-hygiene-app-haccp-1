@@ -136,6 +136,11 @@ export default function DeliveryComponent() {
     quantity_type: 'kg',
   });
 
+  // Photo preview states
+  const [deliveryPhotoPreview, setDeliveryPhotoPreview] = useState<string | null>(null);
+  const [productPhotoPreview, setProductPhotoPreview] = useState<string | null>(null);
+  const [nonConformityPhotoPreview, setNonConformityPhotoPreview] = useState<string | null>(null);
+
   const fetchDeliveries = useCallback(async () => {
     setLoading(true);
     try {
@@ -191,10 +196,27 @@ export default function DeliveryComponent() {
     setCompletedSteps(prev => ({ ...prev, [step]: true }));
   };
 
-  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>, field: 'delivery' | 'product' | 'nonConformity') => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, field: 'delivery' | 'product' | 'nonConformity') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    
+    // Set preview based on field
+    if (field === 'delivery') {
+      setDeliveryPhotoPreview(previewUrl);
+    } else if (field === 'product') {
+      setProductPhotoPreview(previewUrl);
+    } else if (field === 'nonConformity') {
+      setNonConformityPhotoPreview(previewUrl);
+    }
+
+    // Upload the file
+    handleUploadPhoto(file, field);
+  };
+
+  const handleUploadPhoto = async (file: File, field: 'delivery' | 'product' | 'nonConformity') => {
     console.log('🔄 Starting photo upload...');
     console.log('📁 File:', file.name, file.size, file.type);
     console.log('🧑‍💼 Current user:', user?.id, user?.email);
@@ -242,6 +264,114 @@ export default function DeliveryComponent() {
       console.error('❌ Error uploading photo:', error);
       enqueueSnackbar('Impossible de télécharger la photo', { variant: 'error' });
     }
+  };
+
+  const handleRemovePhoto = (field: 'delivery' | 'product' | 'nonConformity') => {
+    // Clean up preview URL
+    if (field === 'delivery' && deliveryPhotoPreview) {
+      URL.revokeObjectURL(deliveryPhotoPreview);
+      setDeliveryPhotoPreview(null);
+      setDeliveryData({ ...deliveryData, photo_url: null });
+    } else if (field === 'product' && productPhotoPreview) {
+      URL.revokeObjectURL(productPhotoPreview);
+      setProductPhotoPreview(null);
+    } else if (field === 'nonConformity' && nonConformityPhotoPreview) {
+      URL.revokeObjectURL(nonConformityPhotoPreview);
+      setNonConformityPhotoPreview(null);
+      setNewNonConformity({ ...newNonConformity, photo_url: null });
+    }
+  };
+
+  // Cleanup function for preview URLs
+  useEffect(() => {
+    return () => {
+      if (deliveryPhotoPreview) URL.revokeObjectURL(deliveryPhotoPreview);
+      if (productPhotoPreview) URL.revokeObjectURL(productPhotoPreview);
+      if (nonConformityPhotoPreview) URL.revokeObjectURL(nonConformityPhotoPreview);
+    };
+  }, [deliveryPhotoPreview, productPhotoPreview, nonConformityPhotoPreview]);
+
+  // Photo preview component
+  const PhotoPreview = ({ 
+    previewUrl, 
+    uploadedUrl, 
+    field, 
+    label 
+  }: { 
+    previewUrl: string | null; 
+    uploadedUrl?: string | null; 
+    field: 'delivery' | 'product' | 'nonConformity'; 
+    label: string;
+  }) => {
+    const displayUrl = previewUrl || uploadedUrl;
+    
+    if (!displayUrl) return null;
+
+    return (
+      <Box sx={{ mt: 2, position: 'relative' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          {label}
+        </Typography>
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'inline-block',
+            border: '2px solid',
+            borderColor: previewUrl ? 'warning.main' : 'success.main',
+            borderRadius: 2,
+            overflow: 'hidden',
+            maxWidth: 300,
+          }}
+        >
+          <img
+            src={displayUrl}
+            alt={label}
+            style={{
+              width: '100%',
+              height: 200,
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              display: 'flex',
+              gap: 1,
+            }}
+          >
+            {previewUrl && (
+              <Chip
+                label="En cours..."
+                size="small"
+                color="warning"
+                sx={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+              />
+            )}
+            {uploadedUrl && !previewUrl && (
+              <Chip
+                label="Téléchargée"
+                size="small"
+                color="success"
+                sx={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+              />
+            )}
+            <IconButton
+              size="small"
+              onClick={() => handleRemovePhoto(field)}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 1)' },
+              }}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
+    );
   };
 
   const handleAddProductControl = () => {
@@ -681,7 +811,7 @@ export default function DeliveryComponent() {
                   style={{ display: 'none' }}
                   id="delivery-photo-upload"
                   type="file"
-                  onChange={(e) => handleUploadPhoto(e, 'delivery')}
+                  onChange={(e) => handleFileSelect(e, 'delivery')}
                 />
                 <label htmlFor="delivery-photo-upload">
                   <Button
@@ -697,14 +827,12 @@ export default function DeliveryComponent() {
                     {deliveryData.photo_url ? 'Photo sélectionnée' : 'Ajouter une photo de la livraison'}
                   </Button>
                 </label>
-                {deliveryData.photo_url && (
-                  <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircle color="success" fontSize="small" />
-                    <Typography variant="body2" color="text.secondary">
-                      Photo prête à être enregistrée
-                    </Typography>
-                  </Box>
-                )}
+                <PhotoPreview
+                  previewUrl={deliveryPhotoPreview}
+                  uploadedUrl={deliveryData.photo_url}
+                  field="delivery"
+                  label="Photo de la livraison"
+                />
               </Box>
             </Box>
           )}
@@ -1001,7 +1129,7 @@ export default function DeliveryComponent() {
                       style={{ display: 'none' }}
                       id="nonconformity-photo-upload"
                       type="file"
-                      onChange={(e) => handleUploadPhoto(e, 'nonConformity')}
+                      onChange={(e) => handleFileSelect(e, 'nonConformity')}
                     />
                     <label htmlFor="nonconformity-photo-upload">
                       <Button
@@ -1022,6 +1150,13 @@ export default function DeliveryComponent() {
                       Ajouter non-conformité
                     </Button>
                   </Box>
+                  
+                  <PhotoPreview
+                    previewUrl={nonConformityPhotoPreview}
+                    uploadedUrl={newNonConformity.photo_url}
+                    field="nonConformity"
+                    label="Photo de la non-conformité"
+                  />
                 </Box>
               </Card>
             </Box>
@@ -1068,19 +1203,51 @@ export default function DeliveryComponent() {
                   </Box>
                   
                   {deliveryData.photo_url && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body1" color="text.secondary">
-                        Photo jointe:
+                    <Box>
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                        Photo de la livraison:
                       </Typography>
-                      <Button
-                        href={deliveryData.photo_url}
-                        target="_blank"
-                        rel="noopener"
-                        size="small"
-                        startIcon={<CameraAlt />}
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          display: 'inline-block',
+                          border: '2px solid',
+                          borderColor: 'success.main',
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          maxWidth: 300,
+                        }}
                       >
-                        Voir photo
-                      </Button>
+                        <img
+                          src={deliveryData.photo_url}
+                          alt="Photo de la livraison"
+                          style={{
+                            width: '100%',
+                            height: 200,
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                          }}
+                        >
+                          <Button
+                            href={deliveryData.photo_url}
+                            target="_blank"
+                            rel="noopener"
+                            size="small"
+                            variant="contained"
+                            startIcon={<CameraAlt />}
+                            sx={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', color: 'primary.main' }}
+                          >
+                            Voir en grand
+                          </Button>
+                        </Box>
+                      </Box>
                     </Box>
                   )}
                 </Box>
@@ -1490,15 +1657,57 @@ export default function DeliveryComponent() {
                       </Box>
                       
                       {delivery.photo_url && (
-                        <Button
-                          href={delivery.photo_url}
-                          target="_blank"
-                          rel="noopener"
-                          size="small"
-                          startIcon={<CameraAlt />}
-                        >
-                          Voir photo de la livraison
-                        </Button>
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Photo de la livraison:
+                          </Typography>
+                          <Box
+                            sx={{
+                              position: 'relative',
+                              display: 'inline-block',
+                              border: '2px solid',
+                              borderColor: 'success.main',
+                              borderRadius: 2,
+                              overflow: 'hidden',
+                              maxWidth: 250,
+                            }}
+                          >
+                            <img
+                              src={delivery.photo_url}
+                              alt="Photo de la livraison"
+                              style={{
+                                width: '100%',
+                                height: 150,
+                                objectFit: 'cover',
+                                display: 'block',
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 8,
+                                right: 8,
+                              }}
+                            >
+                              <Button
+                                href={delivery.photo_url}
+                                target="_blank"
+                                rel="noopener"
+                                size="small"
+                                variant="contained"
+                                startIcon={<CameraAlt />}
+                                sx={{ 
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                                  color: 'primary.main',
+                                  fontSize: '0.7rem',
+                                  px: 1
+                                }}
+                              >
+                                Agrandir
+                              </Button>
+                            </Box>
+                          </Box>
+                        </Box>
                       )}
                     </CardContent>
                   </Card>
@@ -1607,16 +1816,58 @@ export default function DeliveryComponent() {
                                       </Typography>
                                     )}
                                     {nc.photo_url && (
-                                      <Button
-                                        href={nc.photo_url}
-                                        target="_blank"
-                                        rel="noopener"
-                                        size="small"
-                                        startIcon={<CameraAlt />}
-                                        sx={{ mt: 1 }}
-                                      >
-                                        Voir photo
-                                      </Button>
+                                      <Box sx={{ mt: 1 }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                                          Photo de la non-conformité:
+                                        </Typography>
+                                        <Box
+                                          sx={{
+                                            position: 'relative',
+                                            display: 'inline-block',
+                                            border: '2px solid',
+                                            borderColor: 'error.main',
+                                            borderRadius: 2,
+                                            overflow: 'hidden',
+                                            maxWidth: 200,
+                                          }}
+                                        >
+                                          <img
+                                            src={nc.photo_url}
+                                            alt="Photo de la non-conformité"
+                                            style={{
+                                              width: '100%',
+                                              height: 120,
+                                              objectFit: 'cover',
+                                              display: 'block',
+                                            }}
+                                          />
+                                          <Box
+                                            sx={{
+                                              position: 'absolute',
+                                              top: 4,
+                                              right: 4,
+                                            }}
+                                          >
+                                            <Button
+                                              href={nc.photo_url}
+                                              target="_blank"
+                                              rel="noopener"
+                                              size="small"
+                                              variant="contained"
+                                              startIcon={<CameraAlt />}
+                                              sx={{ 
+                                                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                                                color: 'error.main',
+                                                fontSize: '0.6rem',
+                                                px: 0.5,
+                                                minWidth: 'auto'
+                                              }}
+                                            >
+                                              Voir
+                                            </Button>
+                                          </Box>
+                                        </Box>
+                                      </Box>
                                     )}
                                   </Box>
                                 }
