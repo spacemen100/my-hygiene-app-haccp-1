@@ -9,24 +9,40 @@ import {
   Chip,
   Card,
   CardContent,
-  IconButton
+  IconButton,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  Tooltip,
+  Badge,
+  useTheme,
+  useMediaQuery,
+  Fab
 } from '@mui/material';
 import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
   Warning,
-  Schedule
+  Schedule,
+  Today,
+  Add,
+  CalendarMonth
 } from '@mui/icons-material';
 
 interface TaskCalendarProps {
   tasks: Tables<'cleaning_tasks'>[];
   records: Tables<'cleaning_records'>[];
   onEditRecord: (record: Tables<'cleaning_records'>) => void;
+  onCreateTask?: (date: Date) => void;
 }
 
-export default function TaskCalendar({ tasks, records, onEditRecord }: TaskCalendarProps) {
+export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTask }: TaskCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -61,6 +77,47 @@ export default function TaskCalendar({ tasks, records, onEditRecord }: TaskCalen
     });
   };
 
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const goToMonth = (month: number) => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(month);
+      return newDate;
+    });
+  };
+
+  const goToYear = (year: number) => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setFullYear(year);
+      return newDate;
+    });
+  };
+
+  const handleDayClick = (day: number) => {
+    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    setSelectedDate(clickedDate);
+    if (onCreateTask) {
+      onCreateTask(clickedDate);
+    }
+  };
+
+  const getTaskStats = (dayRecords: Tables<'cleaning_records'>[]) => {
+    const completed = dayRecords.filter(r => r.is_completed).length;
+    const compliant = dayRecords.filter(r => r.is_completed && r.is_compliant).length;
+    const overdue = dayRecords.filter(r => {
+      if (r.is_completed) return false;
+      const today = new Date();
+      const scheduledDate = new Date(r.scheduled_date);
+      return scheduledDate < today;
+    }).length;
+    
+    return { total: dayRecords.length, completed, compliant, overdue };
+  };
+
   const daysInMonth = getDaysInMonth(currentDate);
   const firstDay = getFirstDayOfMonth(currentDate);
   const monthName = currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
@@ -92,58 +149,134 @@ export default function TaskCalendar({ tasks, records, onEditRecord }: TaskCalen
     // Jours du mois
     for (let day = 1; day <= daysInMonth; day++) {
       const dayRecords = getRecordsForDate(day);
-      const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
+      const stats = getTaskStats(dayRecords);
+      const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const isToday = new Date().toDateString() === dayDate.toDateString();
+      const isSelected = selectedDate?.toDateString() === dayDate.toDateString();
+      const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
 
       cells.push(
         <Box key={day} sx={{ flex: 1, p: 0.5 }}>
           <Paper
+            onClick={() => handleDayClick(day)}
             sx={{
               p: 1,
-              minHeight: 80,
-              border: isToday ? 2 : 1,
-              borderColor: isToday ? 'primary.main' : 'divider',
-              bgcolor: isToday ? 'primary.50' : 'background.paper',
-              cursor: dayRecords.length > 0 ? 'pointer' : 'default'
+              minHeight: isMobile ? 60 : 90,
+              border: isSelected ? 2 : isToday ? 2 : 1,
+              borderColor: isSelected ? 'secondary.main' : isToday ? 'primary.main' : 'divider',
+              bgcolor: isToday ? 'primary.50' : isWeekend ? 'grey.50' : 'background.paper',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              '&:hover': {
+                bgcolor: isToday ? 'primary.100' : 'grey.100',
+                transform: 'translateY(-1px)',
+                boxShadow: 2
+              },
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
-            <Typography variant="body2" fontWeight={isToday ? 'bold' : 'normal'}>
-              {day}
-            </Typography>
-            {dayRecords.map(record => (
-              <Chip
-                key={record.id}
-                size="small"
-                label={getTaskName(record.cleaning_task_id || '')}
-                onClick={() => onEditRecord(record)}
+            {/* Day number with task count badge */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Typography 
+                variant="body2" 
+                fontWeight={isToday ? 'bold' : 'normal'}
+                color={isToday ? 'primary.main' : 'text.primary'}
+              >
+                {day}
+              </Typography>
+              {stats.total > 0 && (
+                <Badge 
+                  badgeContent={stats.total} 
+                  color={stats.overdue > 0 ? 'error' : stats.completed === stats.total ? 'success' : 'warning'}
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      fontSize: '0.6rem',
+                      minWidth: 16,
+                      height: 16
+                    }
+                  }}
+                >
+                  <CalendarMonth fontSize="small" />
+                </Badge>
+              )}
+            </Box>
+
+            {/* Task indicators */}
+            {dayRecords.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, maxHeight: isMobile ? 30 : 50, overflow: 'hidden' }}>
+                {dayRecords.slice(0, isMobile ? 1 : 2).map(record => (
+                  <Tooltip
+                    key={record.id}
+                    title={`${getTaskName(record.cleaning_task_id || '')} - ${record.is_completed ? (record.is_compliant ? 'Conforme' : 'Non conforme') : 'En attente'}`}
+                    arrow
+                  >
+                    <Chip
+                      size="small"
+                      label={isMobile ? '•' : getTaskName(record.cleaning_task_id || '').slice(0, 8) + '...'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditRecord(record);
+                      }}
+                      sx={{
+                        fontSize: '0.6rem',
+                        height: 16,
+                        cursor: 'pointer',
+                        '& .MuiChip-label': {
+                          px: 0.5,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }
+                      }}
+                      color={
+                        record.is_completed 
+                          ? record.is_compliant 
+                            ? 'success' 
+                            : 'warning'
+                          : stats.overdue > 0 ? 'error' : 'default'
+                      }
+                      variant={record.is_completed ? 'filled' : 'outlined'}
+                    />
+                  </Tooltip>
+                ))}
+                {dayRecords.length > (isMobile ? 1 : 2) && (
+                  <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '0.6rem' }}>
+                    +{dayRecords.length - (isMobile ? 1 : 2)} autres
+                  </Typography>
+                )}
+              </Box>
+            )}
+
+            {/* Quick add button on hover */}
+            {onCreateTask && (
+              <Box
                 sx={{
-                  mt: 0.5,
-                  fontSize: '0.7rem',
-                  height: 20,
-                  cursor: 'pointer',
-                  display: 'block',
-                  '& .MuiChip-label': {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '100%'
-                  }
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  '.MuiPaper-root:hover &': { opacity: 1 }
                 }}
-                color={
-                  record.is_completed 
-                    ? record.is_compliant 
-                      ? 'success' 
-                      : 'warning'
-                    : 'default'
-                }
-                icon={
-                  record.is_completed 
-                    ? record.is_compliant 
-                      ? <CheckCircle /> 
-                      : <Warning />
-                    : <Schedule />
-                }
-              />
-            ))}
+              >
+                <IconButton 
+                  size="small" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDayClick(day);
+                  }}
+                  sx={{ 
+                    width: 16, 
+                    height: 16, 
+                    bgcolor: 'primary.main', 
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }}
+                >
+                  <Add sx={{ fontSize: 10 }} />
+                </IconButton>
+              </Box>
+            )}
           </Paper>
         </Box>
       );
@@ -192,39 +325,180 @@ export default function TaskCalendar({ tasks, records, onEditRecord }: TaskCalen
     return weeks;
   };
 
+  // Generate years and months for selectors
+  const currentYear = currentDate.getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
+  const months = [
+    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+  ];
+
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <IconButton onClick={() => navigateMonth('prev')}>
-            <ChevronLeft />
-          </IconButton>
-          <Typography variant="h6" sx={{ textTransform: 'capitalize' }}>
-            {monthName}
-          </Typography>
-          <IconButton onClick={() => navigateMonth('next')}>
-            <ChevronRight />
-          </IconButton>
+    <Card sx={{ position: 'relative' }}>
+      <CardContent sx={{ pb: 1 }}>
+        {/* Enhanced Navigation Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton onClick={() => navigateMonth('prev')} size="small">
+              <ChevronLeft />
+            </IconButton>
+            
+            {!isMobile && (
+              <>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select
+                    value={currentDate.getMonth()}
+                    onChange={(e) => goToMonth(e.target.value as number)}
+                    variant="outlined"
+                    sx={{ 
+                      '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                      '& .MuiSelect-select': { py: 0.5, textTransform: 'capitalize' }
+                    }}
+                  >
+                    {months.map((month, index) => (
+                      <MenuItem key={month} value={index} sx={{ textTransform: 'capitalize' }}>
+                        {month}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 80 }}>
+                  <Select
+                    value={currentYear}
+                    onChange={(e) => goToYear(e.target.value as number)}
+                    variant="outlined"
+                    sx={{ 
+                      '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                      '& .MuiSelect-select': { py: 0.5 }
+                    }}
+                  >
+                    {years.map(year => (
+                      <MenuItem key={year} value={year}>
+                        {year}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </>
+            )}
+
+            {isMobile && (
+              <Typography variant="h6" sx={{ textTransform: 'capitalize', fontWeight: 600 }}>
+                {monthName}
+              </Typography>
+            )}
+
+            <IconButton onClick={() => navigateMonth('next')} size="small">
+              <ChevronRight />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Today />}
+              onClick={goToToday}
+              sx={{ textTransform: 'none' }}
+            >
+              Aujourd&apos;hui
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Calendar Statistics Summary */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {(() => {
+            const monthRecords = records.filter(r => {
+              const recordDate = new Date(r.scheduled_date);
+              return recordDate.getMonth() === currentDate.getMonth() && 
+                     recordDate.getFullYear() === currentDate.getFullYear();
+            });
+            const monthStats = getTaskStats(monthRecords);
+            
+            return (
+              <>
+                <Chip 
+                  size="small" 
+                  label={`${monthStats.total} tâches`} 
+                  color="primary" 
+                  variant="outlined" 
+                />
+                <Chip 
+                  size="small" 
+                  label={`${monthStats.completed} complétées`} 
+                  color="success" 
+                  variant={monthStats.completed > 0 ? "filled" : "outlined"} 
+                />
+                <Chip 
+                  size="small" 
+                  label={`${monthStats.overdue} en retard`} 
+                  color="error" 
+                  variant={monthStats.overdue > 0 ? "filled" : "outlined"} 
+                />
+              </>
+            );
+          })()}
         </Box>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {renderCalendarDays()}
         </Box>
 
-        <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        {/* Enhanced Legend */}
+        <Box sx={{ 
+          mt: 3, 
+          display: 'flex', 
+          gap: 3, 
+          flexWrap: 'wrap', 
+          justifyContent: 'center',
+          p: 2,
+          bgcolor: 'grey.50',
+          borderRadius: 2
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <CheckCircle color="success" fontSize="small" />
-            <Typography variant="caption">Conforme</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>Tâche conforme</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Warning color="warning" fontSize="small" />
-            <Typography variant="caption">Non conforme</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>Non conforme</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Schedule color="error" fontSize="small" />
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>En retard</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Schedule color="disabled" fontSize="small" />
-            <Typography variant="caption">En attente</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>En attente</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 2, borderLeft: 1, borderColor: 'divider', pl: 2 }}>
+            <Box sx={{ width: 12, height: 12, bgcolor: 'primary.50', border: 2, borderColor: 'primary.main', borderRadius: 0.5 }} />
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>Aujourd&apos;hui</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, bgcolor: 'grey.50', border: 1, borderColor: 'divider', borderRadius: 0.5 }} />
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>Week-end</Typography>
           </Box>
         </Box>
+
+        {/* Floating Action Button for Quick Add */}
+        {onCreateTask && (
+          <Fab
+            color="primary"
+            size="medium"
+            onClick={() => onCreateTask(new Date())}
+            sx={{
+              position: 'absolute',
+              bottom: 16,
+              right: 16,
+              zIndex: 1
+            }}
+          >
+            <Add />
+          </Fab>
+        )}
       </CardContent>
     </Card>
   );
