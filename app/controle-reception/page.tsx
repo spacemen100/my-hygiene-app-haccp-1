@@ -195,20 +195,40 @@ export default function DeliveryComponent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log('🔄 Starting photo upload...');
+    console.log('📁 File:', file.name, file.size, file.type);
+    console.log('🧑‍💼 Current user:', user?.id, user?.email);
+    console.log('👤 Current employee:', employee?.id, employee?.first_name, employee?.last_name);
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      console.log('📤 Attempting upload to path:', filePath);
+      console.log('🪣 Bucket: delivery-photos');
+
       const { error: uploadError } = await supabase.storage
         .from('delivery-photos')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ Upload error:', uploadError);
+        console.error('❌ Error details:', {
+          message: uploadError.message,
+          statusCode: uploadError.statusCode,
+          error: uploadError.error
+        });
+        throw uploadError;
+      }
+
+      console.log('✅ Upload successful!');
 
       const { data: { publicUrl } } = supabase.storage
         .from('delivery-photos')
         .getPublicUrl(filePath);
+
+      console.log('🔗 Public URL generated:', publicUrl);
 
       if (field === 'delivery') {
         setDeliveryData({ ...deliveryData, photo_url: publicUrl });
@@ -216,9 +236,10 @@ export default function DeliveryComponent() {
         setNewNonConformity({ ...newNonConformity, photo_url: publicUrl });
       }
 
+      console.log('💾 State updated for field:', field);
       enqueueSnackbar('Photo téléchargée avec succès', { variant: 'success' });
     } catch (error) {
-      console.error('Error uploading photo:', error);
+      console.error('❌ Error uploading photo:', error);
       enqueueSnackbar('Impossible de télécharger la photo', { variant: 'error' });
     }
   };
