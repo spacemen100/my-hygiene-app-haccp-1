@@ -27,6 +27,8 @@ import {
   CheckCircle,
   Warning
 } from '@mui/icons-material';
+import EditTaskDialog from './EditTaskDialog';
+import { useSnackbar } from 'notistack';
 
 interface TaskListProps {
   tasks: Tables<'cleaning_tasks'>[];
@@ -38,6 +40,9 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [recordsLimit, setRecordsLimit] = useState(10);
   const [hasMoreRecords, setHasMoreRecords] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<Tables<'cleaning_records'> | null>(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   const loadMoreRecords = async () => {
     setLoadingMore(true);
@@ -63,6 +68,32 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
       case 'mensuel': return 'warning';
       default: return 'default';
     }
+  };
+
+  const handleEditRecord = (record: Tables<'cleaning_records'>) => {
+    setSelectedRecord(record);
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setSelectedRecord(null);
+  };
+
+  const handleSaveRecord = async (data: Partial<Tables<'cleaning_records'>>) => {
+    if (!selectedRecord) return;
+    
+    const { error } = await supabase
+      .from('cleaning_records')
+      .update(data)
+      .eq('id', selectedRecord.id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    onRefresh();
+    handleCloseEditDialog();
   };
 
   return (
@@ -194,6 +225,7 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
                       <TableCell>
                         <IconButton
                           size="small"
+                          onClick={() => handleEditRecord(record)}
                           sx={{ color: 'primary.main' }}
                           title="Modifier la tâche"
                         >
@@ -214,6 +246,14 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
           </Typography>
         )}
       </CardContent>
+      
+      <EditTaskDialog
+        open={editDialogOpen}
+        onClose={handleCloseEditDialog}
+        record={selectedRecord}
+        tasks={tasks}
+        onSave={handleSaveRecord}
+      />
     </Card>
   );
 }
