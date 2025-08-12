@@ -86,9 +86,11 @@ export default function LabelPrinting() {
     label_count: 1,
     product_label_type_id: null,
     organization_id: null,
+    printer_id: null,
   });
   const [barcodeValue, setBarcodeValue] = useState('');
   const [labelTypes, setLabelTypes] = useState<Tables<'product_label_types'>[]>([]);
+  const [printers, setPrinters] = useState<Tables<'printers'>[]>([]);
   const [loading, setLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{
     expiryDate: Date | null;
@@ -112,6 +114,7 @@ export default function LabelPrinting() {
 
   useEffect(() => {
     fetchLabelTypes();
+    fetchPrinters();
     // Générer un code-barres unique au chargement
     setBarcodeValue(generateBarcode());
   }, []);
@@ -154,6 +157,19 @@ export default function LabelPrinting() {
       if (!error && data) setLabelTypes(data);
     } catch (error) {
       console.error('Error fetching label types:', error);
+    }
+  };
+
+  const fetchPrinters = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('printers')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      if (!error && data) setPrinters(data);
+    } catch (error) {
+      console.error('Error fetching printers:', error);
     }
   };
 
@@ -209,6 +225,7 @@ export default function LabelPrinting() {
       label_count: labelData.label_count,
       product_label_type_id: labelData.product_label_type_id,
       organization_id: labelData.organization_id,
+      printer_id: labelData.printer_id,
     });
     // Faire défiler vers le formulaire
     document.querySelector('[data-form-section]')?.scrollIntoView({ behavior: 'smooth' });
@@ -234,6 +251,7 @@ export default function LabelPrinting() {
         label_count: 1,
         product_label_type_id: null,
         organization_id: null,
+        printer_id: null,
       });
 
       // Rafraîchir l'historique
@@ -309,7 +327,7 @@ export default function LabelPrinting() {
       <Container maxWidth="xl">
         
         {/* Statistiques rapides */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }, gap: 3, mb: 4 }}>
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
               <CardContent>
@@ -394,6 +412,34 @@ export default function LabelPrinting() {
                     }}
                   >
                     <Schedule />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+          
+          <Box>
+            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography color="text.secondary" gutterBottom variant="body2">
+                      Imprimante sélectionnée
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {formData.printer_id ? 
+                        printers.find(p => p.id === formData.printer_id)?.name || 'Imprimante inconnue' :
+                        'Aucune'
+                      }
+                    </Typography>
+                    {formData.printer_id && (
+                      <Typography variant="caption" color="text.secondary">
+                        {printers.find(p => p.id === formData.printer_id)?.label_size || 'Taille inconnue'}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Avatar sx={{ bgcolor: '#2196f320', color: '#2196f3' }}>
+                    <Print />
                   </Avatar>
                 </Box>
               </CardContent>
@@ -504,6 +550,44 @@ export default function LabelPrinting() {
                       </FormControl>
                     </Box>
 
+                    {/* Sélection d'imprimante */}
+                    <Box sx={{ gridColumn: '1 / -1' }}>
+                      <FormControl fullWidth>
+                        <InputLabel>Imprimante</InputLabel>
+                        <Select
+                          value={formData.printer_id || ''}
+                          label="Imprimante"
+                          onChange={(e) => setFormData({...formData, printer_id: e.target.value || null})}
+                        >
+                          <MenuItem value="">
+                            <em>Sélectionner une imprimante</em>
+                          </MenuItem>
+                          {printers.map(printer => (
+                            <MenuItem key={printer.id} value={printer.id}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                                  {printer.name}
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {printer.model}
+                                  </Typography>
+                                  {printer.label_size && (
+                                    <Typography variant="caption" color="primary.main" sx={{ fontSize: '0.65rem' }}>
+                                      {printer.label_size}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          🖨️ Sélectionnez l&apos;imprimante pour l&apos;impression des étiquettes
+                        </Typography>
+                      </FormControl>
+                    </Box>
+
                     {/* Alertes d urgence */}
                     {previewData.urgencyLevel === 'high' && (
                       <Box sx={{ gridColumn: '1 / -1' }}>
@@ -538,7 +622,11 @@ export default function LabelPrinting() {
                         }
                       }}
                     >
-                      {loading ? 'Impression en cours...' : `Imprimer ${formData.label_count} étiquette${formData.label_count > 1 ? 's' : ''}`}
+                      {loading ? 'Impression en cours...' : 
+                       formData.printer_id ? 
+                         `Imprimer ${formData.label_count} étiquette${formData.label_count > 1 ? 's' : ''} sur ${printers.find(p => p.id === formData.printer_id)?.name || 'imprimante sélectionnée'}` :
+                         `Imprimer ${formData.label_count} étiquette${formData.label_count > 1 ? 's' : ''}`
+                      }
                     </Button>
                   </Box>
                 </form>
