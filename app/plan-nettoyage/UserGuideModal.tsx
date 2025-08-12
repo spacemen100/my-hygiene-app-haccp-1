@@ -49,7 +49,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
         fontSize: '1.5rem',
         fontWeight: 600
       }}>
-        🧹 Plan de Nettoyage et Désinfection - Mode d'emploi
+        🧹 Plan de Nettoyage et Désinfection - Mode d&apos;emploi
         <Button 
           onClick={onClose} 
           sx={{ color: 'white', minWidth: 'auto', p: 1 }}
@@ -64,8 +64,8 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
           <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
             Il est essentiel de bien faire la différence entre <strong>« nettoyage »</strong> et <strong>« désinfection »</strong>. 
             Le nettoyage est préalable à la désinfection et consiste à enlever les souillures visibles 
-            ou invisibles à l'œil nu avant la désinfection. La désinfection, quant à elle, permet 
-            d'éliminer les micro-organismes et d'inactiver les virus présents.
+            ou invisibles à l&apos;œil nu avant la désinfection. La désinfection, quant à elle, permet 
+            d&apos;éliminer les micro-organismes et d&apos;inactiver les virus présents.
           </Typography>
           <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
             Établir un PND permet donc de définir et de savoir à quelle fréquence et selon quel 
@@ -80,7 +80,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
             👉 <strong>QUELS OBJECTIFS POUR MON ÉTABLISSEMENT ?</strong>
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
-            Présent dans toutes les cuisines, le PND s'adapte en fonction de la taille de la 
+            Présent dans toutes les cuisines, le PND s&apos;adapte en fonction de la taille de la 
             cuisine, et du matériel que vous utilisez. Il permet de :
           </Typography>
           <List sx={{ pl: 2 }}>
@@ -89,7 +89,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
                 <CheckIcon color="success" fontSize="small" />
               </ListItemIcon>
               <ListItemText 
-                primary="S'assurer que tous les locaux de l'établissement, équipements et matériels sont convenablement nettoyés et désinfectés"
+                primary="S&apos;assurer que tous les locaux de l&apos;établissement, équipements et matériels sont convenablement nettoyés et désinfectés"
                 primaryTypographyProps={{ fontSize: '0.95rem' }}
               />
             </ListItem>
@@ -107,7 +107,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
                 <CheckIcon color="success" fontSize="small" />
               </ListItemIcon>
               <ListItemText 
-                primary="Maintenir le matériel et l'environnement de production en bon état"
+                primary="Maintenir le matériel et l&apos;environnement de production en bon état"
                 primaryTypographyProps={{ fontSize: '0.95rem' }}
               />
             </ListItem>
@@ -131,7 +131,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
             ✅ <strong>EN PRATIQUE</strong>
           </Typography>
           <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.6 }}>
-            Le PND présenté sous forme de tableau, résume les points d'attente suivants :
+            Le PND présenté sous forme de tableau, résume les points d&apos;attente suivants :
           </Typography>
 
           <Box sx={{ display: 'grid', gap: 2 }}>
@@ -156,11 +156,11 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
                 Pour chaque point ciblé, il vous faudra définir une fréquence de nettoyage et désinfection.
               </Typography>
               <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.5 }}>
-                En effet, certaines surfaces nécessitent un nettoyage plus régulier que d'autres.
+                En effet, certaines surfaces nécessitent un nettoyage plus régulier que d&apos;autres.
               </Typography>
               <Typography variant="body2" sx={{ fontStyle: 'italic', lineHeight: 1.5 }}>
                 En raison de la crise sanitaire Covid-19, veillez à renforcer la désinfection des 
-                éléments sensibles en fonction de leur fréquence d'utilisation.
+                éléments sensibles en fonction de leur fréquence d&apos;utilisation.
               </Typography>
             </Paper>
 
@@ -171,7 +171,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
                 QUI ?
               </Typography>
               <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.5 }}>
-                Poste par poste ; il est nécessaire d'identifier les personnes qui exécutent les 
+                Poste par poste ; il est nécessaire d&apos;identifier les personnes qui exécutent les 
                 opérations de nettoyage et de désinfection.
               </Typography>
               <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
@@ -200,7 +200,7 @@ export default function UserGuideModal({ open, onClose }: UserGuideModalProps) {
           color="primary"
           size="large"
         >
-          J'ai compris
+          J&apos;ai compris
         </Button>
       </DialogActions>
     </Dialog>

@@ -246,7 +246,7 @@ export default function CleaningPlan() {
                 mt: 1
               }}
             >
-              Mode d'emploi
+              Mode d&apos;emploi
             </Button>
           </Box>
         </Box>

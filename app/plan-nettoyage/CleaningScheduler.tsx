@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { predefinedTasks, frequencyOptions } from './PredefinedTasksLibrary';
 import {
@@ -14,12 +14,10 @@ import {
   MenuItem,
   Checkbox,
   FormControlLabel,
-  Alert,
   Chip,
   Avatar,
   Paper,
-  Divider,
-  Grid
+  Divider
 } from '@mui/material';
 import {
   CleaningServices,
@@ -29,32 +27,53 @@ import {
   Add as AddIcon
 } from '@mui/icons-material';
 
+interface Task {
+  name: string;
+  category: string;
+  selected: boolean;
+  customFrequency: string;
+  isCustom?: boolean;
+  defaultFrequency?: string;
+}
+
+interface CustomTask {
+  name: string;
+  frequency: string;
+  customDays: number;
+}
+
+interface FrequencyOption {
+  value: string;
+  label: string;
+}
+
 const CleaningScheduler = () => {
-  const [selectedZone, setSelectedZone] = useState('');
-  const [selectedTasks, setSelectedTasks] = useState([]);
-  const [customTask, setCustomTask] = useState({
+  const [selectedZone, setSelectedZone] = useState<string>('');
+  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [customTask, setCustomTask] = useState<CustomTask>({
     name: '',
     frequency: 'daily',
     customDays: 1
   });
-  const [daysToSchedule, setDaysToSchedule] = useState(100);
+  const [daysToSchedule, setDaysToSchedule] = useState<number>(100);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Get available zones from predefined tasks
   const availableZones = Object.keys(predefinedTasks);
 
   // Handle zone selection
-  const handleZoneSelect = (zone) => {
+  const handleZoneSelect = (zone: string) => {
     setSelectedZone(zone);
     // Initialize selected tasks for this zone (all selected by default)
-    const zoneTasks = [];
-    Object.entries(predefinedTasks[zone]).forEach(([category, tasks]) => {
-      tasks.forEach(task => {
+    const zoneTasks: Task[] = [];
+    Object.entries(predefinedTasks[zone as keyof typeof predefinedTasks]).forEach(([category, tasks]) => {
+      (tasks as unknown[]).forEach((task: unknown) => {
+        const typedTask = task as { name: string; defaultFrequency: string };
         zoneTasks.push({
-          ...task,
+          ...typedTask,
           category,
           selected: true,
-          customFrequency: task.defaultFrequency
+          customFrequency: typedTask.defaultFrequency
         });
       });
     });
@@ -62,14 +81,14 @@ const CleaningScheduler = () => {
   };
 
   // Toggle task selection
-  const toggleTaskSelection = (index) => {
+  const toggleTaskSelection = (index: number) => {
     const updatedTasks = [...selectedTasks];
     updatedTasks[index].selected = !updatedTasks[index].selected;
     setSelectedTasks(updatedTasks);
   };
 
   // Change frequency for a task
-  const changeTaskFrequency = (index, frequency) => {
+  const changeTaskFrequency = (index: number, frequency: string) => {
     const updatedTasks = [...selectedTasks];
     updatedTasks[index].customFrequency = frequency;
     setSelectedTasks(updatedTasks);
@@ -139,16 +158,17 @@ const CleaningScheduler = () => {
       // Success feedback could be handled here with a proper notification system
     } catch (error) {
       console.error("Erreur lors de la création du plan:", error);
-      alert("Une erreur est survenue: " + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      alert("Une erreur est survenue: " + errorMessage);
     }
   };
 
   // Helper function to generate scheduled records
-  const generateScheduledRecords = (taskId, frequency, startDate, daysToSchedule) => {
+  const generateScheduledRecords = (taskId: string, frequency: string, startDate: string, daysToSchedule: number) => {
     const records = [];
     const start = new Date(startDate);
     const endDate = new Date(start);
-    endDate.setDate(endDate.getDate() + parseInt(daysToSchedule));
+    endDate.setDate(endDate.getDate() + daysToSchedule);
     let currentDate = new Date(start);
 
     while (currentDate <= endDate) {
@@ -205,35 +225,38 @@ const CleaningScheduler = () => {
               1. Sélectionnez une zone
             </Typography>
           </Box>
-          <Grid container spacing={2}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+            gap: 2 
+          }}>
             {availableZones.map(zone => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={zone}>
-                <Button
-                  fullWidth
-                  variant={selectedZone === zone ? "contained" : "outlined"}
-                  onClick={() => handleZoneSelect(zone)}
-                  sx={{
-                    p: 2,
-                    height: '80px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.9rem',
-                    textAlign: 'center',
-                    ...(selectedZone === zone && {
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': {
-                        bgcolor: 'primary.dark',
-                      }
-                    })
-                  }}
-                >
-                  {zone}
-                </Button>
-              </Grid>
+              <Button
+                key={zone}
+                fullWidth
+                variant={selectedZone === zone ? "contained" : "outlined"}
+                onClick={() => handleZoneSelect(zone)}
+                sx={{
+                  p: 2,
+                  height: '80px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.9rem',
+                  textAlign: 'center',
+                  ...(selectedZone === zone && {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    }
+                  })
+                }}
+              >
+                {zone}
+              </Button>
             ))}
-          </Grid>
+          </Box>
         </CardContent>
       </Card>
 
@@ -257,7 +280,7 @@ const CleaningScheduler = () => {
               </Box>
               
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {Object.entries(predefinedTasks[selectedZone]).map(([category, _]) => (
+                {Object.entries(predefinedTasks[selectedZone as keyof typeof predefinedTasks]).map(([category]) => (
                   <Paper key={category} variant="outlined" sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <Category sx={{ mr: 1, color: 'primary.main' }} />
@@ -304,7 +327,7 @@ const CleaningScheduler = () => {
                                     e.target.value
                                   )}
                                 >
-                                  {frequencyOptions.map(opt => (
+                                  {(frequencyOptions as FrequencyOption[]).map((opt: FrequencyOption) => (
                                     <MenuItem key={opt.value} value={opt.value}>
                                       {opt.label}
                                     </MenuItem>
@@ -332,8 +355,13 @@ const CleaningScheduler = () => {
                   3. Ajouter une tâche personnalisée
                 </Typography>
               </Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: { xs: '1fr', md: '2fr 1fr auto' },
+                gap: 2,
+                alignItems: 'center'
+              }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Nom de la tâche"
@@ -342,8 +370,8 @@ const CleaningScheduler = () => {
                     placeholder="Entrez le nom de la tâche personnalisée"
                     variant="outlined"
                   />
-                </Grid>
-                <Grid item xs={12} md={4}>
+                </Box>
+                <Box>
                   <FormControl fullWidth>
                     <InputLabel>Fréquence</InputLabel>
                     <Select
@@ -351,15 +379,14 @@ const CleaningScheduler = () => {
                       label="Fréquence"
                       onChange={(e) => setCustomTask({...customTask, frequency: e.target.value})}
                     >
-                      {frequencyOptions.map(opt => (
+                      {(frequencyOptions as FrequencyOption[]).map((opt: FrequencyOption) => (
                         <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
-                </Grid>
-                <Grid item xs={12} md={2}>
+                </Box>
+                <Box>
                   <Button
-                    fullWidth
                     variant="contained"
                     onClick={addCustomTask}
                     startIcon={<AddIcon />}
@@ -367,8 +394,8 @@ const CleaningScheduler = () => {
                   >
                     Ajouter
                   </Button>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
@@ -383,33 +410,37 @@ const CleaningScheduler = () => {
                   4. Options de planification
                 </Typography>
               </Box>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                gap: 3
+              }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Date de début"
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    InputLabelProps={{
-                      shrink: true,
+                    slotProps={{
+                      inputLabel: { shrink: true }
                     }}
                     variant="outlined"
                   />
-                </Grid>
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box>
                   <TextField
                     fullWidth
                     label="Planifier pour combien de jours?"
                     type="number"
-                    inputProps={{ min: 1, max: 365 }}
+                    slotProps={{ htmlInput: { min: 1, max: 365 } }}
                     value={daysToSchedule}
-                    onChange={(e) => setDaysToSchedule(e.target.value)}
+                    onChange={(e) => setDaysToSchedule(Number(e.target.value))}
                     variant="outlined"
                     helperText="Entre 1 et 365 jours"
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
