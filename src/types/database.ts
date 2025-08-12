@@ -1,4 +1,6 @@
-export type Json =
+Need to install the following packages:
+supabase@2.34.3
+Ok to proceed? (y) export type Json =
   | string
   | number
   | boolean
@@ -759,6 +761,7 @@ export type Database = {
           is_active: boolean | null
           last_name: string
           organization_id: string
+          password: string
           role: string | null
           updated_at: string | null
           user_id: string | null
@@ -770,6 +773,7 @@ export type Database = {
           is_active?: boolean | null
           last_name: string
           organization_id: string
+          password?: string
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -781,6 +785,7 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string
           organization_id?: string
+          password?: string
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
