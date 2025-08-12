@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Tables, TablesInsert } from '@/src/types/database';
+import { Tables } from '@/src/types/database';
 import { useSnackbar } from 'notistack';
 import {
   Container,
@@ -45,7 +45,6 @@ function TabPanel(props: TabPanelProps) {
 export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
-  const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
@@ -146,7 +145,6 @@ export default function CleaningPlan() {
           
           <TabPanel value={tabValue} index={0}>
             <CleaningTaskForm 
-              tasks={tasks} 
               onSuccess={() => fetchRecords()} 
               enqueueSnackbar={enqueueSnackbar}
             />
@@ -155,8 +153,7 @@ export default function CleaningPlan() {
           <TabPanel value={tabValue} index={1}>
             <RepeatTaskForm 
               tasks={tasks} 
-              onSuccess={() => fetchRecords()} 
-              enqueueSnackbar={enqueueSnackbar}
+              onSuccess={() => fetchRecords()}
             />
           </TabPanel>
         </Card>

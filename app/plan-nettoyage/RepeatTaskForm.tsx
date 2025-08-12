@@ -65,7 +65,7 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
       const startDate = new Date(formData.start_date);
       
       for (let i = 0; i < formData.occurrence_limit; i++) {
-        let scheduledDate = new Date(startDate);
+        const scheduledDate = new Date(startDate);
         
         switch (formData.frequency) {
           case 'daily':

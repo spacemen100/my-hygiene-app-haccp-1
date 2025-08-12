@@ -17,8 +17,7 @@ import {
   Paper,
   Chip,
   IconButton,
-  Button,
-  Avatar
+  Button
 } from '@mui/material';
 import {
   List,
@@ -195,7 +194,6 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
                       <TableCell>
                         <IconButton
                           size="small"
-                          onClick={() => handleEditRecord(record)}
                           sx={{ color: 'primary.main' }}
                           title="Modifier la tâche"
                         >

@@ -4,9 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  CardActions,
   Button,
   Dialog,
   DialogTitle,
@@ -36,7 +33,6 @@ import {
   Visibility as ViewIcon,
   ExpandMore as ExpandMoreIcon,
   PlaylistAdd as AddStepIcon,
-  DragIndicator as DragIcon,
   Remove as RemoveIcon,
 } from '@mui/icons-material';
 import { supabase } from '@/lib/supabase';

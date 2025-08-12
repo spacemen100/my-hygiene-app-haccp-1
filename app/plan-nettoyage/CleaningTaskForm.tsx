@@ -3,92 +3,19 @@ import { Tables, TablesInsert } from '@/src/types/database';
 import {
   Box,
   Typography,
-  TextField,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
-  Alert,
-  IconButton,
-  Avatar,
-  Chip
+  Avatar
 } from '@mui/material';
 import {
-  Assignment,
-  Schedule,
-  CheckCircle,
-  Warning,
-  Save,
-  PhotoCamera
+  Assignment
 } from '@mui/icons-material';
 
 interface CleaningTaskFormProps {
-  tasks: Tables<'cleaning_tasks'>[];
   onSuccess: () => void;
-  enqueueSnackbar: any;
+  enqueueSnackbar: (message: string, options?: { variant: 'success' | 'error' | 'warning' | 'info' }) => void;
 }
 
-export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: CleaningTaskFormProps) {
-  const [formData, setFormData] = useState<TablesInsert<'cleaning_records'>>({
-    scheduled_date: new Date().toISOString(),
-    cleaning_task_id: null,
-    is_completed: false,
-    is_compliant: false,
-    comments: null,
-    completion_date: null,
-    photo_url: null,
-    user_id: null,
-  });
-  const [loading, setLoading] = useState(false);
+export default function CleaningTaskForm({ onSuccess, enqueueSnackbar }: CleaningTaskFormProps) {
 
-  const formatDateTimeForInput = (isoString: string) => {
-    return isoString.substring(0, 16);
-  };
-
-  const getTaskFrequencyColor = (frequency: string) => {
-    switch (frequency?.toLowerCase()) {
-      case 'quotidien': return 'success';
-      case 'hebdomadaire': return 'info';
-      case 'mensuel': return 'warning';
-      default: return 'default';
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase
-        .from('cleaning_records')
-        .insert([formData]);
-      
-      if (error) throw error;
-      
-      enqueueSnackbar('Enregistrement de nettoyage réussi!', { variant: 'success' });
-      onSuccess();
-      
-      // Reset form
-      setFormData({
-        scheduled_date: new Date().toISOString(),
-        cleaning_task_id: null,
-        is_completed: false,
-        is_compliant: false,
-        comments: null,
-        completion_date: null,
-        photo_url: null,
-        user_id: null,
-      });
-    } catch (error) {
-      console.error('Error saving cleaning record:', error);
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <Box>
@@ -121,13 +48,9 @@ export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: 
         </Box>
       </Box>
       
-      <Box component="form" onSubmit={handleSubmit} sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: { xs: 2.5, sm: 3 }
-      }}>
-        {/* ... (le reste du formulaire reste inchangé) ... */}
-      </Box>
+      <Typography variant="body2" color="text.secondary">
+        Composant de formulaire à implémenter
+      </Typography>
     </Box>
   );
 }

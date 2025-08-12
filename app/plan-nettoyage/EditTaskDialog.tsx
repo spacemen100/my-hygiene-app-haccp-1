@@ -12,7 +12,8 @@ import {
   Button,
   FormControlLabel,
   Switch,
-  Avatar
+  Avatar,
+  Typography
 } from '@mui/material';
 import { Edit as EditIcon, Close as CloseIcon, Save } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
