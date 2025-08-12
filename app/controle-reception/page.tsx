@@ -216,8 +216,8 @@ export default function DeliveryComponent() {
         console.error('❌ Upload error:', uploadError);
         console.error('❌ Error details:', {
           message: uploadError.message,
-          statusCode: uploadError.statusCode,
-          error: uploadError.error
+          name: uploadError.name,
+          cause: uploadError.cause
         });
         throw uploadError;
       }
