@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Tables } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Dialog,
   DialogTitle,
@@ -28,6 +29,7 @@ interface EditTaskDialogProps {
 }
 
 export default function EditTaskDialog({ open, onClose, record, tasks, onSave }: EditTaskDialogProps) {
+  const { selectedEmployee } = useEmployee();
   const [formData, setFormData] = useState<Partial<Tables<'cleaning_records'>>>({});
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -53,7 +55,10 @@ export default function EditTaskDialog({ open, onClose, record, tasks, onSave }:
     
     setLoading(true);
     try {
-      await onSave(formData);
+      await onSave({
+        ...formData,
+        employee_id: selectedEmployee?.id || null
+      });
       enqueueSnackbar('Tâche mise à jour avec succès!', { variant: 'success' });
       onClose();
     } catch (error) {

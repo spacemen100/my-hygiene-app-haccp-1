@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Box,
   Container,
@@ -118,6 +119,7 @@ export default function DeliveryControlSystem() {
 // Composant pour contrôler un produit ambiant
 const AmbientProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { selectedEmployee } = useEmployee();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'ambiant',
@@ -135,7 +137,8 @@ const AmbientProductControl = () => {
         .insert([{
           ...formData,
           control_date: new Date().toISOString(),
-          is_compliant: formData.is_compliant || false
+          is_compliant: formData.is_compliant || false,
+          employee_id: selectedEmployee?.id || null
         }]);
       
       if (error) throw error;
@@ -249,6 +252,7 @@ const AmbientProductControl = () => {
 // Composant pour contrôler un produit frais
 const FreshProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { selectedEmployee } = useEmployee();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'frais',
@@ -280,7 +284,8 @@ const FreshProductControl = () => {
         .insert([{
           ...formData,
           control_date: new Date().toISOString(),
-          is_compliant: formData.is_compliant || false
+          is_compliant: formData.is_compliant || false,
+          employee_id: selectedEmployee?.id || null
         }]);
       
       if (error) throw error;
@@ -397,6 +402,7 @@ const FreshProductControl = () => {
 // Composant pour contrôler un produit surgelé
 const FrozenProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { selectedEmployee } = useEmployee();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'surgelé',
@@ -428,7 +434,8 @@ const FrozenProductControl = () => {
         .insert([{
           ...formData,
           control_date: new Date().toISOString(),
-          is_compliant: formData.is_compliant || false
+          is_compliant: formData.is_compliant || false,
+          employee_id: selectedEmployee?.id || null
         }]);
       
       if (error) throw error;
@@ -545,6 +552,7 @@ const FrozenProductControl = () => {
 // Composant pour gérer les non-conformités
 const NonConformitiesControl = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { selectedEmployee } = useEmployee();
   const [nonConformities, setNonConformities] = useState<TablesInsert<'non_conformities'>[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNonConformity, setNewNonConformity] = useState<Partial<TablesInsert<'non_conformities'>>>({
@@ -573,7 +581,10 @@ const NonConformitiesControl = () => {
     try {
       const { data, error } = await supabase
         .from('non_conformities')
-        .insert([newNonConformity])
+        .insert([{
+          ...newNonConformity,
+          employee_id: selectedEmployee?.id || null
+        }])
         .select()
         .single();
       

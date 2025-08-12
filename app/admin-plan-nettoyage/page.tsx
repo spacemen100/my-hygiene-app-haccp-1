@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -52,6 +53,7 @@ type CleaningEquipment = Tables<'cleaning_equipment'>;
 type CleaningMethod = Tables<'cleaning_methods'>;
 
 export default function AdminPlanNettoyagePage() {
+  const { selectedEmployee } = useEmployee();
   const [tasks, setTasks] = useState<CleaningTask[]>([]);
   const [zones, setZones] = useState<CleaningZone[]>([]);
   const [subZones, setSubZones] = useState<CleaningSubZone[]>([]);
@@ -192,7 +194,10 @@ export default function AdminPlanNettoyagePage() {
         // Update existing task
         const { error } = await supabase
           .from('cleaning_tasks')
-          .update(formData as CleaningTaskUpdate)
+          .update({
+            ...formData as CleaningTaskUpdate,
+            employee_id: selectedEmployee?.id || null
+          })
           .eq('id', editingTask.id);
 
         if (error) throw error;
@@ -201,7 +206,10 @@ export default function AdminPlanNettoyagePage() {
         // Create new task
         const { error } = await supabase
           .from('cleaning_tasks')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            employee_id: selectedEmployee?.id || null
+          }]);
 
         if (error) throw error;
         setSuccess('Tâche créée avec succès');
