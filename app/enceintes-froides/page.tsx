@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -41,6 +42,7 @@ import {
 import { useSnackbar } from 'notistack';
 
 export default function ColdStorage() {
+  const { employee } = useEmployee();
   const [units, setUnits] = useState<Tables<'cold_storage_units'>[]>([]);
   const [readings, setReadings] = useState<Tables<'cold_storage_temperature_readings'>[]>([]);
   const [formData, setFormData] = useState<TablesInsert<'cold_storage_temperature_readings'>>({
@@ -94,7 +96,11 @@ export default function ColdStorage() {
     try {
       const { error } = await supabase
         .from('cold_storage_temperature_readings')
-        .insert([formData]);
+        .insert([{
+          ...formData,
+          employee_id: employee?.id || null,
+          user_id: employee?.user_id || null,
+        }]);
       
       if (error) throw error;
       

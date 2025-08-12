@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -45,6 +46,7 @@ type SupplierInsert = TablesInsert<'suppliers'>;
 type SupplierUpdate = TablesUpdate<'suppliers'>;
 
 export default function AdminFournisseursPage() {
+  const { employee } = useEmployee();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +156,11 @@ export default function AdminFournisseursPage() {
         // Create new supplier
         const { error } = await supabase
           .from('suppliers')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            employee_id: employee?.id || null,
+            user_id: employee?.user_id || null,
+          }]);
 
         if (error) throw error;
         setSuccess('Fournisseur créé avec succès');

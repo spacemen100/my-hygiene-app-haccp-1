@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -34,6 +35,7 @@ import {
 import { useSnackbar } from 'notistack';
 
 export default function CoolingTracking() {
+  const { employee } = useEmployee();
   const [formData, setFormData] = useState<TablesInsert<'cooling_records'>>({
     start_date: new Date().toISOString(),
     end_date: null,
@@ -95,7 +97,11 @@ export default function CoolingTracking() {
       
       const { error } = await supabase
         .from('cooling_records')
-        .insert([updatedFormData]);
+        .insert([{
+          ...updatedFormData,
+          employee_id: employee?.id || null,
+          user_id: employee?.user_id || null,
+        }]);
       
       if (error) throw error;
       

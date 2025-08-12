@@ -46,11 +46,13 @@ import {
 } from '@mui/icons-material';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import { useSnackbar } from 'notistack';
 
 type Printer = Tables<'printers'>;
 
 export default function PrintersAdmin() {
+  const { employee } = useEmployee();
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -170,7 +172,11 @@ export default function PrintersAdmin() {
         // Création
         const { error } = await supabase
           .from('printers')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            employee_id: employee?.id || null,
+            user_id: employee?.user_id || null,
+          }]);
 
         if (error) throw error;
         enqueueSnackbar('Imprimante ajoutée avec succès!', { variant: 'success' });

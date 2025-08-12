@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -54,6 +55,7 @@ type LabelRecordInsert = TablesInsert<'label_records'>;
 type LabelRecordUpdate = TablesUpdate<'label_records'>;
 
 export default function AdminEtiquettesPage() {
+  const { employee } = useEmployee();
   const [records, setRecords] = useState<LabelRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -274,7 +276,11 @@ export default function AdminEtiquettesPage() {
         // Create new record
         const { error } = await supabase
           .from('label_records')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            employee_id: employee?.id || null,
+            user_id: employee?.user_id || null,
+          }]);
 
         if (error) throw error;
         setSuccess('Enregistrement créé avec succès');

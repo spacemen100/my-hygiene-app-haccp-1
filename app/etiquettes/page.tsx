@@ -23,8 +23,10 @@ import {
 } from '@mui/icons-material';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 
 export default function LabelRecording() {
+  const { employee } = useEmployee();
   const [formData, setFormData] = useState<TablesInsert<'label_records'>>({
     record_date: new Date().toISOString(),
     photo_url: '',
@@ -169,7 +171,11 @@ export default function LabelRecording() {
     try {
       const { error } = await supabase
         .from('label_records')
-        .insert([formData]);
+        .insert([{
+          ...formData,
+          employee_id: employee?.id || null,
+          user_id: employee?.user_id || null,
+        }]);
       
       if (error) throw error;
       

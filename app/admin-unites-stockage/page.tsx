@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   Container,
   Typography,
@@ -54,6 +55,7 @@ type ColdStorageUnitInsert = TablesInsert<'cold_storage_units'>;
 type ColdStorageUnitUpdate = TablesUpdate<'cold_storage_units'>;
 
 export default function AdminUnitesStockagePage() {
+  const { employee } = useEmployee();
   const [units, setUnits] = useState<ColdStorageUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +170,11 @@ export default function AdminUnitesStockagePage() {
         // Create new unit
         const { error } = await supabase
           .from('cold_storage_units')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            employee_id: employee?.id || null,
+            user_id: employee?.user_id || null,
+          }]);
 
         if (error) throw error;
         setSuccess('Unité de stockage créée avec succès');
