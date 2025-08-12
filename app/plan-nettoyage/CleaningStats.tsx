@@ -18,18 +18,23 @@ interface CleaningStatsProps {
   records: Tables<'cleaning_records'>[];
 }
 
-export default function CleaningStats({ tasks, records }: CleaningStatsProps) {
+export default function CleaningStats({ records }: CleaningStatsProps) {
+  const completedRecords = records.filter(r => r.is_completed);
+  const todayCompletedRecords = records.filter(r => {
+    const today = new Date();
+    const completionDate = r.completion_date ? new Date(r.completion_date) : null;
+    return completionDate && 
+           completionDate.toDateString() === today.toDateString() && 
+           r.is_completed;
+  });
+  
   const stats = {
-    totalTasks: tasks.length,
-    completedToday: records.filter(r => {
-      const today = new Date();
-      const recordDate = new Date(r.scheduled_date);
-      return recordDate.toDateString() === today.toDateString() && r.is_completed;
-    }).length,
-    complianceRate: records.length > 0 ? 
-      Math.round((records.filter(r => r.is_compliant).length / records.length) * 100) : 
-      0,
-    pendingTasks: tasks.length - records.filter(r => r.is_completed).length
+    totalTasks: records.length, // Total des enregistrements de nettoyage
+    completedToday: todayCompletedRecords.length, // Complétées aujourd'hui (par completion_date)
+    complianceRate: completedRecords.length > 0 ? 
+      Math.round((completedRecords.filter(r => r.is_compliant).length / completedRecords.length) * 100) : 
+      0, // Taux de conformité seulement sur les tâches complétées
+    pendingTasks: records.filter(r => !r.is_completed).length // Tâches non complétées
   };
 
   return (
