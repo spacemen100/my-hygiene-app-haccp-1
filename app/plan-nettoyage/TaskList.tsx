@@ -37,7 +37,8 @@ import {
   Assignment,
   AssignmentTurnedIn,
   AssignmentLate,
-  Today
+  Today,
+  Photo
 } from '@mui/icons-material';
 import EditTaskDialog from './EditTaskDialog';
 import TaskCalendar from './TaskCalendar';
@@ -295,13 +296,14 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
                     <TableCell><strong>Tâche</strong></TableCell>
                     <TableCell><strong>Date programmée</strong></TableCell>
                     <TableCell><strong>Statut</strong></TableCell>
+                    <TableCell><strong>Photo</strong></TableCell>
                     <TableCell><strong>Actions</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredRecords.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                         <Typography color="text.secondary">
                           {tabValue === 'all' 
                             ? 'Aucune tâche enregistrée' 
@@ -379,6 +381,33 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
                                 color="default"
                                 variant="outlined"
                               />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {record.photo_url ? (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box
+                                  component="img"
+                                  src={record.photo_url}
+                                  alt="Photo de la tâche"
+                                  sx={{
+                                    width: 40,
+                                    height: 30,
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                    border: 1,
+                                    borderColor: 'grey.300',
+                                    cursor: 'pointer'
+                                  }}
+                                  onClick={() => window.open(record.photo_url!, '_blank')}
+                                  title="Cliquer pour voir en grand"
+                                />
+                                <Photo color="success" fontSize="small" />
+                              </Box>
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                Aucune photo
+                              </Typography>
                             )}
                           </TableCell>
                           <TableCell>

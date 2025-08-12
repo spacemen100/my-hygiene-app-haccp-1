@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/components/AuthProvider';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import PhotoUpload from './PhotoUpload';
 
 interface CleaningTaskFormProps {
   tasks: Tables<'cleaning_tasks'>[];
@@ -335,12 +336,11 @@ export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: 
                 label="Conforme aux standards HACCP"
               />
               
-              <TextField
-                label="URL de la photo (optionnel)"
-                value={formData.photo_url || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, photo_url: e.target.value }))}
-                fullWidth
-                placeholder="https://..."
+              <PhotoUpload
+                label="Photo de la tâche réalisée (optionnel)"
+                value={formData.photo_url}
+                onChange={(url) => setFormData(prev => ({ ...prev, photo_url: url }))}
+                disabled={loading}
               />
             </>
           )}

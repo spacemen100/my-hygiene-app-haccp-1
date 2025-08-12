@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Close as CloseIcon, Save } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import PhotoUpload from './PhotoUpload';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -124,12 +125,11 @@ export default function EditTaskDialog({ open, onClose, record, tasks, onSave }:
                 InputLabelProps={{ shrink: true }}
               />
               
-              <TextField
-                label="URL de la photo (optionnel)"
-                value={formData.photo_url || ''}
-                onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
-                fullWidth
-                placeholder="https://..."
+              <PhotoUpload
+                label="Photo de la tâche réalisée (optionnel)"
+                value={formData.photo_url}
+                onChange={(url) => setFormData({...formData, photo_url: url})}
+                disabled={loading}
               />
             </>
           )}
