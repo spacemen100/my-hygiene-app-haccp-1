@@ -17,7 +17,10 @@ import {
   Paper,
   Chip,
   IconButton,
-  Button
+  Button,
+  Tabs,
+  Tab,
+  Badge
 } from '@mui/material';
 import {
   List,
@@ -25,10 +28,15 @@ import {
   ExpandMore,
   Schedule,
   CheckCircle,
-  Warning
+  Warning,
+  CalendarToday,
+  Assignment,
+  AssignmentTurnedIn,
+  AssignmentLate,
+  Today
 } from '@mui/icons-material';
 import EditTaskDialog from './EditTaskDialog';
-import { useSnackbar } from 'notistack';
+import TaskCalendar from './TaskCalendar';
 
 interface TaskListProps {
   tasks: Tables<'cleaning_tasks'>[];
@@ -36,13 +44,15 @@ interface TaskListProps {
   onRefresh: () => void;
 }
 
+type TabValue = 'all' | 'todo' | 'completed' | 'overdue' | 'today' | 'calendar';
+
 export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [recordsLimit, setRecordsLimit] = useState(10);
   const [hasMoreRecords, setHasMoreRecords] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Tables<'cleaning_records'> | null>(null);
-  const { enqueueSnackbar } = useSnackbar();
+  const [tabValue, setTabValue] = useState<TabValue>('all');
 
   const loadMoreRecords = async () => {
     setLoadingMore(true);
@@ -69,6 +79,50 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
       default: return 'default';
     }
   };
+
+  // Fonctions de filtrage
+  const isToday = (date: string) => {
+    const today = new Date();
+    const taskDate = new Date(date);
+    return today.toDateString() === taskDate.toDateString();
+  };
+
+  const isOverdue = (record: Tables<'cleaning_records'>) => {
+    if (record.is_completed) return false;
+    const today = new Date();
+    const scheduledDate = new Date(record.scheduled_date);
+    return scheduledDate < today;
+  };
+
+  // Filtrer les enregistrements selon l'onglet sélectionné
+  const getFilteredRecords = () => {
+    switch (tabValue) {
+      case 'todo':
+        return records.filter(record => !record.is_completed);
+      case 'completed':
+        return records.filter(record => record.is_completed);
+      case 'overdue':
+        return records.filter(record => isOverdue(record));
+      case 'today':
+        return records.filter(record => isToday(record.scheduled_date));
+      default:
+        return records;
+    }
+  };
+
+  // Compteurs pour les badges
+  const getCounts = () => {
+    return {
+      all: records.length,
+      todo: records.filter(record => !record.is_completed).length,
+      completed: records.filter(record => record.is_completed).length,
+      overdue: records.filter(record => isOverdue(record)).length,
+      today: records.filter(record => isToday(record.scheduled_date)).length
+    };
+  };
+
+  const counts = getCounts();
+  const filteredRecords = getFilteredRecords();
 
   const handleEditRecord = (record: Tables<'cleaning_records'>) => {
     setSelectedRecord(record);
@@ -121,10 +175,10 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
             }}
           >
             <List />
-            Liste des Tâches
+            Gestion des Tâches
           </Typography>
           
-          {hasMoreRecords && (
+          {hasMoreRecords && tabValue !== 'calendar' && (
             <Button 
               variant="outlined" 
               size="small" 
@@ -136,114 +190,209 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
             </Button>
           )}
         </Box>
+
+        {/* Onglets */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={(_, newValue) => setTabValue(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab 
+              value="all" 
+              label={
+                <Badge badgeContent={counts.all} color="default">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <List fontSize="small" />
+                    Toutes
+                  </Box>
+                </Badge>
+              }
+            />
+            <Tab 
+              value="todo" 
+              label={
+                <Badge badgeContent={counts.todo} color="info">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Assignment fontSize="small" />
+                    À faire
+                  </Box>
+                </Badge>
+              }
+            />
+            <Tab 
+              value="completed" 
+              label={
+                <Badge badgeContent={counts.completed} color="success">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AssignmentTurnedIn fontSize="small" />
+                    Réalisées
+                  </Box>
+                </Badge>
+              }
+            />
+            <Tab 
+              value="overdue" 
+              label={
+                <Badge badgeContent={counts.overdue} color="error">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AssignmentLate fontSize="small" />
+                    En retard
+                  </Box>
+                </Badge>
+              }
+            />
+            <Tab 
+              value="today" 
+              label={
+                <Badge badgeContent={counts.today} color="warning">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Today fontSize="small" />
+                    Aujourd&apos;hui
+                  </Box>
+                </Badge>
+              }
+            />
+            <Tab 
+              value="calendar" 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CalendarToday fontSize="small" />
+                  Calendrier
+                </Box>
+              }
+            />
+          </Tabs>
+        </Box>
         
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell><strong>Tâche</strong></TableCell>
-                <TableCell><strong>Date programmée</strong></TableCell>
-                <TableCell><strong>Statut</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {records.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                    <Typography color="text.secondary">
-                      Aucune tâche enregistrée
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                records.map(record => {
-                  const task = tasks.find(t => t.id === record.cleaning_task_id);
-                  return (
-                    <TableRow key={record.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                          <Typography variant="body2" fontWeight="medium">
-                            {task ? task.name : 'N/A'}
-                          </Typography>
-                          {task && (
-                            <Chip 
-                              label={task.frequency}
-                              size="small"
-                              color={getTaskFrequencyColor(task.frequency)}
-                              variant="outlined"
-                              sx={{ width: 'fit-content', mt: 0.5 }}
-                            />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(record.scheduled_date).toLocaleString('fr-FR', {
-                            dateStyle: 'short',
-                            timeStyle: 'short'
-                          })}
+        {/* Contenu conditionnel selon l'onglet */}
+        {tabValue === 'calendar' ? (
+          <TaskCalendar 
+            tasks={tasks} 
+            records={records} 
+            onEditRecord={handleEditRecord}
+          />
+        ) : (
+          <>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.100' }}>
+                    <TableCell><strong>Tâche</strong></TableCell>
+                    <TableCell><strong>Date programmée</strong></TableCell>
+                    <TableCell><strong>Statut</strong></TableCell>
+                    <TableCell><strong>Actions</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredRecords.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                        <Typography color="text.secondary">
+                          {tabValue === 'all' 
+                            ? 'Aucune tâche enregistrée' 
+                            : `Aucune tâche ${
+                                tabValue === 'todo' ? 'à faire' :
+                                tabValue === 'completed' ? 'réalisée' :
+                                tabValue === 'overdue' ? 'en retard' :
+                                tabValue === 'today' ? 'pour aujourd&apos;hui' : ''
+                              }`
+                          }
                         </Typography>
-                        {record.completion_date && (
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            Complété le {new Date(record.completion_date).toLocaleString('fr-FR', {
-                              dateStyle: 'short',
-                              timeStyle: 'short'
-                            })}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {record.is_completed ? (
-                          record.is_compliant ? (
-                            <Chip
-                              size="small"
-                              icon={<CheckCircle />}
-                              label="Complété (Conforme)"
-                              color="success"
-                              variant="filled"
-                            />
-                          ) : (
-                            <Chip
-                              size="small"
-                              icon={<Warning />}
-                              label="Complété (Non conforme)"
-                              color="warning"
-                              variant="filled"
-                            />
-                          )
-                        ) : (
-                          <Chip
-                            size="small"
-                            icon={<Schedule />}
-                            label="En attente"
-                            color="default"
-                            variant="outlined"
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditRecord(record)}
-                          sx={{ color: 'primary.main' }}
-                          title="Modifier la tâche"
-                        >
-                          <EditIcon />
-                        </IconButton>
                       </TableCell>
                     </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        
-        {records.length > 0 && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Affichage de {records.length} tâches
-          </Typography>
+                  ) : (
+                    filteredRecords.map(record => {
+                      const task = tasks.find(t => t.id === record.cleaning_task_id);
+                      return (
+                        <TableRow key={record.id} hover>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                              <Typography variant="body2" fontWeight="medium">
+                                {task ? task.name : 'N/A'}
+                              </Typography>
+                              {task && (
+                                <Chip 
+                                  label={task.frequency}
+                                  size="small"
+                                  color={getTaskFrequencyColor(task.frequency)}
+                                  variant="outlined"
+                                  sx={{ width: 'fit-content', mt: 0.5 }}
+                                />
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {new Date(record.scheduled_date).toLocaleString('fr-FR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}
+                            </Typography>
+                            {record.completion_date && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                Complété le {new Date(record.completion_date).toLocaleString('fr-FR', {
+                                  dateStyle: 'short',
+                                  timeStyle: 'short'
+                                })}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {record.is_completed ? (
+                              record.is_compliant ? (
+                                <Chip
+                                  size="small"
+                                  icon={<CheckCircle />}
+                                  label="Complété (Conforme)"
+                                  color="success"
+                                  variant="filled"
+                                />
+                              ) : (
+                                <Chip
+                                  size="small"
+                                  icon={<Warning />}
+                                  label="Complété (Non conforme)"
+                                  color="warning"
+                                  variant="filled"
+                                />
+                              )
+                            ) : (
+                              <Chip
+                                size="small"
+                                icon={<Schedule />}
+                                label="En attente"
+                                color="default"
+                                variant="outlined"
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditRecord(record)}
+                              sx={{ color: 'primary.main' }}
+                              title="Modifier la tâche"
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            
+            {filteredRecords.length > 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                Affichage de {filteredRecords.length} tâche(s)
+                {tabValue !== 'all' && ` sur ${records.length} au total`}
+              </Typography>
+            )}
+          </>
         )}
       </CardContent>
       
