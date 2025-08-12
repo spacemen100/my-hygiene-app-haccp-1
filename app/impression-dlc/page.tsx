@@ -180,6 +180,28 @@ export default function LabelPrinting() {
   };
 
   // Fonction pour réimprimer une étiquette
+  // Fonction pour calculer la date d'expiration basée sur shelf_life_days
+  const calculateExpiryDate = (shelfLifeDays: number): string => {
+    const today = new Date();
+    const expiryDate = new Date(today);
+    expiryDate.setDate(today.getDate() + shelfLifeDays);
+    return expiryDate.toISOString();
+  };
+
+  // Fonction pour gérer le changement de type d'étiquette
+  const handleLabelTypeChange = (labelTypeId: string) => {
+    const selectedType = labelTypes.find(type => type.id === labelTypeId);
+    let updatedFormData = { ...formData, product_label_type_id: labelTypeId };
+    
+    if (selectedType && selectedType.shelf_life_days) {
+      // Calculer automatiquement la date d'expiration
+      const calculatedExpiryDate = calculateExpiryDate(selectedType.shelf_life_days);
+      updatedFormData = { ...updatedFormData, expiry_date: calculatedExpiryDate };
+    }
+    
+    setFormData(updatedFormData);
+  };
+
   const handleReprint = (labelData: Tables<'label_printings'>) => {
     setFormData({
       print_date: new Date().toISOString(),
@@ -402,7 +424,7 @@ export default function LabelPrinting() {
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
                     <Box>
                       <TextField
-                        label="Date d'expiration"
+                        label={formData.product_label_type_id ? "Date d'expiration (calculée automatiquement)" : "Date d'expiration"}
                         type="date"
                         value={formData.expiry_date ? formData.expiry_date.split('T')[0] : ''}
                         onChange={(e) => setFormData({...formData, expiry_date: new Date(e.target.value).toISOString()})}
@@ -410,6 +432,19 @@ export default function LabelPrinting() {
                         fullWidth
                         slotProps={{
                           inputLabel: { shrink: true }
+                        }}
+                        helperText={
+                          formData.product_label_type_id ? 
+                            "🤖 Calculée automatiquement - vous pouvez la modifier si nécessaire" :
+                            "Sélectionnez un type d'étiquette pour un calcul automatique"
+                        }
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: formData.product_label_type_id ? 'rgba(46, 125, 50, 0.04)' : 'inherit',
+                            '&:hover': {
+                              backgroundColor: formData.product_label_type_id ? 'rgba(46, 125, 50, 0.08)' : 'inherit',
+                            }
+                          }
                         }}
                       />
                     </Box>
@@ -435,24 +470,37 @@ export default function LabelPrinting() {
                         <Select
                           value={formData.product_label_type_id || ''}
                           label="Type d'étiquette"
-                          onChange={(e) => setFormData({...formData, product_label_type_id: e.target.value})}
+                          onChange={(e) => handleLabelTypeChange(e.target.value)}
                         >
                           <MenuItem value="">
                             <em>Sélectionner un type</em>
                           </MenuItem>
-                          {labelTypes.map(type => (
-                            <MenuItem key={type.id} value={type.id}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                                <Typography variant="body1" sx={{ flexGrow: 1 }}>
-                                  {type.category} - {type.sub_category}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {type.shelf_life_days}j
-                                </Typography>
-                              </Box>
-                            </MenuItem>
-                          ))}
+                          {labelTypes.map(type => {
+                            const calculatedDate = new Date();
+                            calculatedDate.setDate(calculatedDate.getDate() + type.shelf_life_days);
+                            
+                            return (
+                              <MenuItem key={type.id} value={type.id}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                  <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                                    {type.category} - {type.sub_category}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {type.shelf_life_days}j → {calculatedDate.toLocaleDateString('fr-FR')}
+                                    </Typography>
+                                    <Typography variant="caption" color="primary.main" sx={{ fontSize: '0.65rem' }}>
+                                      DLC auto
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </MenuItem>
+                            );
+                          })}
                         </Select>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          ℹ️ La date d&apos;expiration se calcule automatiquement selon la durée de conservation du type sélectionné
+                        </Typography>
                       </FormControl>
                     </Box>
 
