@@ -101,6 +101,8 @@ const nonConformityTypes = [
 const quantityTypes = ['kg', 'g', 'L', 'mL', 'pièce(s)', 'lot(s)', 'carton(s)'];
 
 export default function DeliveryComponent() {
+  const { user } = useAuth();
+  const { employee } = useEmployee();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -112,7 +114,6 @@ export default function DeliveryComponent() {
   const [openDialog, setOpenDialog] = useState(false);
   const [expandedDelivery, setExpandedDelivery] = useState<string | false>(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { employee } = useEmployee();
   const [activeStep, setActiveStep] = useState<ControlStep>('delivery');
   const [completedSteps, setCompletedSteps] = useState<Record<ControlStep, boolean>>({
     delivery: false,
@@ -349,7 +350,7 @@ export default function DeliveryComponent() {
         .insert([{
           ...deliveryData,
           organization_id: employee?.organization_id || null,
-          user_id: employee?.user_id || null,
+          user_id: user?.id || null,
           employee_id: employee?.id || null,
           is_compliant: truckControls.every(c => c.is_compliant) && 
                         productControls.every(p => p.is_compliant) && 
@@ -368,7 +369,7 @@ export default function DeliveryComponent() {
             ...control,
             delivery_id: delivery.id,
             employee_id: employee?.id || null,
-            user_id: employee?.user_id || null,
+            user_id: user?.id || null,
           })));
 
         if (truckError) throw truckError;
@@ -382,7 +383,7 @@ export default function DeliveryComponent() {
             ...control,
             delivery_id: delivery.id,
             employee_id: employee?.id || null,
-            user_id: employee?.user_id || null,
+            user_id: user?.id || null,
           })));
 
         if (productError) throw productError;
@@ -396,7 +397,7 @@ export default function DeliveryComponent() {
             ...nc,
             delivery_id: delivery.id,
             employee_id: employee?.id || null,
-            user_id: employee?.user_id || null,
+            user_id: user?.id || null,
           })));
 
         if (ncError) throw ncError;
