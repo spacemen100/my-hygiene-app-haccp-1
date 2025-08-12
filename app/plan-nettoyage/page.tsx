@@ -49,7 +49,9 @@ import {
   TrendingUp,
   Repeat,
   Edit as EditIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  ExpandMore,
+  List
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -83,9 +85,13 @@ export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [editDialog, setEditDialog] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Tables<'cleaning_records'> | null>(null);
+  const [recordsLimit, setRecordsLimit] = useState(10);
+  const [hasMoreRecords, setHasMoreRecords] = useState(true);
+  
   // Formulaire pour nouvelle tâche unique
   const [formData, setFormData] = useState<TablesInsert<'cleaning_records'>>({
     scheduled_date: new Date().toISOString(),
@@ -122,13 +128,32 @@ export default function CleaningPlan() {
     if (!error && data) setTasks(data);
   };
 
-  const fetchRecords = async () => {
+  const fetchRecords = async (limit = 10, reset = true) => {
     const { data, error } = await supabase
       .from('cleaning_records')
       .select('*')
       .order('scheduled_date', { ascending: false })
-      .limit(10);
-    if (!error && data) setRecords(data);
+      .limit(limit);
+    
+    if (!error && data) {
+      if (reset) {
+        setRecords(data);
+        setRecordsLimit(limit);
+      } else {
+        setRecords(data);
+      }
+      
+      // Vérifier s'il y a plus de records disponibles
+      setHasMoreRecords(data.length === limit);
+    }
+  };
+
+  const loadMoreRecords = async () => {
+    setLoadingMore(true);
+    const newLimit = recordsLimit + 10;
+    await fetchRecords(newLimit, false);
+    setRecordsLimit(newLimit);
+    setLoadingMore(false);
   };
 
   const formatDateTimeForInput = (isoString: string) => {
@@ -259,7 +284,7 @@ export default function CleaningPlan() {
       if (error) throw error;
       
       enqueueSnackbar('Tâche mise à jour avec succès!', { variant: 'success' });
-      fetchRecords();
+      fetchRecords(recordsLimit, false);
       setEditDialog(false);
       setSelectedRecord(null);
       setEditFormData({});
@@ -797,7 +822,7 @@ export default function CleaningPlan() {
                     type="number"
                     value={repeatFormData.occurrence_limit}
                     onChange={(e) => {
-                      const value = Math.min(100, Math.max(1, parseInt(e.target.value) || 1));
+                      const value = Math.min(100, Math.max(1, parseInt(e.target.value) || 1);
                       setRepeatFormData({...repeatFormData, occurrence_limit: value});
                     }}
                     required
@@ -854,7 +879,7 @@ export default function CleaningPlan() {
             </Card>
           </Box>
           
-          {/* Tableau des dernières exécutions */}
+          {/* Tableau des tâches */}
           <Box>
             <Card elevation={3} sx={{
               mx: { xs: -1, sm: 0 },
@@ -862,22 +887,39 @@ export default function CleaningPlan() {
               overflow: { xs: 'hidden', sm: 'visible' }
             }}>
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Typography 
-                  variant="h5" 
-                  component="h2" 
-                  gutterBottom 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: { xs: 1, sm: 1.5 },
-                    color: 'info.main',
-                    mb: { xs: 2, sm: 3 },
-                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
-                  }}
-                >
-                  <Schedule />
-                  Dernières Exécutions
-                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  mb: { xs: 2, sm: 3 }
+                }}>
+                  <Typography 
+                    variant="h5" 
+                    component="h2" 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: { xs: 1, sm: 1.5 },
+                      color: 'info.main',
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                    }}
+                  >
+                    <List />
+                    Liste des Tâches
+                  </Typography>
+                  
+                  {hasMoreRecords && (
+                    <Button 
+                      variant="outlined" 
+                      size="small" 
+                      onClick={loadMoreRecords}
+                      disabled={loadingMore}
+                      startIcon={<ExpandMore />}
+                    >
+                      {loadingMore ? 'Chargement...' : '+ Voir tâches précédentes'}
+                    </Button>
+                  )}
+                </Box>
                 
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
@@ -894,7 +936,7 @@ export default function CleaningPlan() {
                         <TableRow>
                           <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                             <Typography color="text.secondary">
-                              Aucune exécution enregistrée
+                              Aucune tâche enregistrée
                             </Typography>
                           </TableCell>
                         </TableRow>
@@ -984,7 +1026,7 @@ export default function CleaningPlan() {
                 
                 {records.length > 0 && (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                    Affichage des 10 dernières exécutions
+                    Affichage de {records.length} tâches
                   </Typography>
                 )}
               </CardContent>
