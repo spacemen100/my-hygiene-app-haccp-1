@@ -54,6 +54,14 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
   const [selectedRecord, setSelectedRecord] = useState<Tables<'cleaning_records'> | null>(null);
   const [tabValue, setTabValue] = useState<TabValue>('all');
 
+  // Debug logs
+  console.log('TaskList received:', { 
+    tasksCount: tasks.length, 
+    recordsCount: records.length, 
+    tasks: tasks.slice(0, 2), 
+    records: records.slice(0, 2) 
+  });
+
   const loadMoreRecords = async () => {
     setLoadingMore(true);
     const newLimit = recordsLimit + 10;
@@ -90,6 +98,7 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
   const isOverdue = (record: Tables<'cleaning_records'>) => {
     if (record.is_completed) return false;
     const today = new Date();
+    today.setHours(23, 59, 59, 999); // Fin de journée
     const scheduledDate = new Date(record.scheduled_date);
     return scheduledDate < today;
   };

@@ -12,7 +12,8 @@ import {
   Tabs,
   Tab,
   Paper,
-  Avatar
+  Avatar,
+  Button
 } from '@mui/material';
 import { CleaningServices } from '@mui/icons-material';
 import CleaningStats from './CleaningStats';
@@ -54,19 +55,95 @@ export default function CleaningPlan() {
 
   const fetchTasks = async () => {
     const { data, error } = await supabase.from('cleaning_tasks').select('*');
-    if (!error && data) setTasks(data);
+    if (error) {
+      console.error('Error fetching tasks:', error);
+    } else {
+      console.log('Fetched tasks:', data);
+      setTasks(data || []);
+    }
   };
 
-  const fetchRecords = async (limit = 10) => {
-    const { data, error } = await supabase
+  const fetchRecords = async (limit?: number) => {
+    let query = supabase
       .from('cleaning_records')
       .select('*')
-      .order('scheduled_date', { ascending: false })
-      .limit(limit);
-    if (!error && data) setRecords(data);
+      .order('scheduled_date', { ascending: false });
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching records:', error);
+    } else {
+      console.log('Fetched records:', data);
+      setRecords(data || []);
+    }
   };
 
   const { enqueueSnackbar } = useSnackbar();
+
+  // Fonction de test pour créer des données d'exemple
+  const createTestData = async () => {
+    try {
+      // Créer une tâche de test
+      const { data: taskData, error: taskError } = await supabase
+        .from('cleaning_tasks')
+        .insert([{
+          name: 'Nettoyage sol cuisine',
+          frequency: 'quotidien',
+          action_to_perform: 'Nettoyer et désinfecter le sol'
+        }])
+        .select()
+        .single();
+
+      if (taskError) {
+        console.error('Error creating test task:', taskError);
+        return;
+      }
+
+      // Créer des enregistrements de test
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+
+      const { error: recordsError } = await supabase
+        .from('cleaning_records')
+        .insert([
+          {
+            cleaning_task_id: taskData.id,
+            scheduled_date: today.toISOString().split('T')[0],
+            is_completed: false
+          },
+          {
+            cleaning_task_id: taskData.id,
+            scheduled_date: yesterday.toISOString().split('T')[0],
+            is_completed: true,
+            is_compliant: true,
+            completion_date: yesterday.toISOString()
+          },
+          {
+            cleaning_task_id: taskData.id,
+            scheduled_date: tomorrow.toISOString().split('T')[0],
+            is_completed: false
+          }
+        ]);
+
+      if (recordsError) {
+        console.error('Error creating test records:', recordsError);
+      } else {
+        console.log('Test data created successfully!');
+        fetchTasks();
+        fetchRecords();
+        enqueueSnackbar('Données de test créées!', { variant: 'success' });
+      }
+    } catch (error) {
+      console.error('Error in createTestData:', error);
+    }
+  };
 
   return (
     <Box sx={{ 
@@ -134,10 +211,26 @@ export default function CleaningPlan() {
         {/* Statistiques */}
         <CleaningStats tasks={tasks} records={records} />
 
+        {/* Bouton de test temporaire */}
+        {records.length === 0 && (
+          <Box sx={{ mb: 3, textAlign: 'center' }}>
+            <Button 
+              variant="outlined" 
+              onClick={createTestData}
+              sx={{ mb: 2 }}
+            >
+              Créer des données de test
+            </Button>
+            <Typography variant="body2" color="text.secondary">
+              Aucune donnée trouvée. Cliquez ci-dessus pour créer des données de test.
+            </Typography>
+          </Box>
+        )}
+
         {/* Tabs pour les formulaires */}
         <Card sx={{ mb: 4 }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} aria-label="cleaning tabs">
+            <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} aria-label="cleaning tabs">
               <Tab label="Tâche unique" />
               <Tab label="Tâches répétitives" />
             </Tabs>
