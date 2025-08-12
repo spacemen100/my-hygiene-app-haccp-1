@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Container,
   Typography,
@@ -68,6 +69,7 @@ const ROLES = [
 ];
 
 export default function AdminEmployesPage() {
+  const { user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

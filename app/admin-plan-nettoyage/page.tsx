@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Container,
   Typography,
@@ -54,6 +55,7 @@ type CleaningMethod = Tables<'cleaning_methods'>;
 
 export default function AdminPlanNettoyagePage() {
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<CleaningTask[]>([]);
   const [zones, setZones] = useState<CleaningZone[]>([]);
   const [subZones, setSubZones] = useState<CleaningSubZone[]>([]);
@@ -196,7 +198,8 @@ export default function AdminPlanNettoyagePage() {
           .from('cleaning_tasks')
           .update({
             ...formData as CleaningTaskUpdate,
-            employee_id: selectedEmployee?.id || null
+            employee_id: selectedEmployee?.id || null,
+            user_id: user?.id || null
           })
           .eq('id', editingTask.id);
 
@@ -208,7 +211,8 @@ export default function AdminPlanNettoyagePage() {
           .from('cleaning_tasks')
           .insert([{
             ...formData,
-            employee_id: selectedEmployee?.id || null
+            employee_id: selectedEmployee?.id || null,
+            user_id: user?.id || null
           }]);
 
         if (error) throw error;

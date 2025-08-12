@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Container,
   Typography,
@@ -82,6 +83,7 @@ function BarcodeDisplay({ value }: { value: string }) {
 
 export default function LabelPrinting() {
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<TablesInsert<'label_printings'>>({
     print_date: new Date().toISOString(),
     expiry_date: '',
@@ -242,7 +244,8 @@ export default function LabelPrinting() {
         .from('label_printings')
         .insert([{
           ...formData,
-          employee_id: selectedEmployee?.id || null
+          employee_id: selectedEmployee?.id || null,
+          user_id: user?.id || null
         }]);
       
       if (error) throw error;

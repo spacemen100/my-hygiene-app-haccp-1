@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Container,
   Typography,
@@ -36,6 +37,7 @@ import { useSnackbar } from 'notistack';
 
 export default function CoolingTracking() {
   const { employee } = useEmployee();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<TablesInsert<'cooling_records'>>({
     start_date: new Date().toISOString(),
     end_date: null,
@@ -100,7 +102,7 @@ export default function CoolingTracking() {
         .insert([{
           ...updatedFormData,
           employee_id: employee?.id || null,
-          user_id: employee?.user_id || null,
+          user_id: user?.id || null,
         }]);
       
       if (error) throw error;

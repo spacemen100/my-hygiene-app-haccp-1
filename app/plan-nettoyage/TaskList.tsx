@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Tables } from '@/src/types/database';
 import { supabase } from '@/lib/supabase';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 
 type CleaningRecordWithTask = Tables<'cleaning_records'> & {
   cleaning_tasks?: Tables<'cleaning_tasks'>;
@@ -54,6 +55,7 @@ type TabValue = 'all' | 'todo' | 'completed' | 'overdue' | 'today' | 'calendar';
 
 export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [loadingMore, setLoadingMore] = useState(false);
   const [recordsLimit, setRecordsLimit] = useState(10);
   const [hasMoreRecords, setHasMoreRecords] = useState(true);
@@ -157,7 +159,8 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
       .from('cleaning_records')
       .update({
         ...data,
-        employee_id: selectedEmployee?.id || null
+        employee_id: selectedEmployee?.id || null,
+        user_id: user?.id || null
       })
       .eq('id', selectedRecord.id);
     

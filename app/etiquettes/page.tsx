@@ -24,9 +24,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function LabelRecording() {
   const { employee } = useEmployee();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<TablesInsert<'label_records'>>({
     record_date: new Date().toISOString(),
     photo_url: '',
@@ -174,7 +176,7 @@ export default function LabelRecording() {
         .insert([{
           ...formData,
           employee_id: employee?.id || null,
-          user_id: employee?.user_id || null,
+          user_id: user?.id || null,
         }]);
       
       if (error) throw error;

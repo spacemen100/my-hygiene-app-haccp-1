@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Box,
   Container,
@@ -120,6 +121,7 @@ export default function DeliveryControlSystem() {
 const AmbientProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'ambiant',
@@ -138,7 +140,8 @@ const AmbientProductControl = () => {
           ...formData,
           control_date: new Date().toISOString(),
           is_compliant: formData.is_compliant || false,
-          employee_id: selectedEmployee?.id || null
+          employee_id: selectedEmployee?.id || null,
+          user_id: user?.id || null
         }]);
       
       if (error) throw error;
@@ -253,6 +256,7 @@ const AmbientProductControl = () => {
 const FreshProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'frais',
@@ -285,7 +289,8 @@ const FreshProductControl = () => {
           ...formData,
           control_date: new Date().toISOString(),
           is_compliant: formData.is_compliant || false,
-          employee_id: selectedEmployee?.id || null
+          employee_id: selectedEmployee?.id || null,
+          user_id: user?.id || null
         }]);
       
       if (error) throw error;
@@ -403,6 +408,7 @@ const FreshProductControl = () => {
 const FrozenProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
     storage_type: 'surgelé',
@@ -435,7 +441,8 @@ const FrozenProductControl = () => {
           ...formData,
           control_date: new Date().toISOString(),
           is_compliant: formData.is_compliant || false,
-          employee_id: selectedEmployee?.id || null
+          employee_id: selectedEmployee?.id || null,
+          user_id: user?.id || null
         }]);
       
       if (error) throw error;
@@ -553,6 +560,7 @@ const FrozenProductControl = () => {
 const NonConformitiesControl = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { selectedEmployee } = useEmployee();
+  const { user } = useAuth();
   const [nonConformities, setNonConformities] = useState<TablesInsert<'non_conformities'>[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNonConformity, setNewNonConformity] = useState<Partial<TablesInsert<'non_conformities'>>>({
@@ -583,8 +591,9 @@ const NonConformitiesControl = () => {
         .from('non_conformities')
         .insert([{
           ...newNonConformity,
-          employee_id: selectedEmployee?.id || null
-        }])
+          employee_id: selectedEmployee?.id || null,
+          user_id: user?.id || null
+        })
         .select()
         .single();
       

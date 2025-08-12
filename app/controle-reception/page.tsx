@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   CameraAlt,
   CheckCircle,
@@ -60,6 +61,8 @@ type Delivery = TablesInsert<'deliveries'> & {
 };
 
 export default function DeliveryComponent() {
+  const { user } = useAuth();
+  const { employee } = useEmployee();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -126,7 +129,7 @@ export default function DeliveryComponent() {
         .insert([{
           ...newDelivery,
           organization_id: employee?.organization_id || null,
-          user_id: employee?.user_id || null,
+          user_id: user?.id || null,
           employee_id: employee?.id || null,
         }])
         .select();
