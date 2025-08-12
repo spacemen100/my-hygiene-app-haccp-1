@@ -15,11 +15,12 @@ import {
   Avatar,
   Button
 } from '@mui/material';
-import { CleaningServices } from '@mui/icons-material';
+import { CleaningServices, Help } from '@mui/icons-material';
 import CleaningStats from './CleaningStats';
 import CleaningTaskForm from './CleaningTaskForm';
 import RepeatTaskForm from './RepeatTaskForm';
 import TaskList from './TaskList';
+import UserGuideModal from './UserGuideModal';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -47,6 +48,7 @@ export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
   const [tabValue, setTabValue] = useState(0);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -226,6 +228,24 @@ export default function CleaningPlan() {
             >
               Planification et suivi des tâches de nettoyage
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Help />}
+              onClick={() => setGuideModalOpen(true)}
+              sx={{
+                color: 'white',
+                borderColor: 'rgba(255,255,255,0.5)',
+                '&:hover': {
+                  borderColor: 'white',
+                  bgcolor: 'rgba(255,255,255,0.1)'
+                },
+                fontSize: '0.8rem',
+                mt: 1
+              }}
+            >
+              Mode d'emploi
+            </Button>
           </Box>
         </Box>
       </Paper>
@@ -282,6 +302,12 @@ export default function CleaningPlan() {
           onRefresh={() => fetchRecords()}
         />
       </Container>
+      
+      {/* Modal du guide utilisateur */}
+      <UserGuideModal 
+        open={guideModalOpen} 
+        onClose={() => setGuideModalOpen(false)} 
+      />
     </Box>
   );
 }
