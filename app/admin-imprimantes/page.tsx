@@ -97,7 +97,7 @@ export default function PrintersAdmin() {
       console.error('Error fetching printers:', error);
       enqueueSnackbar('Erreur lors du chargement des imprimantes', { variant: 'error' });
     }
-  }, []);
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
     fetchPrinters();

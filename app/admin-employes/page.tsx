@@ -306,7 +306,7 @@ export default function AdminEmployesPage() {
           organization_id: employeeData.organization_id
         };
 
-        if (formData.password.trim()) {
+        if (formData.password?.trim()) {
           updateData.password = formData.password;
         }
 
