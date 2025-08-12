@@ -305,7 +305,7 @@ export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: 
                   ...prev, 
                   is_completed: e.target.checked,
                   completion_date: e.target.checked ? new Date().toISOString() : null,
-                  is_compliant: e.target.checked ? prev.is_compliant : null
+                  is_compliant: e.target.checked ? true : null
                 }))}
               />
             }
@@ -317,7 +317,7 @@ export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: 
               <FormControlLabel
                 control={
                   <Switch
-                    checked={formData.is_compliant || false}
+                    checked={formData.is_compliant !== false}
                     onChange={(e) => setFormData(prev => ({ ...prev, is_compliant: e.target.checked }))}
                   />
                 }
