@@ -54,11 +54,20 @@ export default function CleaningPlan() {
   }, []);
 
   const fetchTasks = async () => {
-    const { data, error } = await supabase.from('cleaning_tasks').select('*');
+    const { data, error } = await supabase
+      .from('cleaning_tasks')
+      .select(`
+        *,
+        cleaning_zones:cleaning_zone_id(id, name),
+        cleaning_sub_zones:cleaning_sub_zone_id(id, name),
+        cleaning_products:cleaning_product_id(id, name),
+        cleaning_equipment:cleaning_equipment_id(id, name),
+        cleaning_methods:cleaning_method_id(id, name)
+      `);
     if (error) {
       console.error('Error fetching tasks:', error);
     } else {
-      console.log('Fetched tasks:', data);
+      console.log('Fetched tasks with relations:', data);
       setTasks(data || []);
     }
   };
@@ -66,7 +75,21 @@ export default function CleaningPlan() {
   const fetchRecords = async (limit?: number) => {
     let query = supabase
       .from('cleaning_records')
-      .select('*')
+      .select(`
+        *,
+        cleaning_tasks:cleaning_task_id(
+          id, 
+          name, 
+          frequency, 
+          action_to_perform,
+          cleaning_zones:cleaning_zone_id(id, name),
+          cleaning_sub_zones:cleaning_sub_zone_id(id, name),
+          cleaning_products:cleaning_product_id(id, name),
+          cleaning_equipment:cleaning_equipment_id(id, name)
+        ),
+        users:user_id(id, email),
+        employees:employee_id(id, first_name, last_name)
+      `)
       .order('scheduled_date', { ascending: false });
     
     if (limit) {
@@ -77,7 +100,7 @@ export default function CleaningPlan() {
     if (error) {
       console.error('Error fetching records:', error);
     } else {
-      console.log('Fetched records:', data);
+      console.log('Fetched records with relations:', data);
       setRecords(data || []);
     }
   };
@@ -238,6 +261,7 @@ export default function CleaningPlan() {
           
           <TabPanel value={tabValue} index={0}>
             <CleaningTaskForm 
+              tasks={tasks}
               onSuccess={() => fetchRecords()} 
               enqueueSnackbar={enqueueSnackbar}
             />

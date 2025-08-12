@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { Tables } from '@/src/types/database';
 import { supabase } from '@/lib/supabase';
+
+type CleaningRecordWithTask = Tables<'cleaning_records'> & {
+  cleaning_tasks?: Tables<'cleaning_tasks'>;
+};
 import {
   Box,
   Card,
@@ -313,7 +317,7 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
                     </TableRow>
                   ) : (
                     filteredRecords.map(record => {
-                      const task = tasks.find(t => t.id === record.cleaning_task_id);
+                      const task = (record as CleaningRecordWithTask).cleaning_tasks || tasks.find(t => t.id === record.cleaning_task_id);
                       return (
                         <TableRow key={record.id} hover>
                           <TableCell>

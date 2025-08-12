@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { Tables } from '@/src/types/database';
+
+type CleaningRecordWithTask = Tables<'cleaning_records'> & {
+  cleaning_tasks?: Tables<'cleaning_tasks'>;
+};
 import {
   Box,
   Typography,
@@ -60,7 +64,13 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
     });
   };
 
-  const getTaskName = (taskId: string) => {
+  const getTaskName = (taskId: string, record?: Tables<'cleaning_records'>) => {
+    // First try to get task from joined data in the record
+    const recordWithTask = record as CleaningRecordWithTask;
+    if (record && recordWithTask.cleaning_tasks) {
+      return recordWithTask.cleaning_tasks.name;
+    }
+    // Fallback to finding the task
     const task = tasks.find(t => t.id === taskId);
     return task ? task.name : 'N/A';
   };
@@ -208,12 +218,12 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
                 {dayRecords.slice(0, isMobile ? 1 : 2).map(record => (
                   <Tooltip
                     key={record.id}
-                    title={`${getTaskName(record.cleaning_task_id || '')} - ${record.is_completed ? (record.is_compliant ? 'Conforme' : 'Non conforme') : 'En attente'}`}
+                    title={`${getTaskName(record.cleaning_task_id || '', record)} - ${record.is_completed ? (record.is_compliant ? 'Conforme' : 'Non conforme') : 'En attente'}`}
                     arrow
                   >
                     <Chip
                       size="small"
-                      label={isMobile ? '•' : getTaskName(record.cleaning_task_id || '').slice(0, 8) + '...'}
+                      label={isMobile ? '•' : getTaskName(record.cleaning_task_id || '', record).slice(0, 8) + '...'}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEditRecord(record);

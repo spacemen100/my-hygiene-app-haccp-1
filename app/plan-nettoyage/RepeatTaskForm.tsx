@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables } from '@/src/types/database';
 import {
@@ -12,14 +12,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Switch,
   Alert,
   Avatar,
-  Chip
+  Chip,
+  Card,
+  CardContent,
+  Divider
 } from '@mui/material';
-import { Repeat } from '@mui/icons-material';
+import { 
+  Repeat,
+  Schedule,
+  LocationOn,
+  CleaningServices
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useAuth } from '@/components/AuthProvider';
 
 interface RepeatTaskFormProps {
   tasks: Tables<'cleaning_tasks'>[];
@@ -27,19 +34,64 @@ interface RepeatTaskFormProps {
 }
 
 export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     cleaning_task_id: null as string | null,
-    start_date: new Date().toISOString(),
+    start_date: new Date().toISOString().split('T')[0],
     frequency: 'daily' as 'daily' | 'weekly' | 'monthly',
     occurrence_limit: 30,
-    is_compliant: false,
     comments: '',
   });
   const [loading, setLoading] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Tables<'cleaning_tasks'> | null>(null);
+  const [zones, setZones] = useState<Tables<'cleaning_zones'>[]>([]);
+  const [subZones, setSubZones] = useState<Tables<'cleaning_sub_zones'>[]>([]);
+  const [products, setProducts] = useState<Tables<'cleaning_products'>[]>([]);
+  const [equipment, setEquipment] = useState<Tables<'cleaning_equipment'>[]>([]);
   const { enqueueSnackbar } = useSnackbar();
 
-  const formatDateTimeForInput = (isoString: string) => {
-    return isoString.substring(0, 16);
+  useEffect(() => {
+    fetchRelatedData();
+  }, []);
+
+  const fetchRelatedData = async () => {
+    try {
+      const [zonesData, productsData, equipmentData] = await Promise.all([
+        supabase.from('cleaning_zones').select('*'),
+        supabase.from('cleaning_products').select('*').eq('is_active', true),
+        supabase.from('cleaning_equipment').select('*').eq('is_active', true)
+      ]);
+      
+      if (zonesData.data) setZones(zonesData.data);
+      if (productsData.data) setProducts(productsData.data);
+      if (equipmentData.data) setEquipment(equipmentData.data);
+    } catch (error) {
+      console.error('Error fetching related data:', error);
+    }
+  };
+
+  const handleTaskChange = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    setSelectedTask(task || null);
+    setFormData(prev => ({ ...prev, cleaning_task_id: taskId }));
+    
+    // Fetch sub-zones if zone is selected
+    if (task?.cleaning_zone_id) {
+      const { data } = await supabase
+        .from('cleaning_sub_zones')
+        .select('*')
+        .eq('cleaning_zone_id', task.cleaning_zone_id);
+      if (data) setSubZones(data);
+    }
+  };
+
+  const getTaskDetails = (task: Tables<'cleaning_tasks'>) => {
+    const zone = zones.find(z => z.id === task.cleaning_zone_id);
+    const subZone = subZones.find(sz => sz.id === task.cleaning_sub_zone_id);
+    const product = products.find(p => p.id === task.cleaning_product_id);
+    const equip = equipment.find(e => e.id === task.cleaning_equipment_id);
+    
+    return { zone, subZone, product, equip };
   };
 
   const getTaskFrequencyColor = (frequency: string) => {
@@ -81,13 +133,14 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
         
         records.push({
           cleaning_task_id: formData.cleaning_task_id,
-          scheduled_date: scheduledDate.toISOString(),
+          user_id: user?.id || null,
+          employee_id: null,
+          scheduled_date: scheduledDate.toISOString().split('T')[0],
           is_completed: false,
-          is_compliant: formData.is_compliant,
+          is_compliant: null,
           comments: formData.comments || null,
           completion_date: null,
-          photo_url: null,
-          user_id: null,
+          photo_url: null
         });
       }
 
@@ -103,12 +156,12 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
       // Reset form
       setFormData({
         cleaning_task_id: null,
-        start_date: new Date().toISOString(),
+        start_date: new Date().toISOString().split('T')[0],
         frequency: 'daily',
         occurrence_limit: 30,
-        is_compliant: false,
         comments: '',
       });
+      setSelectedTask(null);
     } catch (error) {
       console.error('Error creating repeat tasks:', error);
       enqueueSnackbar('Erreur lors de la création des tâches répétitives', { variant: 'error' });
@@ -158,7 +211,7 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
           <Select
             value={formData.cleaning_task_id || ''}
             label="Tâche de nettoyage"
-            onChange={(e) => setFormData({...formData, cleaning_task_id: e.target.value})}
+            onChange={(e) => handleTaskChange(e.target.value)}
           >
             {tasks.map(task => (
               <MenuItem key={task.id} value={task.id}>
@@ -177,16 +230,86 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
             ))}
           </Select>
         </FormControl>
+
+        {/* Task Details Card */}
+        {selectedTask && (
+          <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CleaningServices color="primary" />
+                Détails de la tâche sélectionnée
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>  
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <LocationOn fontSize="small" color="action" />
+                      <Typography variant="body2">
+                        <strong>Zone:</strong> {getTaskDetails(selectedTask).zone?.name || 'Non spécifiée'}
+                      </Typography>
+                    </Box>
+                    {getTaskDetails(selectedTask).subZone && (
+                      <Typography variant="body2" sx={{ ml: 3, color: 'text.secondary' }}>
+                        Sous-zone: {getTaskDetails(selectedTask).subZone?.name}
+                      </Typography>
+                    )}
+                  </Box>
+                  
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <Schedule fontSize="small" color="action" />
+                      <Typography variant="body2">
+                        <strong>Fréquence recommandée:</strong> {selectedTask.frequency}
+                        {selectedTask.frequency_days && ` (${selectedTask.frequency_days} jours)`}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Action à réaliser:</strong> {selectedTask.action_to_perform}
+                  </Typography>
+                </Box>
+
+                {(getTaskDetails(selectedTask).product || getTaskDetails(selectedTask).equip) && (
+                  <Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {getTaskDetails(selectedTask).product && (
+                        <Chip 
+                          label={`Produit: ${getTaskDetails(selectedTask).product?.name}`}
+                          variant="outlined"
+                          size="small"
+                          color="secondary"
+                        />
+                      )}
+                      {getTaskDetails(selectedTask).equip && (
+                        <Chip 
+                          label={`Équipement: ${getTaskDetails(selectedTask).equip?.name}`}
+                          variant="outlined"
+                          size="small"
+                          color="info"
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        )}
         
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
           <TextField
             label="Date de début"
-            type="datetime-local"
-            value={formatDateTimeForInput(formData.start_date)}
-            onChange={(e) => setFormData({...formData, start_date: new Date(e.target.value).toISOString()})}
+            type="date"
+            value={formData.start_date}
+            onChange={(e) => setFormData({...formData, start_date: e.target.value})}
             required
             fullWidth
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
           
           <FormControl fullWidth required>
@@ -213,18 +336,8 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
           }}
           required
           fullWidth
-          inputProps={{ min: 1, max: 100 }}
+          slotProps={{ htmlInput: { min: 1, max: 100 } }}
           helperText={`Cela créera ${formData.occurrence_limit} tâche(s) programmée(s)`}
-        />
-        
-        <FormControlLabel
-          control={
-            <Switch
-              checked={formData.is_compliant}
-              onChange={(e) => setFormData({...formData, is_compliant: e.target.checked})}
-            />
-          }
-          label="Marquer comme conforme par défaut"
         />
         
         <TextField
