@@ -212,8 +212,6 @@ export default function DeliveryComponent() {
 
       if (field === 'delivery') {
         setDeliveryData({ ...deliveryData, photo_url: publicUrl });
-      } else if (field === 'product') {
-        setNewProductControl({ ...newProductControl, photo_url: publicUrl });
       } else if (field === 'nonConformity') {
         setNewNonConformity({ ...newNonConformity, photo_url: publicUrl });
       }
@@ -233,9 +231,9 @@ export default function DeliveryComponent() {
 
     // Check temperature compliance based on storage type
     let isCompliant = newProductControl.is_compliant;
-    if (newProductControl.storage_type === 'frais' && newProductControl.temperature !== null) {
+    if (newProductControl.storage_type === 'frais' && newProductControl.temperature !== null && newProductControl.temperature !== undefined) {
       isCompliant = newProductControl.temperature >= 0 && newProductControl.temperature <= 4;
-    } else if (newProductControl.storage_type === 'surgelé' && newProductControl.temperature !== null) {
+    } else if (newProductControl.storage_type === 'surgelé' && newProductControl.temperature !== null && newProductControl.temperature !== undefined) {
       isCompliant = newProductControl.temperature <= -18;
     }
 
@@ -848,23 +846,6 @@ export default function DeliveryComponent() {
                   </Box>
                   
                   <Box>
-                    <input
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      id="product-photo-upload"
-                      type="file"
-                      onChange={(e) => handleUploadPhoto(e, 'product')}
-                    />
-                    <label htmlFor="product-photo-upload">
-                      <Button
-                        component="span"
-                        variant="outlined"
-                        startIcon={<CameraAlt />}
-                        sx={{ mr: 2 }}
-                      >
-                        {newProductControl.photo_url ? 'Photo ajoutée' : 'Ajouter photo'}
-                      </Button>
-                    </label>
                     
                     <FormControlLabel
                       control={
