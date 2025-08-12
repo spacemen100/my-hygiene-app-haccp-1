@@ -27,7 +27,14 @@ import {
   Chip,
   Alert,
   IconButton,
-  Avatar
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  Switch
 } from '@mui/material';
 import {
   CleaningServices,
@@ -39,14 +46,47 @@ import {
   Assignment,
   TaskAlt,
   CalendarToday,
-  TrendingUp
+  TrendingUp,
+  Repeat,
+  Edit as EditIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
   const [loading, setLoading] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+  const [editDialog, setEditDialog] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<Tables<'cleaning_records'> | null>(null);
+  // Formulaire pour nouvelle tâche unique
   const [formData, setFormData] = useState<TablesInsert<'cleaning_records'>>({
     scheduled_date: new Date().toISOString(),
     cleaning_task_id: null,
@@ -58,6 +98,19 @@ export default function CleaningPlan() {
     user_id: null,
   });
   const { enqueueSnackbar } = useSnackbar();
+
+  // Formulaire pour tâches répétitives
+  const [repeatFormData, setRepeatFormData] = useState({
+    cleaning_task_id: null as string | null,
+    start_date: new Date().toISOString(),
+    frequency: 'daily' as 'daily' | 'weekly' | 'monthly',
+    occurrence_limit: 30, // Limite par défaut
+    is_compliant: false,
+    comments: '',
+  });
+
+  // Formulaire pour modification de tâche
+  const [editFormData, setEditFormData] = useState<Partial<Tables<'cleaning_records'>>>({});
 
   useEffect(() => {
     fetchTasks();
@@ -122,6 +175,113 @@ export default function CleaningPlan() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fonction pour créer des tâches répétitives
+  const handleRepeatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!repeatFormData.cleaning_task_id) {
+      enqueueSnackbar('Veuillez sélectionner une tâche', { variant: 'error' });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const records = [];
+      const startDate = new Date(repeatFormData.start_date);
+      
+      for (let i = 0; i < repeatFormData.occurrence_limit; i++) {
+        let scheduledDate = new Date(startDate);
+        
+        switch (repeatFormData.frequency) {
+          case 'daily':
+            scheduledDate.setDate(startDate.getDate() + i);
+            break;
+          case 'weekly':
+            scheduledDate.setDate(startDate.getDate() + (i * 7));
+            break;
+          case 'monthly':
+            scheduledDate.setMonth(startDate.getMonth() + i);
+            break;
+        }
+        
+        records.push({
+          cleaning_task_id: repeatFormData.cleaning_task_id,
+          scheduled_date: scheduledDate.toISOString(),
+          is_completed: false,
+          is_compliant: repeatFormData.is_compliant,
+          comments: repeatFormData.comments || null,
+          completion_date: null,
+          photo_url: null,
+          user_id: null,
+        });
+      }
+
+      const { error } = await supabase
+        .from('cleaning_records')
+        .insert(records);
+      
+      if (error) throw error;
+      
+      enqueueSnackbar(`${repeatFormData.occurrence_limit} tâches répétitives créées avec succès!`, { variant: 'success' });
+      fetchRecords();
+      
+      // Reset form
+      setRepeatFormData({
+        cleaning_task_id: null,
+        start_date: new Date().toISOString(),
+        frequency: 'daily',
+        occurrence_limit: 30,
+        is_compliant: false,
+        comments: '',
+      });
+    } catch (error) {
+      console.error('Error creating repeat tasks:', error);
+      enqueueSnackbar('Erreur lors de la création des tâches répétitives', { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour modifier une tâche existante
+  const handleEditSubmit = async () => {
+    if (!selectedRecord) return;
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase
+        .from('cleaning_records')
+        .update(editFormData)
+        .eq('id', selectedRecord.id);
+      
+      if (error) throw error;
+      
+      enqueueSnackbar('Tâche mise à jour avec succès!', { variant: 'success' });
+      fetchRecords();
+      setEditDialog(false);
+      setSelectedRecord(null);
+      setEditFormData({});
+    } catch (error) {
+      console.error('Error updating record:', error);
+      enqueueSnackbar('Erreur lors de la mise à jour', { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour ouvrir le dialog d'édition
+  const handleEditRecord = (record: Tables<'cleaning_records'>) => {
+    setSelectedRecord(record);
+    setEditFormData({
+      is_completed: record.is_completed,
+      is_compliant: record.is_compliant,
+      completion_date: record.completion_date,
+      comments: record.comments,
+      photo_url: record.photo_url,
+    });
+    setEditDialog(true);
   };
 
   // Calculer les statistiques
@@ -346,12 +506,22 @@ export default function CleaningPlan() {
           </Box>
         </Box>
 
+        {/* Tabs pour les différentes actions */}
+        <Card sx={{ mb: 4 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} aria-label="cleaning tabs">
+              <Tab label="Tâche unique" />
+              <Tab label="Tâches répétitives" icon={<Repeat />} />
+            </Tabs>
+          </Box>
+        </Card>
+
         <Box sx={{ 
           display: 'grid', 
           gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, 
           gap: { xs: 3, md: 4 }
         }}>
-          {/* Formulaire de nouvelle exécution */}
+          {/* Formulaires dans des onglets */}
           <Box>
             <Card sx={{ 
               height: 'fit-content', 
@@ -360,7 +530,8 @@ export default function CleaningPlan() {
               mx: { xs: -1, sm: 0 },
               borderRadius: { xs: 0, sm: 1 }
             }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+              {/* Onglet 1: Tâche unique */}
+              <TabPanel value={tabValue} index={0}>
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -533,7 +704,153 @@ export default function CleaningPlan() {
                     {loading ? 'Enregistrement...' : 'Enregistrer'}
                   </Button>
                 </Box>
-              </CardContent>
+              </TabPanel>
+              
+              {/* Onglet 2: Tâches répétitives */}
+              <TabPanel value={tabValue} index={1}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: { xs: 1.5, sm: 2 }, 
+                  mb: { xs: 3, md: 4 }
+                }}>
+                  <Avatar sx={{ bgcolor: '#ff980020', color: '#ff9800' }}>
+                    <Repeat />
+                  </Avatar>
+                  <Box>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontWeight: 600,
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                      }}
+                    >
+                      Tâches Répétitives
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                    >
+                      Programmer des tâches récurrentes avec limite
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                <Box component="form" onSubmit={handleRepeatSubmit} sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: { xs: 2.5, sm: 3 }
+                }}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Tâche de nettoyage</InputLabel>
+                    <Select
+                      value={repeatFormData.cleaning_task_id || ''}
+                      label="Tâche de nettoyage"
+                      onChange={(e) => setRepeatFormData({...repeatFormData, cleaning_task_id: e.target.value})}
+                    >
+                      {tasks.map(task => (
+                        <MenuItem key={task.id} value={task.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                            <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                              {task.name}
+                            </Typography>
+                            <Chip 
+                              label={task.frequency}
+                              size="small"
+                              color={getTaskFrequencyColor(task.frequency)}
+                              variant="outlined"
+                            />
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
+                    <TextField
+                      label="Date de début"
+                      type="datetime-local"
+                      value={formatDateTimeForInput(repeatFormData.start_date)}
+                      onChange={(e) => setRepeatFormData({...repeatFormData, start_date: new Date(e.target.value).toISOString()})}
+                      required
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    
+                    <FormControl fullWidth required>
+                      <InputLabel>Fréquence</InputLabel>
+                      <Select
+                        value={repeatFormData.frequency}
+                        label="Fréquence"
+                        onChange={(e) => setRepeatFormData({...repeatFormData, frequency: e.target.value as 'daily' | 'weekly' | 'monthly'})}
+                      >
+                        <MenuItem value="daily">Quotidienne</MenuItem>
+                        <MenuItem value="weekly">Hebdomadaire</MenuItem>
+                        <MenuItem value="monthly">Mensuelle</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  
+                  <TextField
+                    label="Nombre d'occurrences (max 100)"
+                    type="number"
+                    value={repeatFormData.occurrence_limit}
+                    onChange={(e) => {
+                      const value = Math.min(100, Math.max(1, parseInt(e.target.value) || 1));
+                      setRepeatFormData({...repeatFormData, occurrence_limit: value});
+                    }}
+                    required
+                    fullWidth
+                    inputProps={{ min: 1, max: 100 }}
+                    helperText={`Cela créera ${repeatFormData.occurrence_limit} tâche(s) programmée(s)`}
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={repeatFormData.is_compliant}
+                        onChange={(e) => setRepeatFormData({...repeatFormData, is_compliant: e.target.checked})}
+                      />
+                    }
+                    label="Marquer comme conforme par défaut"
+                  />
+                  
+                  <TextField
+                    label="Commentaires (optionnel)"
+                    multiline
+                    rows={3}
+                    value={repeatFormData.comments}
+                    onChange={(e) => setRepeatFormData({...repeatFormData, comments: e.target.value})}
+                    fullWidth
+                    placeholder="Instructions spécifiques pour ces tâches répétitives..."
+                  />
+                  
+                  <Alert severity="info">
+                    <Typography variant="body2">
+                      <strong>Limite de sécurité :</strong> Maximum 100 occurrences pour éviter la saturation de la base de données.
+                    </Typography>
+                  </Alert>
+                  
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    startIcon={<Repeat />}
+                    disabled={loading}
+                    fullWidth
+                    color="warning"
+                    sx={{ 
+                      mt: { xs: 1.5, sm: 2 },
+                      py: { xs: 1.5, sm: 2 },
+                      minHeight: '48px',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}
+                  >
+                    {loading ? 'Création en cours...' : `Créer ${repeatFormData.occurrence_limit} tâche(s)`}
+                  </Button>
+                </Box>
+              </TabPanel>
             </Card>
           </Box>
           
@@ -569,12 +886,13 @@ export default function CleaningPlan() {
                         <TableCell><strong>Tâche</strong></TableCell>
                         <TableCell><strong>Date programmée</strong></TableCell>
                         <TableCell><strong>Statut</strong></TableCell>
+                        <TableCell><strong>Actions</strong></TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {records.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                          <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                             <Typography color="text.secondary">
                               Aucune exécution enregistrée
                             </Typography>
@@ -646,6 +964,16 @@ export default function CleaningPlan() {
                                   />
                                 )}
                               </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEditRecord(record)}
+                                  sx={{ color: 'primary.main' }}
+                                  title="Modifier la tâche"
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </TableCell>
                             </TableRow>
                           );
                         })
@@ -680,6 +1008,104 @@ export default function CleaningPlan() {
           </CardContent>
         </Card>
       </Container>
+
+      {/* Dialog de modification de tâche */}
+      <Dialog 
+        open={editDialog} 
+        onClose={() => setEditDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3 }
+        }}
+      >
+        <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'primary.main' }}>
+            <EditIcon />
+          </Avatar>
+          <Box>
+            <Typography variant="h6">
+              Modifier la tâche
+            </Typography>
+            {selectedRecord && (
+              <Typography variant="body2" color="text.secondary">
+                {tasks.find(t => t.id === selectedRecord.cleaning_task_id)?.name || 'Tâche inconnue'}
+              </Typography>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 2 }}>
+            {/* Statut de la tâche */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={editFormData.is_completed || false}
+                  onChange={(e) => setEditFormData({...editFormData, is_completed: e.target.checked})}
+                />
+              }
+              label="Tâche réalisée"
+            />
+            
+            {editFormData.is_completed && (
+              <>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={editFormData.is_compliant || false}
+                      onChange={(e) => setEditFormData({...editFormData, is_compliant: e.target.checked})}
+                    />
+                  }
+                  label="Conforme aux standards HACCP"
+                />
+                
+                <TextField
+                  label="Date de completion"
+                  type="datetime-local"
+                  value={editFormData.completion_date ? formatDateTimeForInput(editFormData.completion_date) : ''}
+                  onChange={(e) => setEditFormData({...editFormData, completion_date: e.target.value ? new Date(e.target.value).toISOString() : null})}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+                
+                <TextField
+                  label="URL de la photo (optionnel)"
+                  value={editFormData.photo_url || ''}
+                  onChange={(e) => setEditFormData({...editFormData, photo_url: e.target.value})}
+                  fullWidth
+                  placeholder="https://..."
+                />
+              </>
+            )}
+            
+            <TextField
+              label="Commentaires"
+              multiline
+              rows={4}
+              value={editFormData.comments || ''}
+              onChange={(e) => setEditFormData({...editFormData, comments: e.target.value})}
+              fullWidth
+              placeholder="Observations, produits utilisés, difficultés rencontrées..."
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button 
+            onClick={() => setEditDialog(false)} 
+            startIcon={<CloseIcon />}
+          >
+            Annuler
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleEditSubmit} 
+            startIcon={<Save />}
+            disabled={loading}
+          >
+            {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
