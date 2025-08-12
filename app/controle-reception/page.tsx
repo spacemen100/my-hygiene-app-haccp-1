@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { TablesInsert } from '@/src/types/database';
+import { useEmployee } from '@/contexts/EmployeeContext';
 import {
   CameraAlt,
   CheckCircle,
@@ -73,6 +74,7 @@ export default function DeliveryComponent() {
   const [openDialog, setOpenDialog] = useState(false);
   const [expandedDelivery, setExpandedDelivery] = useState<string | false>(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { employee } = useEmployee();
 
   const fetchDeliveries = useCallback(async () => {
     setLoading(true);
@@ -123,8 +125,9 @@ export default function DeliveryComponent() {
         .from('deliveries')
         .insert([{
           ...newDelivery,
-          organization_id: 'your-organization-id',
-          user_id: 'current-user-id',
+          organization_id: employee?.organization_id || null,
+          user_id: employee?.user_id || null,
+          employee_id: employee?.id || null,
         }])
         .select();
 
