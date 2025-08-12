@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '@/components/AuthProvider';
+import { useEmployee } from '@/contexts/EmployeeContext';
 
 interface RepeatTaskFormProps {
   tasks: Tables<'cleaning_tasks'>[];
@@ -35,6 +36,7 @@ interface RepeatTaskFormProps {
 
 export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps) {
   const { user } = useAuth();
+  const { employee } = useEmployee();
   const [formData, setFormData] = useState({
     cleaning_task_id: null as string | null,
     start_date: new Date().toISOString().split('T')[0],
@@ -134,7 +136,7 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
         records.push({
           cleaning_task_id: formData.cleaning_task_id,
           user_id: user?.id || null,
-          employee_id: null,
+          employee_id: employee?.id || null,
           scheduled_date: scheduledDate.toISOString().split('T')[0],
           is_completed: false,
           is_compliant: null,

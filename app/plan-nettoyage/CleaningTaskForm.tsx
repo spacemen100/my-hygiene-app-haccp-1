@@ -30,6 +30,7 @@ import {
   CalendarToday
 } from '@mui/icons-material';
 import { useAuth } from '@/components/AuthProvider';
+import { useEmployee } from '@/contexts/EmployeeContext';
 
 interface CleaningTaskFormProps {
   tasks: Tables<'cleaning_tasks'>[];
@@ -39,10 +40,11 @@ interface CleaningTaskFormProps {
 
 export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: CleaningTaskFormProps) {
   const { user } = useAuth();
+  const { employee } = useEmployee();
   const [formData, setFormData] = useState<TablesInsert<'cleaning_records'>>({
     cleaning_task_id: null,
     user_id: user?.id || null,
-    employee_id: null,
+    employee_id: employee?.id || null,
     scheduled_date: new Date().toISOString().split('T')[0],
     is_completed: false,
     is_compliant: null,
@@ -59,6 +61,15 @@ export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: 
   useEffect(() => {
     fetchRelatedData();
   }, []);
+
+  // Update user_id and employee_id when they change
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      user_id: user?.id || null,
+      employee_id: employee?.id || null
+    }));
+  }, [user?.id, employee?.id]);
 
   const fetchRelatedData = async () => {
     try {
@@ -132,7 +143,7 @@ export default function CleaningTaskForm({ tasks, onSuccess, enqueueSnackbar }: 
       setFormData({
         cleaning_task_id: null,
         user_id: user?.id || null,
-        employee_id: null,
+        employee_id: employee?.id || null,
         scheduled_date: new Date().toISOString().split('T')[0],
         is_completed: false,
         is_compliant: null,
