@@ -42,6 +42,7 @@ import {
 import { useSnackbar } from 'notistack';
 import JsBarcode from 'jsbarcode';
 import { useRef, useEffect as useEffectBarcode } from 'react';
+import LabelHistoryViewer from '@/components/LabelHistoryViewer';
 
 // Composant pour afficher le code-barres
 function BarcodeDisplay({ value }: { value: string }) {
@@ -99,6 +100,7 @@ export default function LabelPrinting() {
     urgencyLevel: null
   });
   const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [refreshHistory, setRefreshHistory] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
 
   // Fonction pour générer un code-barres unique
@@ -177,6 +179,19 @@ export default function LabelPrinting() {
     }
   };
 
+  // Fonction pour réimprimer une étiquette
+  const handleReprint = (labelData: Tables<'label_printings'>) => {
+    setFormData({
+      print_date: new Date().toISOString(),
+      expiry_date: labelData.expiry_date,
+      label_count: labelData.label_count,
+      product_label_type_id: labelData.product_label_type_id,
+      organization_id: labelData.organization_id,
+    });
+    // Faire défiler vers le formulaire
+    document.querySelector('[data-form-section]')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -198,6 +213,9 @@ export default function LabelPrinting() {
         product_label_type_id: null,
         organization_id: null,
       });
+
+      // Rafraîchir l'historique
+      setRefreshHistory(prev => prev + 1);
     } catch (error) {
       console.error('Error saving printing:', error);
       enqueueSnackbar('Erreur lors de l&apos;enregistrement', { variant: 'error' });
@@ -363,7 +381,7 @@ export default function LabelPrinting() {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 4 }}>
           {/* Formulaire d impression */}
-          <Box>
+          <Box data-form-section>
             <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardContent sx={{ p: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -572,6 +590,14 @@ export default function LabelPrinting() {
               </CardContent>
             </Card>
           </Box>
+        </Box>
+
+        {/* Historique des étiquettes */}
+        <Box sx={{ mt: 4 }}>
+          <LabelHistoryViewer 
+            onReprint={handleReprint}
+            refreshTrigger={refreshHistory}
+          />
         </Box>
 
         {/* Modal Guide */}
