@@ -15,12 +15,13 @@ import {
   Avatar,
   Button
 } from '@mui/material';
-import { CleaningServices, Help } from '@mui/icons-material';
+import { CleaningServices, Help, Schedule } from '@mui/icons-material';
 import CleaningStats from './CleaningStats';
 import CleaningTaskForm from './CleaningTaskForm';
 import RepeatTaskForm from './RepeatTaskForm';
 import TaskList from './TaskList';
 import UserGuideModal from './UserGuideModal';
+import CleaningScheduler from './CleaningScheduler';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -49,6 +50,7 @@ export default function CleaningPlan() {
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
   const [tabValue, setTabValue] = useState(0);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -254,6 +256,52 @@ export default function CleaningPlan() {
         {/* Statistiques */}
         <CleaningStats tasks={tasks} records={records} />
 
+        {/* Bouton pour programmer un plan de nettoyage standard */}
+        <Card sx={{ mb: 4, background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' }}>
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <Avatar
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  width: 56,
+                  height: 56,
+                  mr: 2
+                }}
+              >
+                <Schedule fontSize="large" />
+              </Avatar>
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  Planification automatique
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Créez un plan de nettoyage complet avec des tâches pré-remplies
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<Schedule />}
+              onClick={() => setShowScheduler(true)}
+              sx={{
+                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
+                }
+              }}
+            >
+              Programmer un plan de Nettoyage standard
+            </Button>
+          </Box>
+        </Card>
+
         {/* Bouton de test temporaire */}
         {records.length === 0 && (
           <Box sx={{ mb: 3, textAlign: 'center' }}>
@@ -270,30 +318,48 @@ export default function CleaningPlan() {
           </Box>
         )}
 
-        {/* Tabs pour les formulaires */}
-        <Card sx={{ mb: 4 }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} aria-label="cleaning tabs">
-              <Tab label="Tâche unique" />
-              <Tab label="Tâches répétitives" />
-            </Tabs>
-          </Box>
-          
-          <TabPanel value={tabValue} index={0}>
-            <CleaningTaskForm 
-              tasks={tasks}
-              onSuccess={() => fetchRecords()} 
-              enqueueSnackbar={enqueueSnackbar}
-            />
-          </TabPanel>
-          
-          <TabPanel value={tabValue} index={1}>
-            <RepeatTaskForm 
-              tasks={tasks} 
-              onSuccess={() => fetchRecords()}
-            />
-          </TabPanel>
-        </Card>
+        {/* Affichage conditionnel: soit le scheduler soit les tabs normaux */}
+        {showScheduler ? (
+          <Card sx={{ mb: 4 }}>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                Programmeur de plan de nettoyage
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={() => setShowScheduler(false)}
+                size="small"
+              >
+                Retour
+              </Button>
+            </Box>
+            <CleaningScheduler />
+          </Card>
+        ) : (
+          <Card sx={{ mb: 4 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} aria-label="cleaning tabs">
+                <Tab label="Tâche unique" />
+                <Tab label="Tâches répétitives" />
+              </Tabs>
+            </Box>
+            
+            <TabPanel value={tabValue} index={0}>
+              <CleaningTaskForm 
+                tasks={tasks}
+                onSuccess={() => fetchRecords()} 
+                enqueueSnackbar={enqueueSnackbar}
+              />
+            </TabPanel>
+            
+            <TabPanel value={tabValue} index={1}>
+              <RepeatTaskForm 
+                tasks={tasks} 
+                onSuccess={() => fetchRecords()}
+              />
+            </TabPanel>
+          </Card>
+        )}
 
         {/* Liste des tâches */}
         <TaskList 
