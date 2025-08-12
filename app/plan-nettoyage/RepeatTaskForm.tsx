@@ -40,7 +40,8 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
   const [formData, setFormData] = useState({
     cleaning_task_id: null as string | null,
     start_date: new Date().toISOString().split('T')[0],
-    frequency: 'daily' as 'daily' | 'weekly' | 'monthly',
+    frequency: 'daily' as 'daily' | 'weekly' | 'monthly' | 'custom',
+    custom_frequency_days: 1,
     occurrence_limit: 30,
     comments: '',
   });
@@ -131,6 +132,9 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
           case 'monthly':
             scheduledDate.setMonth(startDate.getMonth() + i);
             break;
+          case 'custom':
+            scheduledDate.setDate(startDate.getDate() + (i * formData.custom_frequency_days));
+            break;
         }
         
         records.push({
@@ -160,6 +164,7 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
         cleaning_task_id: null,
         start_date: new Date().toISOString().split('T')[0],
         frequency: 'daily',
+        custom_frequency_days: 1,
         occurrence_limit: 30,
         comments: '',
       });
@@ -319,14 +324,31 @@ export default function RepeatTaskForm({ tasks, onSuccess }: RepeatTaskFormProps
             <Select
               value={formData.frequency}
               label="Fréquence"
-              onChange={(e) => setFormData({...formData, frequency: e.target.value as 'daily' | 'weekly' | 'monthly'})}
+              onChange={(e) => setFormData({...formData, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' | 'custom'})}
             >
               <MenuItem value="daily">Quotidienne</MenuItem>
               <MenuItem value="weekly">Hebdomadaire</MenuItem>
               <MenuItem value="monthly">Mensuelle</MenuItem>
+              <MenuItem value="custom">Personnalisée</MenuItem>
             </Select>
           </FormControl>
         </Box>
+        
+        {formData.frequency === 'custom' && (
+          <TextField
+            label="Fréquence en jours"
+            type="number"
+            value={formData.custom_frequency_days}
+            onChange={(e) => {
+              const value = Math.max(1, parseInt(e.target.value) || 1);
+              setFormData({...formData, custom_frequency_days: value});
+            }}
+            required
+            fullWidth
+            slotProps={{ htmlInput: { min: 1 } }}
+            helperText="Nombre de jours entre chaque occurrence"
+          />
+        )}
         
         <TextField
           label="Nombre d'occurrences (max 100)"
