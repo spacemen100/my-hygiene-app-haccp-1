@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
-// import { useRouter } from 'next/navigation';
 import {
   Container,
   Typography,
@@ -33,6 +32,7 @@ import {
   Select,
   MenuItem,
   Chip,
+  InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -46,6 +46,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelledIcon,
   Business as BusinessIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 
 type Employee = Tables<'employees'>;
@@ -65,8 +68,6 @@ const ROLES = [
 ];
 
 export default function AdminEmployesPage() {
-  console.log('[AdminEmployes] Component rendering');
-  
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,15 +76,9 @@ export default function AdminEmployesPage() {
   const [organizations, setOrganizations] = useState<Tables<'organizations'>[]>([]);
   const [saving, setSaving] = useState(false);
   const [customRole, setCustomRole] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { employee: currentEmployee, loading: employeeLoading } = useEmployee();
-  // const router = useRouter();
-  
-  console.log('[AdminEmployes] States:', { loading, employeeLoading, currentEmployee: !!currentEmployee, defaultOrganization });
-  
-  console.log('[AdminEmployes] Current employee:', currentEmployee);
-  console.log('[AdminEmployes] Loading state:', loading);
-  console.log('[AdminEmployes] Employees count:', employees.length);
-  
+
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -97,6 +92,7 @@ export default function AdminEmployesPage() {
     role: null,
     is_active: true,
     organization_id: '',
+    password: '',
   });
 
   const loadOrganizations = useCallback(async () => {
@@ -109,7 +105,6 @@ export default function AdminEmployesPage() {
       if (error) throw error;
       setOrganizations(data || []);
       
-      // Set default organization (first one created)
       const { data: defaultData, error: defaultError } = await supabase
         .from('organizations')
         .select('id')
@@ -120,21 +115,17 @@ export default function AdminEmployesPage() {
       if (defaultError && defaultError.code !== 'PGRST116') throw defaultError;
       setDefaultOrganization(defaultData?.id || null);
     } catch (err) {
-      console.error('[AdminEmployes] Error loading organizations:', err);
+      console.error('Error loading organizations:', err);
     }
   }, []);
 
   const loadEmployees = useCallback(async () => {
-    console.log('[AdminEmployes] loadEmployees called with org ID:', currentEmployee?.organization_id || defaultOrganization);
-    
     try {
-      console.log('[AdminEmployes] Starting to load employees...');
       setLoading(true);
       setError(null);
 
       const organizationId = currentEmployee?.organization_id || defaultOrganization;
       if (!organizationId) {
-        console.log('[AdminEmployes] No organization ID, setting empty employees list');
         setEmployees([]);
         return;
       }
@@ -152,63 +143,58 @@ export default function AdminEmployesPage() {
         .eq('organization_id', organizationId)
         .order('last_name')
         .order('first_name');
-
-      console.log('[AdminEmployes] Supabase response:', { data, error });
       
       if (error) throw error;
       setEmployees(data || []);
-      console.log('[AdminEmployes] Employees loaded successfully, count:', data?.length || 0);
     } catch (err) {
-      console.error('[AdminEmployes] Error loading employees:', err);
+      console.error('Error loading employees:', err);
       setError('Erreur lors du chargement des employés');
     } finally {
-      console.log('[AdminEmployes] Setting loading to false');
       setLoading(false);
     }
   }, [currentEmployee?.organization_id, defaultOrganization]);
 
   useEffect(() => {
-    console.log('[AdminEmployes] useEffect triggered with:', {
-      organizationId: currentEmployee?.organization_id,
-      hasCurrentEmployee: !!currentEmployee,
-      defaultOrganization
-    });
-    
     loadOrganizations();
     
-    // Timeout de sécurité pour éviter le chargement infini
     const timeoutId = setTimeout(() => {
       if (loading) {
-        console.log('[AdminEmployes] Timeout reached, forcing loading to false');
         setLoading(false);
       }
-    }, 5000); // 5 secondes
+    }, 5000);
     
     return () => clearTimeout(timeoutId);
   }, [loadOrganizations, loading]);
 
   useEffect(() => {
-    // Attendre que l'EmployeeProvider ait fini de charger ET que nous ayons vérifié l'organisation par défaut
     if (!employeeLoading && defaultOrganization !== null) {
-      console.log('[AdminEmployes] Both employee loading finished and default org loaded');
       loadEmployees();
       
-      // Ne pas modifier le formData si le modal est ouvert pour éviter les conflits
       if (!dialogOpen) {
         const organizationId = currentEmployee?.organization_id || defaultOrganization;
         if (organizationId) {
-          console.log('[AdminEmployes] Setting form data with org ID');
           setFormData(prev => ({ ...prev, organization_id: organizationId }));
-        } else {
-          console.log('[AdminEmployes] No organization ID available, will need to create first employee');
         }
       }
     }
   }, [currentEmployee?.organization_id, defaultOrganization, loadEmployees, employeeLoading, currentEmployee, dialogOpen]);
 
+  const generateRandomPassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  };
+
+  const handleGeneratePassword = () => {
+    const newPassword = generateRandomPassword();
+    setFormData({ ...formData, password: newPassword });
+  };
 
   const handleOpenDialog = (employee: Employee | null = null) => {
-    // Nettoyer les messages précédents quand on ouvre le modal
     setError(null);
     setSuccess(null);
     
@@ -221,6 +207,7 @@ export default function AdminEmployesPage() {
         role: isCustomRole ? 'Autre' : employee.role,
         is_active: employee.is_active ?? true,
         organization_id: employee.organization_id,
+        password: '', // Ne pas afficher le mot de passe existant
       });
       setCustomRole(isCustomRole ? (employee.role || '') : '');
     } else {
@@ -231,10 +218,12 @@ export default function AdminEmployesPage() {
         role: null,
         is_active: true,
         organization_id: currentEmployee?.organization_id || defaultOrganization || '',
+        password: '',
       });
       setCustomRole('');
     }
     setDialogOpen(true);
+    setShowPassword(false);
   };
 
   const handleCloseDialog = () => {
@@ -242,31 +231,20 @@ export default function AdminEmployesPage() {
     setEditingEmployee(null);
     setError(null);
     setCustomRole('');
-    // Ne pas nettoyer setSuccess(null) ici pour garder le message visible après fermeture
+    setShowPassword(false);
     
-    // Réinitialiser le formData pour éviter des conflits futurs
     setFormData({
       first_name: '',
       last_name: '',
       role: null,
       is_active: true,
       organization_id: currentEmployee?.organization_id || defaultOrganization || '',
+      password: '',
     });
   };
 
-  // const handleRedirectToCreateOrganization = () => {
-  //   // Stocker un message dans localStorage pour l'afficher sur la page organisation
-  //   localStorage.setItem('organizationMessage', JSON.stringify({
-  //     type: 'info',
-  //     message: 'Vous devez créer une organisation avant de pouvoir ajouter des employés. Cette organisation sera utilisée par défaut pour tous les employés.'
-  //   }));
-  //   
-  //   // Rediriger vers la page de création d'organisation
-  //   router.push('/admin-organisation');
-  // };
-
   const handleSave = async () => {
-    if (saving) return; // Éviter les appels multiples
+    if (saving) return;
     
     try {
       setSaving(true);
@@ -291,6 +269,18 @@ export default function AdminEmployesPage() {
         return;
       }
 
+      if (!editingEmployee && !formData.password?.trim()) {
+        setError('Le mot de passe est obligatoire pour un nouvel employé');
+        setSaving(false);
+        return;
+      }
+
+      if (formData.password && formData.password.length < 6) {
+        setError('Le mot de passe doit contenir au moins 6 caractères');
+        setSaving(false);
+        return;
+      }
+
       if (formData.role === 'Autre' && !customRole.trim()) {
         setError('Veuillez spécifier le rôle personnalisé');
         setSaving(false);
@@ -298,8 +288,6 @@ export default function AdminEmployesPage() {
       }
 
       const organizationId = formData.organization_id;
-      
-      // Déterminer le rôle final : utiliser le rôle personnalisé si "Autre" est sélectionné
       const finalRole = formData.role === 'Autre' ? customRole.trim() || null : formData.role;
       
       const employeeData = {
@@ -309,16 +297,28 @@ export default function AdminEmployesPage() {
       };
 
       if (editingEmployee) {
-        // Update existing employee
+        // Update existing employee - only include password if provided
+        const updateData: Partial<EmployeeUpdate> = {
+          first_name: employeeData.first_name,
+          last_name: employeeData.last_name,
+          role: employeeData.role,
+          is_active: employeeData.is_active,
+          organization_id: employeeData.organization_id
+        };
+
+        if (formData.password.trim()) {
+          updateData.password = formData.password;
+        }
+
         const { error } = await supabase
           .from('employees')
-          .update(employeeData as EmployeeUpdate)
+          .update(updateData)
           .eq('id', editingEmployee.id);
 
         if (error) throw error;
         setSuccess('Employé mis à jour avec succès');
       } else {
-        // Create new employee
+        // Create new employee - password is required
         const { error } = await supabase
           .from('employees')
           .insert([employeeData]);
@@ -328,11 +328,8 @@ export default function AdminEmployesPage() {
       }
 
       await loadEmployees();
-      
-      // Fermer le modal immédiatement mais garder le message visible
       handleCloseDialog();
       
-      // Nettoyer le message de succès après un délai pour que l'utilisateur le voie
       setTimeout(() => {
         setSuccess(null);
       }, 3000);
@@ -340,7 +337,7 @@ export default function AdminEmployesPage() {
       console.error('Erreur lors de la sauvegarde:', err);
       setError('Erreur lors de la sauvegarde');
     } finally {
-      setSaving(false); // Réinitialiser l'état de sauvegarde
+      setSaving(false);
     }
   };
 
@@ -378,7 +375,6 @@ export default function AdminEmployesPage() {
   };
 
   if (loading || employeeLoading) {
-    console.log('[AdminEmployes] Rendering loading state', { loading, employeeLoading });
     return (
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -387,8 +383,6 @@ export default function AdminEmployesPage() {
       </Container>
     );
   }
-  
-  console.log('[AdminEmployes] Rendering main content');
 
   return (
     <Container maxWidth="xl">
@@ -699,7 +693,7 @@ export default function AdminEmployesPage() {
                   const selectedRole = e.target.value || null;
                   setFormData({ ...formData, role: selectedRole });
                   if (selectedRole !== 'Autre') {
-                    setCustomRole(''); // Reset custom role if not "Autre"
+                    setCustomRole('');
                   }
                 }}
                 label="Rôle"
@@ -715,7 +709,6 @@ export default function AdminEmployesPage() {
               </Select>
             </FormControl>
 
-            {/* Champ texte conditionnel pour rôle personnalisé */}
             {formData.role === 'Autre' && (
               <TextField
                 label="Spécifiez le rôle *"
@@ -725,10 +718,57 @@ export default function AdminEmployesPage() {
                 placeholder="Saisissez le rôle personnalisé"
                 helperText="Veuillez spécifier le rôle de l'employé"
                 sx={{
-                  gridColumn: { xs: 'span 1', md: 'span 2' }, // Prend toute la largeur
+                  gridColumn: { xs: 'span 1', md: 'span 2' },
                 }}
               />
             )}
+
+            {/* Password Field */}
+            <Box sx={{ gridColumn: { xs: 'span 1', md: 'span 2' }, display: 'flex', gap: 2, alignItems: 'start' }}>
+              <TextField
+                label={editingEmployee ? "Nouveau mot de passe" : "Mot de passe *"}
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password || ''}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                fullWidth
+                required={!editingEmployee}
+                helperText={
+                  editingEmployee 
+                    ? "Laissez vide pour conserver le mot de passe actuel. Minimum 6 caractères."
+                    : "Le mot de passe doit contenir au moins 6 caractères"
+                }
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        size="small"
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Button
+                variant="outlined"
+                onClick={handleGeneratePassword}
+                sx={{ 
+                  mt: 0.5,
+                  minWidth: 'auto',
+                  px: 2,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Générer
+              </Button>
+            </Box>
 
             <FormControl fullWidth>
               <InputLabel>Organisation *</InputLabel>
