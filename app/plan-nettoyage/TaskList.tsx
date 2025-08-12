@@ -54,7 +54,7 @@ interface TaskListProps {
 type TabValue = 'all' | 'todo' | 'completed' | 'overdue' | 'today' | 'calendar';
 
 export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
-  const { selectedEmployee } = useEmployee();
+  const { employee } = useEmployee();
   const { user } = useAuth();
   const [loadingMore, setLoadingMore] = useState(false);
   const [recordsLimit, setRecordsLimit] = useState(10);
@@ -159,7 +159,7 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
       .from('cleaning_records')
       .update({
         ...data,
-        employee_id: selectedEmployee?.id || null,
+        employee_id: employee?.id || null,
         user_id: user?.id || null
       })
       .eq('id', selectedRecord.id);

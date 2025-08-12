@@ -54,7 +54,7 @@ type CleaningEquipment = Tables<'cleaning_equipment'>;
 type CleaningMethod = Tables<'cleaning_methods'>;
 
 export default function AdminPlanNettoyagePage() {
-  const { selectedEmployee } = useEmployee();
+  const { employee } = useEmployee();
   const { user } = useAuth();
   const [tasks, setTasks] = useState<CleaningTask[]>([]);
   const [zones, setZones] = useState<CleaningZone[]>([]);
@@ -198,7 +198,7 @@ export default function AdminPlanNettoyagePage() {
           .from('cleaning_tasks')
           .update({
             ...formData as CleaningTaskUpdate,
-            employee_id: selectedEmployee?.id || null,
+            employee_id: employee?.id || null,
             user_id: user?.id || null
           })
           .eq('id', editingTask.id);
@@ -211,7 +211,7 @@ export default function AdminPlanNettoyagePage() {
           .from('cleaning_tasks')
           .insert([{
             ...formData,
-            employee_id: selectedEmployee?.id || null,
+            employee_id: employee?.id || null,
             user_id: user?.id || null
           }]);
 

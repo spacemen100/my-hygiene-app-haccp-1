@@ -15,13 +15,11 @@ import {
   Close,
   CloudUpload,
   ExpandMore,
-  Edit,
   Delete,
   Thermostat,
   Warning,
   Inventory,
   Save,
-  AttachFile,
 } from '@mui/icons-material';
 import {
   Button,
@@ -42,7 +40,6 @@ import {
   CircularProgress,
   Card,
   CardContent,
-  CardActions,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -50,8 +47,6 @@ import {
   Avatar,
   useTheme,
   useMediaQuery,
-  Tabs,
-  Tab,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -59,7 +54,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider,
   Stepper,
   Step,
   StepLabel,
@@ -109,7 +103,6 @@ export default function DeliveryComponent() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [suppliers, setSuppliers] = useState<TablesInsert<'suppliers'>[]>([]);
-  const [products, setProducts] = useState<TablesInsert<'products'>[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [expandedDelivery, setExpandedDelivery] = useState<string | false>(false);
@@ -128,8 +121,8 @@ export default function DeliveryComponent() {
     is_compliant: true,
   });
   const [truckControls, setTruckControls] = useState<TablesInsert<'truck_temperature_controls'>[]>([
-    { storage_type: 'frais', truck_temperature: null, is_compliant: false, control_date: new Date().toISOString() },
-    { storage_type: 'surgelé', truck_temperature: null, is_compliant: false, control_date: new Date().toISOString() },
+    { storage_type: 'frais', truck_temperature: 0, is_compliant: false, control_date: new Date().toISOString() },
+    { storage_type: 'surgelé', truck_temperature: 0, is_compliant: false, control_date: new Date().toISOString() },
   ]);
   const [productControls, setProductControls] = useState<TablesInsert<'product_reception_controls'>[]>([]);
   const [newProductControl, setNewProductControl] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
@@ -176,22 +169,11 @@ export default function DeliveryComponent() {
     }
   }, [enqueueSnackbar]);
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.from('products').select('*');
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      enqueueSnackbar('Impossible de charger les produits', { variant: 'error' });
-    }
-  }, [enqueueSnackbar]);
 
   useEffect(() => {
     fetchDeliveries();
     fetchSuppliers();
-    fetchProducts();
-  }, [fetchDeliveries, fetchSuppliers, fetchProducts]);
+  }, [fetchDeliveries, fetchSuppliers]);
 
   const handleNextStep = () => {
     if (activeStep === 'delivery') setActiveStep('truck');
@@ -307,12 +289,12 @@ export default function DeliveryComponent() {
     setNonConformities(updatedNonConformities);
   };
 
-  const handleTruckTemperatureChange = (index: number, field: string, value: any) => {
+  const handleTruckTemperatureChange = (index: number, field: string, value: string | number) => {
     const updatedControls = [...truckControls];
     
     // For temperature field, check compliance
     if (field === 'truck_temperature') {
-      const temp = parseFloat(value);
+      const temp = parseFloat(String(value));
       let isCompliant = false;
       
       if (updatedControls[index].storage_type === 'frais') {
@@ -323,7 +305,7 @@ export default function DeliveryComponent() {
       
       updatedControls[index] = {
         ...updatedControls[index],
-        truck_temperature: isNaN(temp) ? null : temp,
+        truck_temperature: isNaN(temp) ? 0 : temp,
         is_compliant: isCompliant,
       };
     } else {
@@ -414,8 +396,8 @@ export default function DeliveryComponent() {
         is_compliant: true,
       });
       setTruckControls([
-        { storage_type: 'frais', truck_temperature: null, is_compliant: false, control_date: new Date().toISOString() },
-        { storage_type: 'surgelé', truck_temperature: null, is_compliant: false, control_date: new Date().toISOString() },
+        { storage_type: 'frais', truck_temperature: 0, is_compliant: false, control_date: new Date().toISOString() },
+        { storage_type: 'surgelé', truck_temperature: 0, is_compliant: false, control_date: new Date().toISOString() },
       ]);
       setProductControls([]);
       setNonConformities([]);
@@ -729,12 +711,12 @@ export default function DeliveryComponent() {
                       onChange={(e) => handleTruckTemperatureChange(index, 'truck_temperature', e.target.value)}
                       fullWidth
                       inputProps={{ step: "0.1" }}
-                      error={control.truck_temperature !== null && !control.is_compliant}
-                      helperText={control.truck_temperature !== null && !control.is_compliant ? 
+                      error={control.truck_temperature !== 0 && !control.is_compliant}
+                      helperText={control.truck_temperature !== 0 && !control.is_compliant ? 
                         `Température non conforme pour ${control.storage_type}` : ''}
                     />
                     
-                    {control.truck_temperature !== null && (
+                    {control.truck_temperature !== 0 && (
                       <Alert 
                         severity={control.is_compliant ? "success" : "error"}
                         icon={control.is_compliant ? <CheckCircle /> : <Warning />}
@@ -817,7 +799,7 @@ export default function DeliveryComponent() {
                     <Select
                       value={newProductControl.storage_type || 'ambiant'}
                       label="Type de stockage *"
-                      onChange={(e) => setNewProductControl({...newProductControl, storage_type: e.target.value as any})}
+                      onChange={(e) => setNewProductControl({...newProductControl, storage_type: e.target.value as 'ambiant' | 'frais' | 'surgelé'})}
                     >
                       {storageTypes.map(type => (
                         <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>

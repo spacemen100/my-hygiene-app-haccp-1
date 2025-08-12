@@ -120,7 +120,7 @@ export default function DeliveryControlSystem() {
 // Composant pour contrôler un produit ambiant
 const AmbientProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const { selectedEmployee } = useEmployee();
+  const { employee } = useEmployee();
   const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
@@ -140,7 +140,7 @@ const AmbientProductControl = () => {
           ...formData,
           control_date: new Date().toISOString(),
           is_compliant: formData.is_compliant || false,
-          employee_id: selectedEmployee?.id || null,
+          employee_id: employee?.id || null,
           user_id: user?.id || null
         }]);
       
@@ -255,7 +255,7 @@ const AmbientProductControl = () => {
 // Composant pour contrôler un produit frais
 const FreshProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const { selectedEmployee } = useEmployee();
+  const { employee } = useEmployee();
   const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
@@ -289,7 +289,7 @@ const FreshProductControl = () => {
           ...formData,
           control_date: new Date().toISOString(),
           is_compliant: formData.is_compliant || false,
-          employee_id: selectedEmployee?.id || null,
+          employee_id: employee?.id || null,
           user_id: user?.id || null
         }]);
       
@@ -407,7 +407,7 @@ const FreshProductControl = () => {
 // Composant pour contrôler un produit surgelé
 const FrozenProductControl = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const { selectedEmployee } = useEmployee();
+  const { employee } = useEmployee();
   const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<TablesInsert<'product_reception_controls'>>>({
     product_name: '',
@@ -441,7 +441,7 @@ const FrozenProductControl = () => {
           ...formData,
           control_date: new Date().toISOString(),
           is_compliant: formData.is_compliant || false,
-          employee_id: selectedEmployee?.id || null,
+          employee_id: employee?.id || null,
           user_id: user?.id || null
         }]);
       
@@ -559,7 +559,7 @@ const FrozenProductControl = () => {
 // Composant pour gérer les non-conformités
 const NonConformitiesControl = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const { selectedEmployee } = useEmployee();
+  const { employee } = useEmployee();
   const { user } = useAuth();
   const [nonConformities, setNonConformities] = useState<TablesInsert<'non_conformities'>[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -591,9 +591,9 @@ const NonConformitiesControl = () => {
         .from('non_conformities')
         .insert([{
           ...newNonConformity,
-          employee_id: selectedEmployee?.id || null,
+          employee_id: employee?.id || null,
           user_id: user?.id || null
-        })
+        }])
         .select()
         .single();
       
