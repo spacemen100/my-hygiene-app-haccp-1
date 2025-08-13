@@ -157,9 +157,13 @@ export default function DeliveryComponent() {
     return JSON.stringify(urls);
   };
 
-  // Local state for managing photo URLs (arrays)
-  const [deliveryPhotoUrls, setDeliveryPhotoUrls] = useState<string[]>([]);
-  const [nonConformityPhotoUrls, setNonConformityPhotoUrls] = useState<string[]>([]);
+  // These states are no longer needed since we upload on save
+  // const [deliveryPhotoUrls, setDeliveryPhotoUrls] = useState<string[]>([]);
+  // const [nonConformityPhotoUrls, setNonConformityPhotoUrls] = useState<string[]>([]);
+  
+  // Store actual files for upload on save
+  const [deliveryFiles, setDeliveryFiles] = useState<File[]>([]);
+  const [nonConformityFiles, setNonConformityFiles] = useState<File[]>([]);
 
   const fetchDeliveries = useCallback(async () => {
     setLoading(true);
@@ -220,23 +224,49 @@ export default function DeliveryComponent() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Handle multiple files
-    Array.from(files).forEach(file => {
+    // Handle multiple files - only create previews, upload will happen on save
+    const fileArray = Array.from(files);
+    
+    fileArray.forEach(file => {
       // Create preview URL
       const previewUrl = URL.createObjectURL(file);
       
-      // Add preview based on field
+      // Add preview and store file based on field
       if (field === 'delivery') {
         setDeliveryPhotoPreviews(prev => [...prev, previewUrl]);
+        setDeliveryFiles(prev => [...prev, file]);
       } else if (field === 'product') {
         setProductPhotoPreviews(prev => [...prev, previewUrl]);
       } else if (field === 'nonConformity') {
         setNonConformityPhotoPreviews(prev => [...prev, previewUrl]);
+        setNonConformityFiles(prev => [...prev, file]);
+      }
+    });
+  };
+
+  // Helper function to upload files and return URLs
+  const uploadFiles = async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('delivery-photos')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
       }
 
-      // Upload the file
-      handleUploadPhoto(file, field);
+      const { data: { publicUrl } } = supabase.storage
+        .from('delivery-photos')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
     });
+
+    return Promise.all(uploadPromises);
   };
 
   const handleUploadPhoto = async (file: File, field: 'delivery' | 'product' | 'nonConformity') => {
@@ -305,24 +335,12 @@ export default function DeliveryComponent() {
 
   const handleRemovePhoto = (field: 'delivery' | 'product' | 'nonConformity', index: number) => {
     if (field === 'delivery') {
-      // Check if it's a preview URL (first N items) or uploaded URL
-      const totalPreviews = deliveryPhotoPreviews.length;
-      if (index < totalPreviews) {
-        // Remove preview
-        const photoToRemove = deliveryPhotoPreviews[index];
+      // Remove preview and corresponding file
+      const photoToRemove = deliveryPhotoPreviews[index];
+      if (photoToRemove) {
         URL.revokeObjectURL(photoToRemove);
         setDeliveryPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-      } else {
-        // Remove uploaded photo
-        const uploadedIndex = index - totalPreviews;
-        setDeliveryPhotoUrls(prev => {
-          const newUrls = prev.filter((_, i) => i !== uploadedIndex);
-          setDeliveryData(curr => ({
-            ...curr,
-            photo_url: stringifyPhotoUrls(newUrls)
-          }));
-          return newUrls;
-        });
+        setDeliveryFiles(prev => prev.filter((_, i) => i !== index));
       }
     } else if (field === 'product') {
       const photoToRemove = productPhotoPreviews[index];
@@ -331,24 +349,12 @@ export default function DeliveryComponent() {
         setProductPhotoPreviews(prev => prev.filter((_, i) => i !== index));
       }
     } else if (field === 'nonConformity') {
-      // Check if it's a preview URL (first N items) or uploaded URL
-      const totalPreviews = nonConformityPhotoPreviews.length;
-      if (index < totalPreviews) {
-        // Remove preview
-        const photoToRemove = nonConformityPhotoPreviews[index];
+      // Remove preview and corresponding file
+      const photoToRemove = nonConformityPhotoPreviews[index];
+      if (photoToRemove) {
         URL.revokeObjectURL(photoToRemove);
         setNonConformityPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-      } else {
-        // Remove uploaded photo
-        const uploadedIndex = index - totalPreviews;
-        setNonConformityPhotoUrls(prev => {
-          const newUrls = prev.filter((_, i) => i !== uploadedIndex);
-          setNewNonConformity(curr => ({
-            ...curr,
-            photo_url: stringifyPhotoUrls(newUrls)
-          }));
-          return newUrls;
-        });
+        setNonConformityFiles(prev => prev.filter((_, i) => i !== index));
       }
     }
   };
@@ -365,104 +371,83 @@ export default function DeliveryComponent() {
   // Photo preview component for multiple photos
   const PhotosPreview = ({ 
     previewUrls, 
-    uploadedUrls, 
     field, 
     label 
   }: { 
     previewUrls: string[]; 
-    uploadedUrls?: string[]; 
     field: 'delivery' | 'product' | 'nonConformity'; 
     label: string;
   }) => {
-    const allUrls = [...previewUrls, ...(uploadedUrls || [])];
-    
-    if (allUrls.length === 0) return null;
+    if (previewUrls.length === 0) return null;
 
     return (
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {label} ({allUrls.length})
+          {label} ({previewUrls.length})
         </Typography>
         <Box sx={{ 
           display: 'flex', 
           flexWrap: 'wrap', 
           gap: 2 
         }}>
-          {allUrls.map((url, index) => {
-            const isPreview = index < previewUrls.length;
-            return (
+          {previewUrls.map((url, index) => (
+            <Box
+              key={index}
+              sx={{
+                position: 'relative',
+                border: '2px solid',
+                borderColor: 'warning.main',
+                borderRadius: 2,
+                overflow: 'hidden',
+                width: 150,
+                height: 120,
+              }}
+            >
+              <img
+                src={url}
+                alt={`${label} ${index + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
               <Box
-                key={index}
                 sx={{
-                  position: 'relative',
-                  border: '2px solid',
-                  borderColor: isPreview ? 'warning.main' : 'success.main',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  width: 150,
-                  height: 120,
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.5,
                 }}
               >
-                <img
-                  src={url}
-                  alt={`${label} ${index + 1}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
+                <Chip
+                  label="Prêt"
+                  size="small"
+                  color="warning"
+                  sx={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.6rem',
+                    height: 20
                   }}
                 />
-                <Box
+                <IconButton
+                  size="small"
+                  onClick={() => handleRemovePhoto(field, index)}
                   sx={{
-                    position: 'absolute',
-                    top: 4,
-                    right: 4,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.5,
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 1)' },
+                    width: 24,
+                    height: 24,
                   }}
                 >
-                  {isPreview && (
-                    <Chip
-                      label="Upload..."
-                      size="small"
-                      color="warning"
-                      sx={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        fontSize: '0.6rem',
-                        height: 20
-                      }}
-                    />
-                  )}
-                  {!isPreview && (
-                    <Chip
-                      label="OK"
-                      size="small"
-                      color="success"
-                      sx={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        fontSize: '0.6rem',
-                        height: 20
-                      }}
-                    />
-                  )}
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemovePhoto(field, index)}
-                    sx={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      '&:hover': { backgroundColor: 'rgba(255, 255, 255, 1)' },
-                      width: 24,
-                      height: 24,
-                    }}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </Box>
+                  <Delete fontSize="small" />
+                </IconButton>
               </Box>
-            );
-          })}
+            </Box>
+          ))}
         </Box>
       </Box>
     );
@@ -525,8 +510,8 @@ export default function DeliveryComponent() {
       quantity_type: 'kg',
     });
     // Reset photo states for non-conformity
-    setNonConformityPhotoUrls([]);
     setNonConformityPhotoPreviews([]);
+    setNonConformityFiles([]);
   };
 
   const handleRemoveNonConformity = (index: number) => {
@@ -572,11 +557,24 @@ export default function DeliveryComponent() {
 
     setIsCreating(true);
     try {
+      // Upload delivery photos first
+      let deliveryPhotoUrls: string[] = [];
+      if (deliveryFiles.length > 0) {
+        deliveryPhotoUrls = await uploadFiles(deliveryFiles);
+      }
+
+      // Upload non-conformity photos
+      let ncPhotoUrls: string[] = [];
+      if (nonConformityFiles.length > 0) {
+        ncPhotoUrls = await uploadFiles(nonConformityFiles);
+      }
+
       // Start transaction
       const { data: delivery, error: deliveryError } = await supabase
         .from('deliveries')
         .insert([{
           ...deliveryData,
+          photo_url: deliveryPhotoUrls.length > 0 ? stringifyPhotoUrls(deliveryPhotoUrls) : null,
           organization_id: employee?.organization_id || null,
           user_id: user?.id || null,
           employee_id: employee?.id || null,
@@ -623,6 +621,7 @@ export default function DeliveryComponent() {
           .from('non_conformities')
           .insert(nonConformities.map(nc => ({
             ...nc,
+            photo_url: ncPhotoUrls.length > 0 ? stringifyPhotoUrls(ncPhotoUrls) : nc.photo_url,
             delivery_id: delivery.id,
             employee_id: employee?.id || null,
             user_id: user?.id || null,
@@ -649,10 +648,10 @@ export default function DeliveryComponent() {
       setNonConformities([]);
       
       // Reset photo states
-      setDeliveryPhotoUrls([]);
-      setNonConformityPhotoUrls([]);
       setDeliveryPhotoPreviews([]);
       setNonConformityPhotoPreviews([]);
+      setDeliveryFiles([]);
+      setNonConformityFiles([]);
       setActiveStep('delivery');
       setCompletedSteps({
         delivery: false,
@@ -928,14 +927,13 @@ export default function DeliveryComponent() {
                       minHeight: '44px'
                     }}
                   >
-                    {(deliveryPhotoUrls.length + deliveryPhotoPreviews.length) > 0 
-                      ? `${deliveryPhotoUrls.length + deliveryPhotoPreviews.length} photo(s) sélectionnée(s)` 
+                    {deliveryPhotoPreviews.length > 0 
+                      ? `${deliveryPhotoPreviews.length} photo(s) sélectionnée(s)` 
                       : 'Ajouter des photos de la livraison'}
                   </Button>
                 </label>
                 <PhotosPreview
                   previewUrls={deliveryPhotoPreviews}
-                  uploadedUrls={deliveryPhotoUrls}
                   field="delivery"
                   label="Photos de la livraison"
                 />
@@ -1245,8 +1243,8 @@ export default function DeliveryComponent() {
                         startIcon={<CameraAlt />}
                         sx={{ mr: 2 }}
                       >
-                        {(nonConformityPhotoUrls.length + nonConformityPhotoPreviews.length) > 0 
-                          ? `${nonConformityPhotoUrls.length + nonConformityPhotoPreviews.length} photo(s)` 
+                        {nonConformityPhotoPreviews.length > 0 
+                          ? `${nonConformityPhotoPreviews.length} photo(s)` 
                           : 'Ajouter photos'}
                       </Button>
                     </label>
@@ -1262,7 +1260,6 @@ export default function DeliveryComponent() {
                   
                   <PhotosPreview
                     previewUrls={nonConformityPhotoPreviews}
-                    uploadedUrls={nonConformityPhotoUrls}
                     field="nonConformity"
                     label="Photos de la non-conformité"
                   />
@@ -1311,13 +1308,13 @@ export default function DeliveryComponent() {
                     </Typography>
                   </Box>
                   
-                  {(deliveryPhotoUrls.length > 0 || deliveryPhotoPreviews.length > 0) && (
+                  {deliveryPhotoPreviews.length > 0 && (
                     <Box>
                       <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                        Photos de la livraison ({deliveryPhotoUrls.length + deliveryPhotoPreviews.length}):
+                        Photos de la livraison ({deliveryPhotoPreviews.length}):
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {[...deliveryPhotoPreviews, ...deliveryPhotoUrls].map((url, index) => (
+                        {deliveryPhotoPreviews.map((url, index) => (
                           <Box
                             key={index}
                             sx={{
