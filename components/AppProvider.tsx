@@ -30,6 +30,7 @@ import {
   Science as ProductsIcon,
   Build as EquipmentIcon,
   ListAlt as MethodsIcon,
+  LocalDining as OilIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,6 +47,7 @@ const menuItems = [
   { href: "/etiquettes", icon: TagsIcon, label: "Enregistrement des étiquettes" },
   { href: "/impression-dlc", icon: PrinterIcon, label: "Impression des DLC secondaires" },
   { href: "/enceintes-froides", icon: SnowflakeIcon, label: "Enceintes froides" },
+  { href: "/controle-huile", icon: OilIcon, label: "Contrôle qualité de l'huile" },
   { href: "/suivi-refroidissement", icon: ThermometerIcon, label: "Suivi de refroidissement" },
   { href: "/plan-nettoyage", icon: SprayCanIcon, label: "Plan de nettoyage" },
   { href: "/admin-organisation", icon: BusinessIcon, label: "Administrateur Organisation" },
