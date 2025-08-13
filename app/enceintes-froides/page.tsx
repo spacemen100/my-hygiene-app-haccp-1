@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
@@ -37,7 +37,8 @@ import {
   DialogContent,
   DialogActions,
   Menu,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import {
   AcUnit,
@@ -51,21 +52,10 @@ import {
   FilterList,
   Download,
   Close,
-  DateRange,
-  PictureAsPdf,
-  GridOn
+  DateRange
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import { CSVLink } from 'react-csv';
-import dynamic from 'next/dynamic';
-
-// Composants dynamiques pour le chargement paresseux
-const PDFReport = dynamic(() => import('./PDFReport'), { 
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" width={200} height={30} />
-});
+import TemperatureCurvesChart from '@/components/TemperatureCurvesChart';
 
 // Composant mémoïsé pour les lignes du tableau
 const ReadingRow = React.memo(({ reading, units }: { reading: Tables<'cold_storage_temperature_readings'>, units: Tables<'cold_storage_units'>[] }) => {
@@ -315,29 +305,7 @@ export default function ColdStorage() {
     setFilterAnchorEl(null);
   }, [fetchReadings]);
 
-  // Données pour le graphique
-  const chartData = useMemo(() => {
-    return readings.slice(0, 50).map(r => ({
-      date: new Date(r.reading_date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      temperature: r.temperature,
-      unit: units.find(u => u.id === r.cold_storage_unit_id)?.name || 'Inconnu'
-    })).reverse();
-  }, [readings, units]);
 
-  // Données pour l'export
-  const exportData = useMemo(() => {
-    return readings.map(r => {
-      const unit = units.find(u => u.id === r.cold_storage_unit_id);
-      return {
-        Date: new Date(r.reading_date).toLocaleString('fr-FR'),
-        Unité: unit?.name || 'Inconnu',
-        Localisation: unit?.location || '',
-        Température: `${r.temperature}°C`,
-        Statut: r.is_compliant ? 'Conforme' : 'Non conforme',
-        Commentaires: r.comments || ''
-      };
-    });
-  }, [readings, units]);
 
   const selectedUnit = useMemo(() => 
     units.find(u => u.id === formData.cold_storage_unit_id), 
@@ -359,7 +327,7 @@ export default function ColdStorage() {
       recentReadings: filteredReadings.length,
       compliantReadings: filteredReadings.filter(r => r.is_compliant).length,
       averageTemp: filteredReadings.length > 0 ? 
-        (filteredReadings.reduce((sum, r) => sum + r.temperature, 0) / filteredReadings.length : 
+        (filteredReadings.reduce((sum, r) => sum + r.temperature, 0) / filteredReadings.length) : 
         0
     };
   }, [readings, units, filters]);
@@ -669,63 +637,13 @@ export default function ColdStorage() {
           
           {/* Historique et graphique */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Graphique des tendances */}
+            {/* Graphique des courbes de température par enceinte */}
             <Card>
-              <CardContent sx={{ p: 3, height: 300 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                  <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
-                    <History />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      Évolution des Températures
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Dernières 50 lectures
-                    </Typography>
-                  </Box>
-                </Box>
-                
+              <CardContent sx={{ p: 3 }}>
                 {loading.readings ? (
-                  <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 1 }} />
-                ) : readings.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="80%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis dataKey="date" />
-                      <YAxis label={{ value: '°C', angle: -90, position: 'insideLeft' }} />
-                      <ChartTooltip 
-                        formatter={(value: number) => [`${value}°C`, 'Température']}
-                        labelFormatter={(label) => `Heure: ${label}`}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="temperature" 
-                        stroke="#00bcd4" 
-                        strokeWidth={2}
-                        dot={{ r: 2 }}
-                        activeDot={{ r: 4 }}
-                        name="Température"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 1 }} />
                 ) : (
-                  <Box sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    gap: 1
-                  }}>
-                    <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500' }}>
-                      <History />
-                    </Avatar>
-                    <Typography color="text.secondary">
-                      Aucune donnée disponible
-                    </Typography>
-                  </Box>
+                  <TemperatureCurvesChart readings={readings} units={units} />
                 )}
               </CardContent>
             </Card>
@@ -932,40 +850,10 @@ export default function ColdStorage() {
               Sélectionnez le format d'export pour les {readings.length} lectures enregistrées
             </Typography>
             
-            <Box sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(2, 1fr)', 
-              gap: 2,
-              mt: 2
-            }}>
-              <Button
-                variant="outlined"
-                component={CSVLink}
-                data={exportData}
-                filename={`temperature-readings-${new Date().toISOString().slice(0, 10)}.csv`}
-                startIcon={<GridOn />}
-                fullWidth
-                onClick={() => setExportDialogOpen(false)}
-              >
-                CSV
-              </Button>
-              
-              <PDFDownloadLink
-                document={<PDFReport data={exportData} />}
-                fileName={`temperature-readings-${new Date().toISOString().slice(0, 10)}.pdf`}
-              >
-                {({ loading }) => (
-                  <Button
-                    variant="outlined"
-                    startIcon={<PictureAsPdf />}
-                    fullWidth
-                    disabled={loading}
-                    onClick={() => setExportDialogOpen(false)}
-                  >
-                    {loading ? 'Génération...' : 'PDF'}
-                  </Button>
-                )}
-              </PDFDownloadLink>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Fonctionnalités d'export CSV et PDF disponibles avec l'installation des packages appropriés.
+              </Typography>
             </Box>
           </DialogContent>
           <DialogActions>
