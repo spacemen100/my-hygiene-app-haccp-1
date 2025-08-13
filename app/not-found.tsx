@@ -6,7 +6,6 @@ import {
   Typography,
   Button,
   Avatar,
-  Paper,
 } from '@mui/material';
 import {
   ErrorOutline,
@@ -104,8 +103,8 @@ export default function NotFound() {
               mx: 'auto'
             }}
           >
-            La page que vous recherchez n'existe pas ou a été déplacée. 
-            Veuillez vérifier l'adresse ou retourner à l'accueil.
+            La page que vous recherchez n&apos;existe pas ou a été déplacée. 
+            Veuillez vérifier l&apos;adresse ou retourner à l&apos;accueil.
           </Typography>
 
           {/* Back to Home Button */}
@@ -132,7 +131,7 @@ export default function NotFound() {
               }
             }}
           >
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Button>
         </CardContent>
       </Card>
