@@ -306,7 +306,7 @@ export default function DeliveryComponent() {
       console.log('🔗 Public URL generated:', publicUrl);
 
       if (field === 'delivery') {
-        setDeliveryPhotoUrls(prev => {
+        setDeliveryPhotoPreviews(prev => {
           const newUrls = [...prev, publicUrl];
           setDeliveryData(curr => ({ 
             ...curr, 
@@ -315,7 +315,7 @@ export default function DeliveryComponent() {
           return newUrls;
         });
       } else if (field === 'nonConformity') {
-        setNonConformityPhotoUrls(prev => {
+        setNonConformityPhotoPreviews(prev => {
           const newUrls = [...prev, publicUrl];
           setNewNonConformity(curr => ({ 
             ...curr, 
