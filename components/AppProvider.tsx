@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEmployee } from '@/contexts/EmployeeContext';
 
 // Responsive drawer widths
 const mobileDrawerWidth = 280;
@@ -71,6 +72,28 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const pathname = usePathname();
+  const { employee: currentEmployee } = useEmployee();
+  
+  // Function to check if user has admin access
+  const hasAdminAccess = () => {
+    return currentEmployee?.role === 'Administrateur';
+  };
+
+  // Filter menu items based on role
+  const getFilteredMenuItems = () => {
+    if (!currentEmployee) {
+      // If no employee is selected, show all items (for initial setup)
+      return menuItems;
+    }
+    
+    if (hasAdminAccess()) {
+      // Admin users see all menu items
+      return menuItems;
+    }
+    
+    // Non-admin users don't see admin menu items
+    return menuItems.filter(item => !item.label.startsWith('Administrateur'));
+  };
   
   // Dynamic drawer width based on screen size
   const getDrawerWidth = () => {
@@ -194,7 +217,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         },
       }}>
         <List sx={{ mt: { xs: 0, md: 1 }, pb: 2, pt: { xs: 1, md: 0 } }}>
-          {menuItems.map((item) => {
+          {getFilteredMenuItems().map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             

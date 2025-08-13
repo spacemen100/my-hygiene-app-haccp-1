@@ -57,6 +57,7 @@ type EmployeeInsert = TablesInsert<'employees'>;
 type EmployeeUpdate = TablesUpdate<'employees'>;
 
 const ROLES = [
+  'Administrateur',
   'Manager',
   'Chef de cuisine', 
   'Cuisinier',
