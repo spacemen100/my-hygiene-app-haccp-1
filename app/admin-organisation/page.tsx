@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert, TablesUpdate } from '@/src/types/database';
 // import { useEmployee } from '@/contexts/EmployeeContext';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Container,
   Typography,
@@ -45,6 +46,7 @@ type OrganizationInsert = TablesInsert<'organizations'>;
 type OrganizationUpdate = TablesUpdate<'organizations'>;
 
 export default function AdminOrganisationPage() {
+  const { user } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +173,10 @@ export default function AdminOrganisationPage() {
         // Create new organization
         const { error } = await supabase
           .from('organizations')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         setSuccess('Organisation créée avec succès');

@@ -59,7 +59,7 @@ interface MethodFormData {
 }
 
 export default function AdminMethodesNettoyagePage() {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const { employee: currentEmployee } = useEmployee();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -208,7 +208,10 @@ export default function AdminMethodesNettoyagePage() {
         // Création
         const { error } = await supabase
           .from('cleaning_methods')
-          .insert(methodData);
+          .insert([{
+            ...methodData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         enqueueSnackbar('Méthode créée avec succès', { variant: 'success' });

@@ -67,7 +67,7 @@ interface FormData {
 }
 
 export default function AdminZonesNettoyagePage() {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const { employee: currentEmployee } = useEmployee();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -202,7 +202,10 @@ export default function AdminZonesNettoyagePage() {
         // Création
         const { error } = await supabase
           .from('cleaning_zones')
-          .insert(zoneData);
+          .insert([{
+            ...zoneData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         enqueueSnackbar('Zone créée avec succès', { variant: 'success' });
@@ -249,7 +252,10 @@ export default function AdminZonesNettoyagePage() {
         // Création
         const { error } = await supabase
           .from('cleaning_sub_zones')
-          .insert(subZoneData);
+          .insert([{
+            ...subZoneData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         enqueueSnackbar('Sous-zone créée avec succès', { variant: 'success' });

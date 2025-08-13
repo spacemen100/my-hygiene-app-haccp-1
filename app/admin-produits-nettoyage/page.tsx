@@ -85,7 +85,7 @@ const PRODUCT_TYPES = [
 ];
 
 export default function AdminProduitsNettoyagePage() {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const { employee: currentEmployee } = useEmployee();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -213,7 +213,10 @@ export default function AdminProduitsNettoyagePage() {
         // Création
         const { error } = await supabase
           .from('cleaning_products')
-          .insert(productData);
+          .insert([{
+            ...productData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         enqueueSnackbar('Produit créé avec succès', { variant: 'success' });

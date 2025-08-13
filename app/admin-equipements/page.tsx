@@ -85,7 +85,7 @@ const EQUIPMENT_TYPES = [
 ];
 
 export default function AdminEquipementsPage() {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const { employee: currentEmployee } = useEmployee();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -205,7 +205,10 @@ export default function AdminEquipementsPage() {
         // Création
         const { error } = await supabase
           .from('cleaning_equipment')
-          .insert(equipmentData);
+          .insert([{
+            ...equipmentData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         enqueueSnackbar('Équipement créé avec succès', { variant: 'success' });
