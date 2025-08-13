@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Dot } from 'recharts';
 import {
   Card,
   CardContent,
@@ -15,7 +15,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Skeleton
+  Skeleton,
+  Alert
 } from '@mui/material';
 import {
   AcUnit,
@@ -23,7 +24,8 @@ import {
   CheckCircle,
   Cancel,
   ShowChart,
-  History
+  History,
+  Warning
 } from '@mui/icons-material';
 import { Tables } from '@/src/types/database';
 
@@ -45,23 +47,31 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
   const chartData = useMemo(() => {
     return unitReadings
       .slice(0, 20) // Dernières 20 lectures
-      .map(reading => ({
-        date: new Date(reading.reading_date).toLocaleTimeString('fr-FR', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          day: '2-digit',
-          month: '2-digit'
-        }),
-        temperature: reading.temperature,
-        timestamp: new Date(reading.reading_date).getTime()
-      }))
+      .map(reading => {
+        const isOutOfBounds = reading.temperature < unit.min_temperature || reading.temperature > unit.max_temperature;
+        return {
+          date: new Date(reading.reading_date).toLocaleTimeString('fr-FR', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit'
+          }),
+          temperature: reading.temperature,
+          timestamp: new Date(reading.reading_date).getTime(),
+          isOutOfBounds,
+          isCompliant: reading.is_compliant
+        };
+      })
       .sort((a, b) => a.timestamp - b.timestamp);
-  }, [unitReadings]);
+  }, [unitReadings, unit.min_temperature, unit.max_temperature]);
 
   // Statistiques de l'enceinte
   const stats = useMemo(() => {
     const recentReadings = unitReadings.slice(0, 10);
     const compliantReadings = recentReadings.filter(r => r.is_compliant);
+    const outOfBoundsReadings = recentReadings.filter(r => 
+      r.temperature < unit.min_temperature || r.temperature > unit.max_temperature
+    );
     const avgTemp = recentReadings.length > 0 ? 
       recentReadings.reduce((sum, r) => sum + r.temperature, 0) / recentReadings.length : 
       0;
@@ -70,15 +80,38 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
     return {
       totalReadings: recentReadings.length,
       compliantReadings: compliantReadings.length,
+      outOfBoundsReadings: outOfBoundsReadings.length,
       avgTemp,
       lastReading,
-      complianceRate: recentReadings.length > 0 ? (compliantReadings.length / recentReadings.length) * 100 : 0
+      complianceRate: recentReadings.length > 0 ? (compliantReadings.length / recentReadings.length) * 100 : 0,
+      hasAlerts: outOfBoundsReadings.length > 0
     };
-  }, [unitReadings]);
+  }, [unitReadings, unit.min_temperature, unit.max_temperature]);
 
   const getTemperatureColor = (temp: number) => {
     return temp < unit.min_temperature || temp > unit.max_temperature ? 'error.main' : 'success.main';
   };
+
+  // Composant personnalisé pour les points du graphique
+  const CustomDot = (props: { cx?: number; cy?: number; payload?: { isOutOfBounds?: boolean } }) => {
+    const { cx, cy, payload } = props;
+    if (!payload || typeof cx !== 'number' || typeof cy !== 'number') return null;
+    
+    const isOutOfBounds = payload.isOutOfBounds;
+    const color = isOutOfBounds ? '#ff5252' : '#00bcd4';
+    
+    return (
+      <Dot 
+        cx={cx} 
+        cy={cy} 
+        r={isOutOfBounds ? 5 : 3} 
+        fill={color}
+        stroke={isOutOfBounds ? '#d32f2f' : '#0097a7'}
+        strokeWidth={2}
+      />
+    );
+  };
+
 
   return (
     <Card sx={{ mb: 4, boxShadow: 3 }}>
@@ -86,18 +119,23 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
         {/* Header de l'enceinte */}
         <Box sx={{ 
           p: 3, 
-          bgcolor: 'primary.main', 
+          bgcolor: stats.hasAlerts ? 'error.main' : 'primary.main', 
           color: 'white',
           borderRadius: '4px 4px 0 0'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}>
-              <AcUnit />
+              {stats.hasAlerts ? <Warning /> : <AcUnit />}
             </Avatar>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                {unit.name}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                  {unit.name}
+                </Typography>
+                {stats.hasAlerts && (
+                  <Warning sx={{ color: 'warning.light' }} />
+                )}
+              </Box>
               <Typography variant="body1" sx={{ opacity: 0.9 }}>
                 {unit.location} • {unit.type}
               </Typography>
@@ -144,6 +182,25 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
           </Box>
         </Box>
 
+        {/* Alerte pour lectures hors limites */}
+        {stats.hasAlerts && (
+          <Box sx={{ p: 3, pt: 0 }}>
+            <Alert 
+              severity="error" 
+              icon={<Warning />}
+              sx={{ 
+                bgcolor: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                '& .MuiAlert-icon': { color: 'warning.light' }
+              }}
+            >
+              <Typography variant="body2">
+                <strong>{stats.outOfBoundsReadings}</strong> lecture{stats.outOfBoundsReadings > 1 ? 's' : ''} récente{stats.outOfBoundsReadings > 1 ? 's' : ''} hors limites détectée{stats.outOfBoundsReadings > 1 ? 's' : ''}
+              </Typography>
+            </Alert>
+          </Box>
+        )}
+
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, p: 3 }}>
           {/* Graphique */}
           <Card variant="outlined">
@@ -178,8 +235,14 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                       domain={[unit.min_temperature - 2, unit.max_temperature + 2]}
                     />
                     <Tooltip 
-                      formatter={(value: number) => [`${value}°C`, 'Température']}
-                      labelFormatter={(label) => `Temps: ${label}`}
+                      formatter={(value: number, name: string, props: { payload?: { isOutOfBounds?: boolean } }) => {
+                        const isOutOfBounds = props.payload?.isOutOfBounds;
+                        return [
+                          `${value}°C ${isOutOfBounds ? '⚠️ Hors limites' : '✅ Conforme'}`, 
+                          'Température'
+                        ];
+                      }}
+                      labelFormatter={(label: string) => `Temps: ${label}`}
                     />
                     
                     {/* Lignes de référence */}
@@ -188,21 +251,25 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                       stroke="#ff5252" 
                       strokeDasharray="5 5" 
                       strokeWidth={1}
+                      label={{ value: `Min: ${unit.min_temperature}°C`, position: "insideTopRight" }}
                     />
                     <ReferenceLine 
                       y={unit.max_temperature} 
                       stroke="#ff9800" 
                       strokeDasharray="5 5" 
                       strokeWidth={1}
+                      label={{ value: `Max: ${unit.max_temperature}°C`, position: "insideBottomRight" }}
                     />
                     
+                    {/* Ligne avec points personnalisés colorés */}
                     <Line 
                       type="monotone" 
                       dataKey="temperature" 
-                      stroke="#00bcd4" 
+                      stroke="#00bcd4"
                       strokeWidth={2}
-                      dot={{ r: 3 }}
-                      activeDot={{ r: 5 }}
+                      dot={<CustomDot />}
+                      activeDot={{ r: 6, strokeWidth: 2 }}
+                      connectNulls={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
