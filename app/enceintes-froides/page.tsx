@@ -142,7 +142,7 @@ ReadingRow.displayName = 'ReadingRow';
 
 // Composant mémoïsé pour la jauge de température
 const TemperatureGauge = React.memo(({ temp, min, max }: { temp: number, min: number, max: number }) => {
-  const percentage = useMemo(() => Math.min(100, Math.max(0, ((temp - min) / (max - min)) * 100), [temp, min, max]);
+  const percentage = useMemo(() => Math.min(100, Math.max(0, ((temp - min) / (max - min)) * 100)), [temp, min, max]);
   const color = useMemo(() => temp < min ? '#ff5252' : temp > max ? '#ff9800' : '#4caf50', [temp, min, max]);
 
   return (
