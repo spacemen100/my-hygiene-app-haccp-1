@@ -277,69 +277,6 @@ export default function DeliveryComponent() {
     return Promise.all(uploadPromises);
   };
 
-  const handleUploadPhoto = async (file: File, field: 'delivery' | 'product' | 'nonConformity') => {
-    console.log('🔄 Starting photo upload...');
-    console.log('📁 File:', file.name, file.size, file.type);
-    console.log('🧑‍💼 Current user:', user?.id, user?.email);
-    console.log('👤 Current employee:', employee?.id, employee?.first_name, employee?.last_name);
-
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      console.log('📤 Attempting upload to path:', filePath);
-      console.log('🪣 Bucket: delivery-photos');
-
-      const { error: uploadError } = await supabase.storage
-        .from('delivery-photos')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('❌ Upload error:', uploadError);
-        console.error('❌ Error details:', {
-          message: uploadError.message,
-          name: uploadError.name,
-          cause: uploadError.cause
-        });
-        throw uploadError;
-      }
-
-      console.log('✅ Upload successful!');
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('delivery-photos')
-        .getPublicUrl(filePath);
-
-      console.log('🔗 Public URL generated:', publicUrl);
-
-      if (field === 'delivery') {
-        setDeliveryUploadedUrls(prev => {
-          const newUrls = [...prev, publicUrl];
-          setDeliveryData(curr => ({ 
-            ...curr, 
-            photo_url: stringifyPhotoUrls(newUrls)
-          }));
-          return newUrls;
-        });
-      } else if (field === 'nonConformity') {
-        setNonConformityUploadedUrls(prev => {
-          const newUrls = [...prev, publicUrl];
-          setNewNonConformity(curr => ({ 
-            ...curr, 
-            photo_url: stringifyPhotoUrls(newUrls)
-          }));
-          return newUrls;
-        });
-      }
-
-      console.log('💾 State updated for field:', field);
-      enqueueSnackbar('Photo téléchargée avec succès', { variant: 'success' });
-    } catch (error) {
-      console.error('❌ Error uploading photo:', error);
-      enqueueSnackbar('Impossible de télécharger la photo', { variant: 'error' });
-    }
-  };
 
   const handleRemovePhoto = (field: 'delivery' | 'product' | 'nonConformity', index: number) => {
     if (field === 'delivery') {

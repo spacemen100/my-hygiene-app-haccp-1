@@ -679,7 +679,7 @@ export default function LabelPrinting() {
                   {formData.product_label_type_id && (
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-                        TYPE D'ÉTIQUETTE
+                        TYPE D&apos;ÉTIQUETTE
                       </Typography>
                       <Typography variant="body1" sx={{ fontWeight: 600, color: '#9c27b0' }}>
                         {(() => {
