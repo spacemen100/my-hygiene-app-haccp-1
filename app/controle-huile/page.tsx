@@ -364,13 +364,13 @@ export default function OilQualityControl() {
                   onChange={(e) => handlePolarCompoundsChange(e.target.value)}
                   fullWidth
                   helperText={
-                    formData.polar_compounds_percentage !== null ? 
+                    formData.polar_compounds_percentage !== null && formData.polar_compounds_percentage !== undefined ? 
                       formData.polar_compounds_percentage <= 24 ? "✅ Conforme (≤24%)" :
                       formData.polar_compounds_percentage <= 27 ? "⚠️ À surveiller (24-27%)" :
                       "❌ Non conforme (>27%)" : 
                       "Seuils: ≤24% conforme, >27% non conforme"
                   }
-                  error={formData.polar_compounds_percentage !== null && formData.polar_compounds_percentage > 27}
+                  error={formData.polar_compounds_percentage !== null && formData.polar_compounds_percentage !== undefined && formData.polar_compounds_percentage > 27}
                 />
               )}
               
