@@ -44,7 +44,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [selectedEmployeeTemp, setSelectedEmployeeTemp] = useState<any>(null);
+  const [selectedEmployeeTemp, setSelectedEmployeeTemp] = useState<typeof employees[0] | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyingPassword, setVerifyingPassword] = useState(false);
@@ -60,7 +60,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const tabletDrawerWidth = 260;
   const desktopDrawerWidth = 280;
 
-  const handleEmployeeSelect = (selectedEmployee: any) => {
+  const handleEmployeeSelect = (selectedEmployee: typeof employees[0] | null) => {
     // Si l'employé n'a pas de mot de passe, sélectionner directement
     if (!selectedEmployee || !selectedEmployee.password) {
       setCurrentEmployee(selectedEmployee || null);
@@ -206,7 +206,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 <Select
                   value={currentEmployee?.id || ''}
                   onChange={(e) => {
-                    const selectedEmployee = employees.find(emp => emp.id === e.target.value);
+                    const selectedEmployee = employees.find(emp => emp.id === e.target.value) || null;
                     handleEmployeeSelect(selectedEmployee);
                   }}
                   label="Employé actuel"

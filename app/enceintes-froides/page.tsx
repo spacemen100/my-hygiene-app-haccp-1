@@ -28,7 +28,6 @@ import {
   Paper,
   Chip,
   Avatar,
-  Stack,
   Skeleton,
   IconButton,
   Tooltip,
@@ -51,8 +50,7 @@ import {
   History,
   FilterList,
   Download,
-  Close,
-  DateRange
+  Close
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import TemperatureCurvesChart from '@/components/TemperatureCurvesChart';
@@ -195,7 +193,9 @@ export default function ColdStorage() {
   const fetchUnits = useCallback(async () => {
     setLoading(prev => ({ ...prev, units: true }));
     const { data, error } = await supabase.from('cold_storage_units').select('*');
-    if (!error && data) setUnits(data);
+    if (!error && data) {
+      setUnits(data);
+    }
     setLoading(prev => ({ ...prev, units: false }));
   }, []);
 
@@ -289,7 +289,7 @@ export default function ColdStorage() {
         comments: null,
         user_id: null,
       });
-    } catch (error) {
+    } catch {
       enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
     }
   }, [formData, employee, user, enqueueSnackbar, fetchReadings]);
@@ -847,12 +847,12 @@ export default function ColdStorage() {
           <DialogTitle>Exporter les données</DialogTitle>
           <DialogContent>
             <Typography variant="body1" sx={{ mb: 2 }}>
-              Sélectionnez le format d'export pour les {readings.length} lectures enregistrées
+              Sélectionnez le format d&apos;export pour les {readings.length} lectures enregistrées
             </Typography>
             
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Fonctionnalités d'export CSV et PDF disponibles avec l'installation des packages appropriés.
+                Fonctionnalités d&apos;export CSV et PDF disponibles avec l&apos;installation des packages appropriés.
               </Typography>
             </Box>
           </DialogContent>

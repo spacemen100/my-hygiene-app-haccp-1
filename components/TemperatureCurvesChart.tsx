@@ -41,10 +41,10 @@ export default function TemperatureCurvesChart({ readings, units }: TemperatureC
         }
         
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, { time: string; displayTime: string; [key: string]: string | number }>);
 
     return Object.values(timeGroups)
-      .sort((a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime());
+      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
   }, [readings, units]);
 
   const activeUnits = useMemo(() => {
