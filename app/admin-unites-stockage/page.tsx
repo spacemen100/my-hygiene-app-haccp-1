@@ -78,13 +78,13 @@ export default function AdminUnitesStockagePage() {
   });
 
   const storageTypes = [
-    { value: 'réfrigérateur', label: 'Réfrigérateur' },
-    { value: 'congélateur', label: 'Congélateur' },
-    { value: 'chambre froide positive', label: 'Chambre froide positive' },
-    { value: 'chambre froide négative', label: 'Chambre froide négative' },
-    { value: 'vitrine réfrigérée', label: 'Vitrine réfrigérée' },
-    { value: 'cellule de refroidissement', label: 'Cellule de refroidissement' },
-    { value: 'autre', label: 'Autre' },
+    { value: 'réfrigérateur', label: 'Réfrigérateur', minTemp: 0, maxTemp: 4 },
+    { value: 'congélateur', label: 'Congélateur', minTemp: -25, maxTemp: -18 },
+    { value: 'chambre froide positive', label: 'Chambre froide positive', minTemp: 0, maxTemp: 8 },
+    { value: 'chambre froide négative', label: 'Chambre froide négative', minTemp: -25, maxTemp: -15 },
+    { value: 'vitrine réfrigérée', label: 'Vitrine réfrigérée', minTemp: 2, maxTemp: 6 },
+    { value: 'cellule de refroidissement', label: 'Cellule de refroidissement', minTemp: -1, maxTemp: 3 },
+    { value: 'autre', label: 'Autre', minTemp: 0, maxTemp: 4 },
   ];
 
   useEffect(() => {
@@ -124,12 +124,13 @@ export default function AdminUnitesStockagePage() {
       });
     } else {
       setEditingUnit(null);
+      const defaultType = storageTypes.find(type => type.value === 'réfrigérateur');
       setFormData({
         name: '',
         type: 'réfrigérateur',
         location: '',
-        min_temperature: 0,
-        max_temperature: 4,
+        min_temperature: defaultType?.minTemp || 0,
+        max_temperature: defaultType?.maxTemp || 4,
         is_active: true,
       });
     }
@@ -140,6 +141,23 @@ export default function AdminUnitesStockagePage() {
     setDialogOpen(false);
     setEditingUnit(null);
     // Ne pas réinitialiser les messages d'erreur/succès ici pour qu'ils restent visibles
+  };
+
+  const handleTypeChange = (newType: string) => {
+    const selectedType = storageTypes.find(type => type.value === newType);
+    if (selectedType) {
+      setFormData({
+        ...formData,
+        type: newType,
+        min_temperature: selectedType.minTemp,
+        max_temperature: selectedType.maxTemp,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        type: newType,
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -521,12 +539,17 @@ export default function AdminUnitesStockagePage() {
               <InputLabel>Type d&apos;unité *</InputLabel>
               <Select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                onChange={(e) => handleTypeChange(e.target.value)}
                 label="Type d&apos;unité *"
               >
                 {storageTypes.map((type) => (
                   <MenuItem key={type.value} value={type.value}>
-                    {type.label}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <Typography>{type.label}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                        {type.minTemp}°C à {type.maxTemp}°C
+                      </Typography>
+                    </Box>
                   </MenuItem>
                 ))}
               </Select>
@@ -553,6 +576,7 @@ export default function AdminUnitesStockagePage() {
               value={formData.min_temperature}
               onChange={(e) => setFormData({ ...formData, min_temperature: parseFloat(e.target.value) })}
               fullWidth
+              helperText="🤖 Ajustée automatiquement selon le type - vous pouvez la modifier"
               InputProps={{
                 endAdornment: <InputAdornment position="end">°C</InputAdornment>,
                 startAdornment: (
@@ -560,6 +584,14 @@ export default function AdminUnitesStockagePage() {
                     <TempIcon color="info" />
                   </InputAdornment>
                 ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgba(33, 150, 243, 0.04)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                  }
+                }
               }}
             />
 
@@ -569,6 +601,7 @@ export default function AdminUnitesStockagePage() {
               value={formData.max_temperature}
               onChange={(e) => setFormData({ ...formData, max_temperature: parseFloat(e.target.value) })}
               fullWidth
+              helperText="🤖 Ajustée automatiquement selon le type - vous pouvez la modifier"
               InputProps={{
                 endAdornment: <InputAdornment position="end">°C</InputAdornment>,
                 startAdornment: (
@@ -576,6 +609,14 @@ export default function AdminUnitesStockagePage() {
                     <TempIcon color="error" />
                   </InputAdornment>
                 ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgba(244, 67, 54, 0.04)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(244, 67, 54, 0.08)',
+                  }
+                }
               }}
             />
 
