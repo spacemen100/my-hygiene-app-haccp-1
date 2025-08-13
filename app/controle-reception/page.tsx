@@ -140,6 +140,14 @@ export default function DeliveryComponent() {
   const [deliveryPhotoPreviews, setDeliveryPhotoPreviews] = useState<string[]>([]);
   const [productPhotoPreviews, setProductPhotoPreviews] = useState<string[]>([]);
   const [nonConformityPhotoPreviews, setNonConformityPhotoPreviews] = useState<string[]>([]);
+  
+  // Separate states for uploaded photo URLs
+  const [deliveryUploadedUrls, setDeliveryUploadedUrls] = useState<string[]>([]);
+  const [nonConformityUploadedUrls, setNonConformityUploadedUrls] = useState<string[]>([]);
+  
+  // Helper functions to combine preview and uploaded URLs
+  const getAllDeliveryPhotos = () => [...deliveryPhotoPreviews, ...deliveryUploadedUrls];
+  const getAllNonConformityPhotos = () => [...nonConformityPhotoPreviews, ...nonConformityUploadedUrls];
 
   // Helper functions for managing photo URLs as JSON arrays in the database
   const parsePhotoUrls = (photoUrl: string | null | undefined): string[] => {
@@ -306,7 +314,7 @@ export default function DeliveryComponent() {
       console.log('🔗 Public URL generated:', publicUrl);
 
       if (field === 'delivery') {
-        setDeliveryPhotoPreviews(prev => {
+        setDeliveryUploadedUrls(prev => {
           const newUrls = [...prev, publicUrl];
           setDeliveryData(curr => ({ 
             ...curr, 
@@ -315,7 +323,7 @@ export default function DeliveryComponent() {
           return newUrls;
         });
       } else if (field === 'nonConformity') {
-        setNonConformityPhotoPreviews(prev => {
+        setNonConformityUploadedUrls(prev => {
           const newUrls = [...prev, publicUrl];
           setNewNonConformity(curr => ({ 
             ...curr, 
@@ -335,12 +343,27 @@ export default function DeliveryComponent() {
 
   const handleRemovePhoto = (field: 'delivery' | 'product' | 'nonConformity', index: number) => {
     if (field === 'delivery') {
-      // Remove preview and corresponding file
-      const photoToRemove = deliveryPhotoPreviews[index];
-      if (photoToRemove) {
-        URL.revokeObjectURL(photoToRemove);
-        setDeliveryPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-        setDeliveryFiles(prev => prev.filter((_, i) => i !== index));
+      const previewCount = deliveryPhotoPreviews.length;
+      
+      if (index < previewCount) {
+        // Removing a preview photo
+        const photoToRemove = deliveryPhotoPreviews[index];
+        if (photoToRemove) {
+          URL.revokeObjectURL(photoToRemove);
+          setDeliveryPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+          setDeliveryFiles(prev => prev.filter((_, i) => i !== index));
+        }
+      } else {
+        // Removing an uploaded photo
+        const uploadedIndex = index - previewCount;
+        setDeliveryUploadedUrls(prev => {
+          const newUrls = prev.filter((_, i) => i !== uploadedIndex);
+          setDeliveryData(curr => ({ 
+            ...curr, 
+            photo_url: stringifyPhotoUrls(newUrls)
+          }));
+          return newUrls;
+        });
       }
     } else if (field === 'product') {
       const photoToRemove = productPhotoPreviews[index];
@@ -349,12 +372,27 @@ export default function DeliveryComponent() {
         setProductPhotoPreviews(prev => prev.filter((_, i) => i !== index));
       }
     } else if (field === 'nonConformity') {
-      // Remove preview and corresponding file
-      const photoToRemove = nonConformityPhotoPreviews[index];
-      if (photoToRemove) {
-        URL.revokeObjectURL(photoToRemove);
-        setNonConformityPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-        setNonConformityFiles(prev => prev.filter((_, i) => i !== index));
+      const previewCount = nonConformityPhotoPreviews.length;
+      
+      if (index < previewCount) {
+        // Removing a preview photo
+        const photoToRemove = nonConformityPhotoPreviews[index];
+        if (photoToRemove) {
+          URL.revokeObjectURL(photoToRemove);
+          setNonConformityPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+          setNonConformityFiles(prev => prev.filter((_, i) => i !== index));
+        }
+      } else {
+        // Removing an uploaded photo
+        const uploadedIndex = index - previewCount;
+        setNonConformityUploadedUrls(prev => {
+          const newUrls = prev.filter((_, i) => i !== uploadedIndex);
+          setNewNonConformity(curr => ({ 
+            ...curr, 
+            photo_url: stringifyPhotoUrls(newUrls)
+          }));
+          return newUrls;
+        });
       }
     }
   };
@@ -650,6 +688,8 @@ export default function DeliveryComponent() {
       // Reset photo states
       setDeliveryPhotoPreviews([]);
       setNonConformityPhotoPreviews([]);
+      setDeliveryUploadedUrls([]);
+      setNonConformityUploadedUrls([]);
       setDeliveryFiles([]);
       setNonConformityFiles([]);
       setActiveStep('delivery');
@@ -1243,8 +1283,8 @@ export default function DeliveryComponent() {
                         startIcon={<CameraAlt />}
                         sx={{ mr: 2 }}
                       >
-                        {nonConformityPhotoPreviews.length > 0 
-                          ? `${nonConformityPhotoPreviews.length} photo(s)` 
+                        {getAllNonConformityPhotos().length > 0 
+                          ? `${getAllNonConformityPhotos().length} photo(s)` 
                           : 'Ajouter photos'}
                       </Button>
                     </label>
@@ -1259,7 +1299,7 @@ export default function DeliveryComponent() {
                   </Box>
                   
                   <PhotosPreview
-                    previewUrls={nonConformityPhotoPreviews}
+                    previewUrls={getAllNonConformityPhotos()}
                     field="nonConformity"
                     label="Photos de la non-conformité"
                   />
@@ -1308,13 +1348,13 @@ export default function DeliveryComponent() {
                     </Typography>
                   </Box>
                   
-                  {deliveryPhotoPreviews.length > 0 && (
+                  {getAllDeliveryPhotos().length > 0 && (
                     <Box>
                       <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                        Photos de la livraison ({deliveryPhotoPreviews.length}):
+                        Photos de la livraison ({getAllDeliveryPhotos().length}):
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {deliveryPhotoPreviews.map((url, index) => (
+                        {getAllDeliveryPhotos().map((url, index) => (
                           <Box
                             key={index}
                             sx={{
