@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables, TablesInsert } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
@@ -28,7 +28,16 @@ import {
   Paper,
   Chip,
   Avatar,
-  Stack
+  Stack,
+  Skeleton,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Menu,
+  Divider
 } from '@mui/material';
 import {
   AcUnit,
@@ -38,15 +47,142 @@ import {
   Save,
   DeviceThermostat,
   Sensors,
-  History
+  History,
+  FilterList,
+  Download,
+  Close,
+  DateRange,
+  PictureAsPdf,
+  GridOn
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { CSVLink } from 'react-csv';
+import dynamic from 'next/dynamic';
+
+// Composants dynamiques pour le chargement paresseux
+const PDFReport = dynamic(() => import('./PDFReport'), { 
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" width={200} height={30} />
+});
+
+// Composant mémoïsé pour les lignes du tableau
+const ReadingRow = React.memo(({ reading, units }: { reading: Tables<'cold_storage_temperature_readings'>, units: Tables<'cold_storage_units'>[] }) => {
+  const unit = useMemo(() => units.find(u => u.id === reading.cold_storage_unit_id), [reading.cold_storage_unit_id, units]);
+  const isRecent = useMemo(() => new Date().getTime() - new Date(reading.reading_date).getTime() < 3600000, [reading.reading_date]);
+
+  const getTemperatureColor = useCallback((temp: number, unit?: Tables<'cold_storage_units'>) => {
+    if (!unit) return 'text.primary';
+    return temp < unit.min_temperature || temp > unit.max_temperature ? 'error.main' : 'success.main';
+  }, []);
+
+  return (
+    <TableRow hover sx={{ 
+      '&:hover': { bgcolor: 'action.hover' },
+      bgcolor: isRecent ? 'success.light' : 'inherit',
+      opacity: isRecent ? 1 : 0.8
+    }}>
+      <TableCell>
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {new Date(reading.reading_date).toLocaleDateString('fr-FR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: '2-digit'
+            })}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {new Date(reading.reading_date).toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Typography>
+        </Box>
+      </TableCell>
+      <TableCell>
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {unit ? unit.name : 'N/A'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {unit ? unit.location : ''}
+          </Typography>
+        </Box>
+      </TableCell>
+      <TableCell>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography 
+            variant="body1" 
+            fontWeight="bold"
+            color={getTemperatureColor(reading.temperature, unit)}
+          >
+            {reading.temperature}°C
+          </Typography>
+          <Thermostat 
+            fontSize="small" 
+            sx={{ color: getTemperatureColor(reading.temperature, unit) }} 
+          />
+        </Box>
+      </TableCell>
+      <TableCell>
+        <Chip
+          size="small"
+          icon={reading.is_compliant ? <CheckCircle /> : <Cancel />}
+          label={reading.is_compliant ? 'Conforme' : 'Non conforme'}
+          color={reading.is_compliant ? 'success' : 'error'}
+          variant={reading.is_compliant ? 'outlined' : 'filled'}
+          sx={{ fontWeight: 600 }}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
+ReadingRow.displayName = 'ReadingRow';
+
+// Composant mémoïsé pour la jauge de température
+const TemperatureGauge = React.memo(({ temp, min, max }: { temp: number, min: number, max: number }) => {
+  const percentage = useMemo(() => Math.min(100, Math.max(0, ((temp - min) / (max - min)) * 100), [temp, min, max]);
+  const color = useMemo(() => temp < min ? '#ff5252' : temp > max ? '#ff9800' : '#4caf50', [temp, min, max]);
+
+  return (
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Typography variant="caption">{min}°C</Typography>
+        <Typography variant="caption">{max}°C</Typography>
+      </Box>
+      <Box sx={{
+        height: 8,
+        bgcolor: 'grey.200',
+        borderRadius: 4,
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        <Box sx={{
+          position: 'absolute',
+          left: 0,
+          width: `${percentage}%`,
+          height: '100%',
+          bgcolor: color,
+          transition: 'all 0.3s ease'
+        }} />
+      </Box>
+    </Box>
+  );
+});
+TemperatureGauge.displayName = 'TemperatureGauge';
 
 export default function ColdStorage() {
   const { employee } = useEmployee();
   const { user } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
+  
+  // États
   const [units, setUnits] = useState<Tables<'cold_storage_units'>[]>([]);
   const [readings, setReadings] = useState<Tables<'cold_storage_temperature_readings'>[]>([]);
+  const [loading, setLoading] = useState({ units: true, readings: true });
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [formData, setFormData] = useState<TablesInsert<'cold_storage_temperature_readings'>>({
     reading_date: new Date().toISOString(),
     temperature: 0,
@@ -55,45 +191,92 @@ export default function ColdStorage() {
     comments: null,
     user_id: null,
   });
-  const { enqueueSnackbar } = useSnackbar();
+  
+  // États pour les filtres
+  const [filters, setFilters] = useState({
+    unitId: null as string | null,
+    compliantOnly: false,
+    dateRange: { start: null as Date | null, end: null as Date | null }
+  });
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
-  useEffect(() => {
-    fetchUnits();
-    fetchReadings();
-  }, []);
-
-  const fetchUnits = async () => {
+  // Fetch des données avec mémoïsation
+  const fetchUnits = useCallback(async () => {
+    setLoading(prev => ({ ...prev, units: true }));
     const { data, error } = await supabase.from('cold_storage_units').select('*');
     if (!error && data) setUnits(data);
-  };
+    setLoading(prev => ({ ...prev, units: false }));
+  }, []);
 
-  const fetchReadings = async () => {
-    const { data, error } = await supabase
+  const fetchReadings = useCallback(async (page = 1, reset = false) => {
+    setLoading(prev => ({ ...prev, readings: true }));
+    
+    let query = supabase
       .from('cold_storage_temperature_readings')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('reading_date', { ascending: false })
-      .limit(10);
-    if (!error && data) setReadings(data);
-  };
+      .range((page - 1) * 10, page * 10 - 1);
 
-  const validateTemperature = (temp: number, unitId: string | null | undefined) => {
+    // Application des filtres
+    if (filters.unitId) query = query.eq('cold_storage_unit_id', filters.unitId);
+    if (filters.compliantOnly) query = query.eq('is_compliant', true);
+    if (filters.dateRange.start) query = query.gte('reading_date', filters.dateRange.start.toISOString());
+    if (filters.dateRange.end) query = query.lte('reading_date', filters.dateRange.end.toISOString());
+
+    const { data, error, count } = await query;
+
+    if (!error) {
+      setReadings(prev => reset ? (data || []) : [...prev, ...(data || [])]);
+      setHasMore((count || 0) > page * 10);
+    } else {
+      enqueueSnackbar('Erreur de chargement', { variant: 'error' });
+    }
+    
+    setLoading(prev => ({ ...prev, readings: false }));
+  }, [filters, enqueueSnackbar]);
+
+  // Chargement initial et pagination infinie
+  useEffect(() => {
+    fetchUnits();
+    fetchReadings(1, true);
+  }, [fetchUnits, fetchReadings]);
+
+  const handleScroll = useCallback(() => {
+    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || 
+        loading.readings || !hasMore) return;
+    setPage(prev => prev + 1);
+  }, [loading.readings, hasMore]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  useEffect(() => {
+    if (page > 1) fetchReadings(page);
+  }, [page, fetchReadings]);
+
+  // Validation de la température
+  const validateTemperature = useCallback((temp: number, unitId: string | null | undefined) => {
     if (!unitId) return true;
     const unit = units.find(u => u.id === unitId);
     if (!unit) return true;
     return temp >= unit.min_temperature && temp <= unit.max_temperature;
-  };
+  }, [units]);
 
-  const handleTemperatureChange = (value: string) => {
+  const handleTemperatureChange = useCallback((value: string) => {
     const temp = Number(value);
     const isCompliant = validateTemperature(temp, formData.cold_storage_unit_id);
-    setFormData({
-      ...formData, 
+    setFormData(prev => ({
+      ...prev, 
       temperature: temp,
       is_compliant: isCompliant
-    });
-  };
+    }));
+  }, [formData.cold_storage_unit_id, validateTemperature]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Soumission du formulaire
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { error } = await supabase
@@ -107,8 +290,7 @@ export default function ColdStorage() {
       if (error) throw error;
       
       enqueueSnackbar('Lecture enregistrée avec succès!', { variant: 'success' });
-      fetchReadings();
-      // Reset form
+      fetchReadings(1, true); // Reset à la première page
       setFormData({
         reading_date: new Date().toISOString(),
         temperature: 0,
@@ -118,28 +300,69 @@ export default function ColdStorage() {
         user_id: null,
       });
     } catch (error) {
-      console.error('Error saving reading:', error);
-      enqueueSnackbar('Erreur lors de l&apos;enregistrement', { variant: 'error' });
+      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
     }
-  };
+  }, [formData, employee, user, enqueueSnackbar, fetchReadings]);
 
-  const selectedUnit = units.find(u => u.id === formData.cold_storage_unit_id);
+  // Filtres
+  const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setPage(1);
+  }, []);
 
-  // Calculer les statistiques
-  const stats = {
-    totalUnits: units.length,
-    recentReadings: readings.length,
-    compliantReadings: readings.filter(r => r.is_compliant).length,
-    averageTemp: readings.length > 0 ? 
-      (readings.reduce((sum, r) => sum + r.temperature, 0) / readings.length).toFixed(1) : 
-      'N/A'
-  };
+  const applyFilters = useCallback(() => {
+    fetchReadings(1, true);
+    setFilterAnchorEl(null);
+  }, [fetchReadings]);
 
-  const getTemperatureColor = (temp: number, unit: Tables<'cold_storage_units'> | undefined) => {
-    if (!unit) return 'text.primary';
-    if (temp < unit.min_temperature || temp > unit.max_temperature) return 'error.main';
-    return 'success.main';
-  };
+  // Données pour le graphique
+  const chartData = useMemo(() => {
+    return readings.slice(0, 50).map(r => ({
+      date: new Date(r.reading_date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      temperature: r.temperature,
+      unit: units.find(u => u.id === r.cold_storage_unit_id)?.name || 'Inconnu'
+    })).reverse();
+  }, [readings, units]);
+
+  // Données pour l'export
+  const exportData = useMemo(() => {
+    return readings.map(r => {
+      const unit = units.find(u => u.id === r.cold_storage_unit_id);
+      return {
+        Date: new Date(r.reading_date).toLocaleString('fr-FR'),
+        Unité: unit?.name || 'Inconnu',
+        Localisation: unit?.location || '',
+        Température: `${r.temperature}°C`,
+        Statut: r.is_compliant ? 'Conforme' : 'Non conforme',
+        Commentaires: r.comments || ''
+      };
+    });
+  }, [readings, units]);
+
+  const selectedUnit = useMemo(() => 
+    units.find(u => u.id === formData.cold_storage_unit_id), 
+    [units, formData.cold_storage_unit_id]
+  );
+
+  // Statistiques calculées
+  const stats = useMemo(() => {
+    const filteredReadings = readings.filter(r => {
+      if (filters.unitId && r.cold_storage_unit_id !== filters.unitId) return false;
+      if (filters.compliantOnly && !r.is_compliant) return false;
+      if (filters.dateRange.start && new Date(r.reading_date) < filters.dateRange.start) return false;
+      if (filters.dateRange.end && new Date(r.reading_date) > filters.dateRange.end) return false;
+      return true;
+    });
+
+    return {
+      totalUnits: units.length,
+      recentReadings: filteredReadings.length,
+      compliantReadings: filteredReadings.filter(r => r.is_compliant).length,
+      averageTemp: filteredReadings.length > 0 ? 
+        (filteredReadings.reduce((sum, r) => sum + r.temperature, 0) / filteredReadings.length : 
+        0
+    };
+  }, [readings, units, filters]);
 
   return (
     <Box sx={{ 
@@ -229,137 +452,41 @@ export default function ColdStorage() {
           gap: { xs: 2, sm: 3 }, 
           mb: { xs: 3, md: 4 }
         }}>
-          <Box>
-            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography 
-                      color="text.secondary" 
-                      gutterBottom 
-                      variant="body2"
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                    >
-                      Unités actives
-                    </Typography>
-                    <Typography 
-                      variant="h4" 
-                      component="div" 
-                      sx={{ 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', sm: '2rem' }
-                      }}
-                    >
-                      {stats.totalUnits}
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: '#00bcd420', color: '#00bcd4' }}>
-                    <DeviceThermostat />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-          
-          <Box>
-            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography 
-                      color="text.secondary" 
-                      gutterBottom 
-                      variant="body2"
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                    >
-                      Lectures récentes
-                    </Typography>
-                    <Typography 
-                      variant="h4" 
-                      component="div" 
-                      sx={{ 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', sm: '2rem' }
-                      }}
-                    >
-                      {stats.recentReadings}
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
-                    <History />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-          
-          <Box>
-            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography 
-                      color="text.secondary" 
-                      gutterBottom 
-                      variant="body2"
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                    >
-                      Conformité
-                    </Typography>
-                    <Typography 
-                      variant="h4" 
-                      component="div" 
-                      sx={{ 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', sm: '2rem' }
-                      }}
-                    >
-                      {stats.recentReadings > 0 ? 
-                        Math.round((stats.compliantReadings / stats.recentReadings) * 100) + '%' : 
-                        'N/A'
-                      }
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: stats.compliantReadings === stats.recentReadings ? '#4caf5020' : '#ff980020', 
-                                color: stats.compliantReadings === stats.recentReadings ? '#4caf50' : '#ff9800' }}>
-                    {stats.compliantReadings === stats.recentReadings ? <CheckCircle /> : <Cancel />}
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-          
-          <Box>
-            <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography 
-                      color="text.secondary" 
-                      gutterBottom 
-                      variant="body2"
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                    >
-                      Température moy.
-                    </Typography>
-                    <Typography 
-                      variant="h4" 
-                      component="div" 
-                      sx={{ 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', sm: '2rem' }
-                      }}
-                    >
-                      {stats.averageTemp}°C
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: '#2196f320', color: '#2196f3' }}>
-                    <Sensors />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
+          {loading.units ? (
+            Array(4).fill(0).map((_, i) => (
+              <Skeleton key={i} variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
+            ))
+          ) : (
+            <>
+              <StatCard 
+                title="Unités actives" 
+                value={stats.totalUnits} 
+                icon={<DeviceThermostat />} 
+                color="#00bcd4"
+              />
+              <StatCard 
+                title="Lectures récentes" 
+                value={stats.recentReadings} 
+                icon={<History />} 
+                color="#4caf50"
+              />
+              <StatCard 
+                title="Conformité" 
+                value={stats.recentReadings > 0 ? 
+                  Math.round((stats.compliantReadings / stats.recentReadings) * 100) + '%' : 
+                  'N/A'
+                } 
+                icon={stats.compliantReadings === stats.recentReadings ? <CheckCircle /> : <Cancel />} 
+                color={stats.compliantReadings === stats.recentReadings ? '#4caf50' : '#ff9800'}
+              />
+              <StatCard 
+                title="Température moy." 
+                value={stats.averageTemp.toFixed(1) + '°C'} 
+                icon={<Sensors />} 
+                color="#2196f3"
+              />
+            </>
+          )}
         </Box>
 
         <Box sx={{ 
@@ -439,9 +566,7 @@ export default function ColdStorage() {
                     <TextField
                       label="Température mesurée (°C)"
                       type="number"
-                      slotProps={{
-                        htmlInput: { step: "0.1" }
-                      }}
+                      inputProps={{ step: "0.1" }}
                       value={formData.temperature}
                       onChange={(e) => handleTemperatureChange(e.target.value)}
                       required
@@ -456,28 +581,35 @@ export default function ColdStorage() {
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           color: selectedUnit ? 
-                            getTemperatureColor(formData.temperature, selectedUnit) : 
+                            validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
+                            'success.main' : 'error.main' : 
                             'text.primary'
                         }
                       }}
                     />
                     
-                    {/* Indicateur visuel de température */}
                     {selectedUnit && (
-                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Chip
-                          icon={validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
-                                <CheckCircle /> : <Cancel />}
-                          label={validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
-                                'Conforme' : 'Non conforme'}
-                          color={validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
-                                'success' : 'error'}
-                          variant="filled"
+                      <>
+                        <TemperatureGauge 
+                          temp={formData.temperature} 
+                          min={selectedUnit.min_temperature} 
+                          max={selectedUnit.max_temperature} 
                         />
-                        <Typography variant="body2" color="text.secondary">
-                          {formData.temperature}°C
-                        </Typography>
-                      </Box>
+                        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Chip
+                            icon={validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
+                                  <CheckCircle /> : <Cancel />}
+                            label={validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
+                                  'Conforme' : 'Non conforme'}
+                            color={validateTemperature(formData.temperature, formData.cold_storage_unit_id) ? 
+                                  'success' : 'error'}
+                            variant="filled"
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            {formData.temperature}°C
+                          </Typography>
+                        </Box>
+                      </>
                     )}
                   </Box>
                   
@@ -509,7 +641,7 @@ export default function ColdStorage() {
                     value={formData.comments || ''}
                     onChange={(e) => setFormData({...formData, comments: e.target.value})}
                     fullWidth
-                    placeholder="Actions correctives, anomalies détectées, conditions particulières..."
+                    placeholder="Actions correctives, anomalies détectées..."
                   />
                   
                   <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
@@ -535,25 +667,108 @@ export default function ColdStorage() {
             </Card>
           </Box>
           
-          {/* Historique des lectures */}
-          <Box>
-            <Card sx={{ height: 'fit-content', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+          {/* Historique et graphique */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Graphique des tendances */}
+            <Card>
+              <CardContent sx={{ p: 3, height: 300 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                   <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
                     <History />
                   </Avatar>
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      Historique des Lectures
+                      Évolution des Températures
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {readings.length} lecture{readings.length !== 1 ? 's' : ''} récente{readings.length !== 1 ? 's' : ''}
+                      Dernières 50 lectures
                     </Typography>
                   </Box>
                 </Box>
                 
-                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                {loading.readings ? (
+                  <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 1 }} />
+                ) : readings.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="80%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <XAxis dataKey="date" />
+                      <YAxis label={{ value: '°C', angle: -90, position: 'insideLeft' }} />
+                      <ChartTooltip 
+                        formatter={(value: number) => [`${value}°C`, 'Température']}
+                        labelFormatter={(label) => `Heure: ${label}`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="temperature" 
+                        stroke="#00bcd4" 
+                        strokeWidth={2}
+                        dot={{ r: 2 }}
+                        activeDot={{ r: 4 }}
+                        name="Température"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    gap: 1
+                  }}>
+                    <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500' }}>
+                      <History />
+                    </Avatar>
+                    <Typography color="text.secondary">
+                      Aucune donnée disponible
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Historique des lectures */}
+            <Card>
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  p: 3,
+                  pb: 0
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
+                      <History />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        Historique des Lectures
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {readings.length} lecture{readings.length !== 1 ? 's' : ''}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Box>
+                    <Tooltip title="Filtrer">
+                      <IconButton onClick={(e) => setFilterAnchorEl(e.currentTarget)}>
+                        <FilterList />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Exporter">
+                      <IconButton onClick={() => setExportDialogOpen(true)}>
+                        <Download />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+                
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 0, borderLeft: 0, borderRight: 0 }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -564,7 +779,16 @@ export default function ColdStorage() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {readings.length === 0 ? (
+                      {loading.readings ? (
+                        Array(5).fill(0).map((_, i) => (
+                          <TableRow key={`skeleton-${i}`}>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : readings.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -581,79 +805,24 @@ export default function ColdStorage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        readings.map(reading => {
-                          const unit = units.find(u => u.id === reading.cold_storage_unit_id);
-                          const isRecent = new Date().getTime() - new Date(reading.reading_date).getTime() < 3600000; // < 1h
-                          return (
-                            <TableRow key={reading.id} hover sx={{ 
-                              '&:hover': { bgcolor: 'action.hover' },
-                              bgcolor: isRecent ? 'success.light' : 'inherit',
-                              opacity: isRecent ? 1 : 0.8
-                            }}>
-                              <TableCell>
-                                <Box>
-                                  <Typography variant="body2" fontWeight="medium">
-                                    {new Date(reading.reading_date).toLocaleDateString('fr-FR', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: '2-digit'
-                                    })}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {new Date(reading.reading_date).toLocaleTimeString('fr-FR', {
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Box>
-                                  <Typography variant="body2" fontWeight="medium">
-                                    {unit ? unit.name : 'N/A'}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {unit ? unit.location : ''}
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography 
-                                    variant="body1" 
-                                    fontWeight="bold"
-                                    color={getTemperatureColor(reading.temperature, unit)}
-                                  >
-                                    {reading.temperature}°C
-                                  </Typography>
-                                  <Thermostat 
-                                    fontSize="small" 
-                                    sx={{ color: getTemperatureColor(reading.temperature, unit) }} 
-                                  />
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  size="small"
-                                  icon={reading.is_compliant ? <CheckCircle /> : <Cancel />}
-                                  label={reading.is_compliant ? 'Conforme' : 'Non conforme'}
-                                  color={reading.is_compliant ? 'success' : 'error'}
-                                  variant={reading.is_compliant ? 'outlined' : 'filled'}
-                                  sx={{ fontWeight: 600 }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
+                        readings.map(reading => (
+                          <ReadingRow key={reading.id} reading={reading} units={units} />
+                        ))
                       )}
                     </TableBody>
                   </Table>
                 </TableContainer>
                 
+                {loading.readings && hasMore && (
+                  <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                )}
+                
                 {readings.length > 0 && (
-                  <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50' }}>
                     <Typography variant="caption" color="text.secondary" display="block">
-                      📊 Affichage des 10 dernières lectures • Mise à jour en temps réel
+                      📊 Affichage des {readings.length} dernières lectures • Mise à jour en temps réel
                     </Typography>
                     <Typography variant="caption" color="text.disabled" display="block">
                       Les lectures récentes (moins d&apos;1h) sont surlignées
@@ -665,57 +834,184 @@ export default function ColdStorage() {
           </Box>
         </Box>
 
-        {/* Guide et bonnes pratiques */}
-        <Card sx={{ mt: 4, overflow: 'hidden' }}>
-          <Box sx={{ 
-            background: 'linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)', 
-            p: 3, 
-            borderBottom: '1px solid', 
-            borderColor: 'divider' 
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'success.main' }}>
-                <AcUnit />
-              </Avatar>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Bonnes Pratiques - Enceintes Froides HACCP
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Surveillance continue et conformité réglementaire
-                </Typography>
+        {/* Menu des filtres */}
+        <Menu
+          anchorEl={filterAnchorEl}
+          open={Boolean(filterAnchorEl)}
+          onClose={() => setFilterAnchorEl(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Box sx={{ p: 2, width: 300 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                Filtres avancés
+              </Typography>
+              <IconButton size="small" onClick={() => setFilterAnchorEl(null)}>
+                <Close fontSize="small" />
+              </IconButton>
+            </Box>
+            
+            <Divider sx={{ my: 1 }} />
+            
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Unité de stockage</InputLabel>
+              <Select
+                value={filters.unitId || ''}
+                label="Unité de stockage"
+                onChange={(e) => handleFilterChange({ unitId: e.target.value || null })}
+              >
+                <MenuItem value="">Toutes les unités</MenuItem>
+                {units.map(unit => (
+                  <MenuItem key={unit.id} value={unit.id}>{unit.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.compliantOnly}
+                  onChange={(e) => handleFilterChange({ compliantOnly: e.target.checked })}
+                />
+              }
+              label="Afficher uniquement les lectures conformes"
+              sx={{ mb: 2 }}
+            />
+            
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Période
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="Début"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  value={filters.dateRange.start?.toISOString().split('T')[0] || ''}
+                  onChange={(e) => handleFilterChange({ 
+                    dateRange: { 
+                      ...filters.dateRange, 
+                      start: e.target.value ? new Date(e.target.value) : null 
+                    } 
+                  })}
+                />
+                <TextField
+                  label="Fin"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  value={filters.dateRange.end?.toISOString().split('T')[0] || ''}
+                  onChange={(e) => handleFilterChange({ 
+                    dateRange: { 
+                      ...filters.dateRange, 
+                      end: e.target.value ? new Date(e.target.value) : null 
+                    } 
+                  })}
+                />
               </Box>
             </Box>
+            
+            <Button 
+              variant="contained" 
+              fullWidth 
+              onClick={applyFilters}
+              startIcon={<FilterList />}
+            >
+              Appliquer les filtres
+            </Button>
           </Box>
-          <CardContent>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-              <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-                  🎯 Fréquence de Contrôle
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">• <strong>Minimum 2 fois par jour</strong> : matin et soir</Typography>
-                  <Typography variant="body2">• <strong>Après chaque ouverture prolongée</strong> de l&apos;enceinte</Typography>
-                  <Typography variant="body2">• <strong>En cas d&apos;alarme</strong> ou de dysfonctionnement</Typography>
-                  <Typography variant="body2">• <strong>Lors de variations climatiques</strong> importantes</Typography>
-                </Stack>
-              </Box>
+        </Menu>
+        
+        {/* Dialogue d'export */}
+        <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
+          <DialogTitle>Exporter les données</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Sélectionnez le format d'export pour les {readings.length} lectures enregistrées
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(2, 1fr)', 
+              gap: 2,
+              mt: 2
+            }}>
+              <Button
+                variant="outlined"
+                component={CSVLink}
+                data={exportData}
+                filename={`temperature-readings-${new Date().toISOString().slice(0, 10)}.csv`}
+                startIcon={<GridOn />}
+                fullWidth
+                onClick={() => setExportDialogOpen(false)}
+              >
+                CSV
+              </Button>
               
-              <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
-                  ⚠️ Actions en Cas de Non-Conformité
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">• <strong>Vérifier immédiatement</strong> le bon fonctionnement de l&apos;équipement</Typography>
-                  <Typography variant="body2">• <strong>Isoler les produits</strong> potentiellement compromis</Typography>
-                  <Typography variant="body2">• <strong>Documenter l&apos;incident</strong> et les actions correctives</Typography>
-                  <Typography variant="body2">• <strong>Contacter la maintenance</strong> si nécessaire</Typography>
-                </Stack>
-              </Box>
+              <PDFDownloadLink
+                document={<PDFReport data={exportData} />}
+                fileName={`temperature-readings-${new Date().toISOString().slice(0, 10)}.pdf`}
+              >
+                {({ loading }) => (
+                  <Button
+                    variant="outlined"
+                    startIcon={<PictureAsPdf />}
+                    fullWidth
+                    disabled={loading}
+                    onClick={() => setExportDialogOpen(false)}
+                  >
+                    {loading ? 'Génération...' : 'PDF'}
+                  </Button>
+                )}
+              </PDFDownloadLink>
             </Box>
-          </CardContent>
-        </Card>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setExportDialogOpen(false)}>Fermer</Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
 }
+
+// Composant mémoïsé pour les cartes de statistiques
+const StatCard = React.memo(({ title, value, icon, color }: { 
+  title: string, 
+  value: string | number, 
+  icon: React.ReactNode,
+  color: string
+}) => (
+  <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
+    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography 
+            color="text.secondary" 
+            gutterBottom 
+            variant="body2"
+            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+          >
+            {title}
+          </Typography>
+          <Typography 
+            variant="h4" 
+            component="div" 
+            sx={{ 
+              fontWeight: 700,
+              fontSize: { xs: '1.5rem', sm: '2rem' }
+            }}
+          >
+            {value}
+          </Typography>
+        </Box>
+        <Avatar sx={{ bgcolor: `${color}20`, color }}>
+          {icon}
+        </Avatar>
+      </Box>
+    </CardContent>
+  </Card>
+));
+StatCard.displayName = 'StatCard';
