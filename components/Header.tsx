@@ -14,7 +14,14 @@ import {
   FormControl,
   InputLabel,
   Avatar,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
@@ -24,6 +31,7 @@ import {
 import { useAuth } from './AuthProvider';
 import { useEmployee, getEmployeeFullName } from '@/contexts/EmployeeContext';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -35,6 +43,11 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [selectedEmployeeTemp, setSelectedEmployeeTemp] = useState<any>(null);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [verifyingPassword, setVerifyingPassword] = useState(false);
   
   // Debug logs
   console.log('[Header] Employee data:', { 
@@ -46,6 +59,63 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
   const tabletDrawerWidth = 260;
   const desktopDrawerWidth = 280;
+
+  const handleEmployeeSelect = (selectedEmployee: any) => {
+    // Si l'employé n'a pas de mot de passe, sélectionner directement
+    if (!selectedEmployee || !selectedEmployee.password) {
+      setCurrentEmployee(selectedEmployee || null);
+      return;
+    }
+
+    // Si l'employé a un mot de passe, ouvrir la boîte de dialogue de vérification
+    setSelectedEmployeeTemp(selectedEmployee);
+    setPasswordDialogOpen(true);
+    setPassword('');
+    setPasswordError(null);
+  };
+
+  const verifyPassword = async () => {
+    if (!selectedEmployeeTemp || !password.trim()) {
+      setPasswordError('Veuillez saisir le mot de passe');
+      return;
+    }
+
+    setVerifyingPassword(true);
+    setPasswordError(null);
+
+    try {
+      // Récupérer l'employé avec son mot de passe depuis la base de données
+      const { data: employeeData, error } = await supabase
+        .from('employees')
+        .select('password')
+        .eq('id', selectedEmployeeTemp.id)
+        .single();
+
+      if (error) throw error;
+
+      // Comparer le mot de passe (comparaison simple - dans un vrai système, il faudrait hasher)
+      if (employeeData.password === password.trim()) {
+        setCurrentEmployee(selectedEmployeeTemp);
+        setPasswordDialogOpen(false);
+        setSelectedEmployeeTemp(null);
+        setPassword('');
+      } else {
+        setPasswordError('Mot de passe incorrect');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification du mot de passe:', error);
+      setPasswordError('Erreur lors de la vérification');
+    } finally {
+      setVerifyingPassword(false);
+    }
+  };
+
+  const cancelPasswordDialog = () => {
+    setPasswordDialogOpen(false);
+    setSelectedEmployeeTemp(null);
+    setPassword('');
+    setPasswordError(null);
+  };
 
   // const handleEmployeeChange = (employeeId: string) => {
   //   const selectedEmployee = employees.find(emp => emp.id === employeeId) || null;
@@ -137,7 +207,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   value={currentEmployee?.id || ''}
                   onChange={(e) => {
                     const selectedEmployee = employees.find(emp => emp.id === e.target.value);
-                    setCurrentEmployee(selectedEmployee || null);
+                    handleEmployeeSelect(selectedEmployee);
                   }}
                   label="Employé actuel"
                   open={employeeSelectOpen}
@@ -284,6 +354,61 @@ const Header = ({ onMenuClick }: HeaderProps) => {
           </Button>
         )}
       </Toolbar>
+      
+      {/* Dialog de vérification de mot de passe */}
+      <Dialog 
+        open={passwordDialogOpen} 
+        onClose={cancelPasswordDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Authentification requise
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            {selectedEmployeeTemp && (
+              <Typography variant="body2" sx={{ mb: 3, textAlign: 'center' }}>
+                Veuillez saisir le mot de passe pour <strong>{getEmployeeFullName(selectedEmployeeTemp)}</strong>
+              </Typography>
+            )}
+            
+            {passwordError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {passwordError}
+              </Alert>
+            )}
+            
+            <TextField
+              label="Mot de passe"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              fullWidth
+              disabled={verifyingPassword}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  verifyPassword();
+                }
+              }}
+              autoFocus
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelPasswordDialog} disabled={verifyingPassword}>
+            Annuler
+          </Button>
+          <Button 
+            onClick={verifyPassword} 
+            variant="contained"
+            disabled={verifyingPassword || !password.trim()}
+            startIcon={verifyingPassword ? <CircularProgress size={16} /> : null}
+          >
+            {verifyingPassword ? 'Vérification...' : 'Confirmer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 };
