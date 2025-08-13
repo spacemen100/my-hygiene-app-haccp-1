@@ -324,7 +324,10 @@ export default function AdminEmployesPage() {
         // Create new employee - password is required
         const { error } = await supabase
           .from('employees')
-          .insert([employeeData]);
+          .insert([{
+            ...employeeData,
+            user_id: user?.id || null
+          }]);
 
         if (error) throw error;
         setSuccess('Employé créé avec succès');
