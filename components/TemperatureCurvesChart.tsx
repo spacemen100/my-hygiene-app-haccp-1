@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Box, Typography, Avatar } from '@mui/material';
 import { ShowChart } from '@mui/icons-material';
 import { Tables } from '@/src/types/database';
@@ -53,6 +53,19 @@ export default function TemperatureCurvesChart({ readings, units }: TemperatureC
     );
   }, [units, readings]);
 
+  // Calculer les bornes globales pour les lignes de référence
+  const temperatureBounds = useMemo(() => {
+    if (activeUnits.length === 0) return { globalMin: 0, globalMax: 10 };
+    
+    const allMins = activeUnits.map(unit => unit.min_temperature);
+    const allMaxs = activeUnits.map(unit => unit.max_temperature);
+    
+    return {
+      globalMin: Math.min(...allMins),
+      globalMax: Math.max(...allMaxs)
+    };
+  }, [activeUnits]);
+
   if (readings.length === 0 || activeUnits.length === 0) {
     return (
       <Box sx={{ 
@@ -84,7 +97,7 @@ export default function TemperatureCurvesChart({ readings, units }: TemperatureC
             Courbes de Température par Enceinte
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Évolution temporelle des {activeUnits.length} enceinte{activeUnits.length > 1 ? 's' : ''} active{activeUnits.length > 1 ? 's' : ''}
+            Évolution temporelle des {activeUnits.length} enceinte{activeUnits.length > 1 ? 's' : ''} active{activeUnits.length > 1 ? 's' : ''} avec bornes de température
           </Typography>
         </Box>
       </Box>
@@ -113,6 +126,30 @@ export default function TemperatureCurvesChart({ readings, units }: TemperatureC
           />
           <Legend 
             wrapperStyle={{ fontSize: '14px' }}
+          />
+          
+          {/* Lignes de référence pour les bornes de température */}
+          <ReferenceLine 
+            y={temperatureBounds.globalMin} 
+            stroke="#ff5252" 
+            strokeDasharray="5 5" 
+            strokeWidth={2}
+            label={{ 
+              value: `Min: ${temperatureBounds.globalMin}°C`, 
+              position: "insideTopRight",
+              style: { fontSize: '11px', fill: '#ff5252', fontWeight: 'bold' }
+            }}
+          />
+          <ReferenceLine 
+            y={temperatureBounds.globalMax} 
+            stroke="#ff9800" 
+            strokeDasharray="5 5" 
+            strokeWidth={2}
+            label={{ 
+              value: `Max: ${temperatureBounds.globalMax}°C`, 
+              position: "insideBottomRight",
+              style: { fontSize: '11px', fill: '#ff9800', fontWeight: 'bold' }
+            }}
           />
           
           {activeUnits.map((unit, index) => (
