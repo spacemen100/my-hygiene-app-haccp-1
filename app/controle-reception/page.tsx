@@ -893,22 +893,20 @@ export default function DeliveryComponent() {
                   multiple
                   onChange={(e) => handleFileSelect(e, 'delivery')}
                 />
-                <label htmlFor="delivery-photo-upload">
-                  <Button
-                    component="span"
-                    variant="outlined"
-                    startIcon={<CloudUpload />}
-                    fullWidth
-                    sx={{ 
-                      py: { xs: 1.5, sm: 2 },
-                      minHeight: '44px'
-                    }}
-                  >
-                    {deliveryPhotoPreviews.length > 0 
-                      ? `${deliveryPhotoPreviews.length} photo(s) sélectionnée(s)` 
-                      : 'Ajouter des photos de la livraison'}
-                  </Button>
-                </label>
+                <Button
+                  variant="outlined"
+                  startIcon={<CloudUpload />}
+                  fullWidth
+                  onClick={() => document.getElementById('delivery-photo-upload')?.click()}
+                  sx={{ 
+                    py: { xs: 1.5, sm: 2 },
+                    minHeight: '44px'
+                  }}
+                >
+                  {deliveryPhotoPreviews.length > 0 
+                    ? `${deliveryPhotoPreviews.length} photo(s) sélectionnée(s)` 
+                    : 'Ajouter des photos de la livraison'}
+                </Button>
                 <PhotosPreview
                   previewUrls={deliveryPhotoPreviews}
                   field="delivery"
@@ -1213,18 +1211,16 @@ export default function DeliveryComponent() {
                       multiple
                       onChange={(e) => handleFileSelect(e, 'nonConformity')}
                     />
-                    <label htmlFor="nonconformity-photo-upload">
-                      <Button
-                        component="span"
-                        variant="outlined"
-                        startIcon={<CameraAlt />}
-                        sx={{ mr: 2 }}
-                      >
-                        {getAllNonConformityPhotos().length > 0 
-                          ? `${getAllNonConformityPhotos().length} photo(s)` 
-                          : 'Ajouter photos'}
-                      </Button>
-                    </label>
+                    <Button
+                      variant="outlined"
+                      startIcon={<CameraAlt />}
+                      onClick={() => document.getElementById('nonconformity-photo-upload')?.click()}
+                      sx={{ mr: 2 }}
+                    >
+                      {getAllNonConformityPhotos().length > 0 
+                        ? `${getAllNonConformityPhotos().length} photo(s)` 
+                        : 'Ajouter photos'}
+                    </Button>
                     
                     <Button
                       variant="contained"
@@ -1369,6 +1365,7 @@ export default function DeliveryComponent() {
                               </Typography>
                             </Box>
                           }
+                          secondaryTypographyProps={{ component: "div" }}
                         />
                       </ListItem>
                     ))}
@@ -1650,16 +1647,26 @@ export default function DeliveryComponent() {
                     gap: 1
                   }}>
                     <Tooltip title="Supprimer">
-                      <IconButton
-                        size="small"
+                      <Box
                         onClick={(e) => {
                           e.stopPropagation();
                           if (delivery.id) handleDeleteDelivery(delivery.id);
                         }}
-                        sx={{ minHeight: '40px', minWidth: '40px' }}
+                        sx={{ 
+                          minHeight: '40px', 
+                          minWidth: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            backgroundColor: 'action.hover'
+                          }
+                        }}
                       >
                         <Delete fontSize="small" color="error" />
-                      </IconButton>
+                      </Box>
                     </Tooltip>
                   </Box>
                 </Box>
@@ -1837,6 +1844,7 @@ export default function DeliveryComponent() {
                                     </Typography>
                                   </Box>
                                 }
+                                secondaryTypographyProps={{ component: "div" }}
                               />
                             </ListItem>
                           ))}
@@ -1880,6 +1888,7 @@ export default function DeliveryComponent() {
                                     </Box>
                                   </Box>
                                 }
+                                secondaryTypographyProps={{ component: "div" }}
                               />
                             </ListItem>
                           ))}
@@ -1980,6 +1989,7 @@ export default function DeliveryComponent() {
                                     })()}
                                   </Box>
                                 }
+                                secondaryTypographyProps={{ component: "div" }}
                               />
                             </ListItem>
                           ))}
