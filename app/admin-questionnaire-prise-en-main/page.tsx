@@ -1,7 +1,53 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { User, Plus, Minus, Eye, EyeOff } from 'lucide-react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Paper,
+  Stepper,
+  Step,
+  StepLabel,
+  Container,
+  Grid2 as Grid,
+  Alert,
+  IconButton,
+  InputAdornment,
+  Chip,
+  Switch,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  LinearProgress,
+  Avatar,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  Person as PersonIcon,
+  Business as BusinessIcon,
+  People as PeopleIcon,
+  LocalShipping as TruckIcon,
+  AcUnit as SnowflakeIcon,
+  CleaningServices as CleaningIcon,
+  CheckCircle as CheckCircleIcon,
+  ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
+} from '@mui/icons-material';
 
 interface User {
   id: string;
@@ -30,6 +76,16 @@ interface CleaningTask {
 }
 
 type Step = 'login' | 'info' | 'users' | 'suppliers' | 'enclosures' | 'cleaning' | 'complete';
+
+const steps = [
+  { id: 'login', label: 'Connexion', icon: PersonIcon },
+  { id: 'info', label: 'Informations', icon: BusinessIcon },
+  { id: 'users', label: 'Utilisateurs', icon: PeopleIcon },
+  { id: 'suppliers', label: 'Fournisseurs', icon: TruckIcon },
+  { id: 'enclosures', label: 'Enceintes froides', icon: SnowflakeIcon },
+  { id: 'cleaning', label: 'Plan de nettoyage', icon: CleaningIcon },
+  { id: 'complete', label: 'Terminé', icon: CheckCircleIcon },
+];
 
 export default function HACCPSetupComponent() {
   const [currentStep, setCurrentStep] = useState<Step>('login');
@@ -146,10 +202,8 @@ export default function HACCPSetupComponent() {
     ));
   };
 
-  const getStepProgress = () => {
-    const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
-    const currentIndex = stepOrder.indexOf(currentStep);
-    return Math.round(((currentIndex + 1) / stepOrder.length) * 100);
+  const getCurrentStepIndex = () => {
+    return steps.findIndex(step => step.id === currentStep);
   };
 
   const getFilteredTasks = () => {
@@ -171,467 +225,619 @@ export default function HACCPSetupComponent() {
     ));
   };
 
-  const renderProgressBar = () => (
-    <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-      <div 
-        className="bg-teal-600 h-2 rounded-full transition-all duration-500"
-        style={{ width: `${getStepProgress()}%` }}
-      />
-    </div>
-  );
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 'login':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Avatar sx={{ 
+                  width: 64, 
+                  height: 64, 
+                  bgcolor: 'primary.main', 
+                  mx: 'auto', 
+                  mb: 2,
+                  fontSize: '2rem'
+                }}>
+                  🏃‍♀️
+                </Avatar>
+                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                  Testez rapidement
+                </Typography>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Testez gratuitement l&apos;application HACCP, en créant votre compte en quelques minutes. 
+                  Pas de carte bancaire requise pour tester l&apos;application.
+                </Alert>
+              </Box>
 
-  const renderHeader = () => (
-    <div className="flex items-center justify-between mb-8">
-      <div className="flex items-center space-x-3">
-        <div className="text-orange-500 text-2xl font-bold">🐙</div>
-        <span className="text-teal-600 text-xl font-semibold">octopus</span>
-      </div>
-      <button className="text-gray-400 hover:text-gray-600">
-        ✕
-      </button>
-    </div>
-  );
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <CheckCircleIcon color="success" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Mot de passe"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                          <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <Box sx={{ mt: 2 }}>
+                    <Grid container spacing={1}>
+                      {passwordRequirements.map((req, index) => (
+                        <Grid item xs={6} key={index}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CheckCircleIcon 
+                              fontSize="small" 
+                              color={req.met ? 'success' : 'disabled'} 
+                            />
+                            <Typography 
+                              variant="caption" 
+                              color={req.met ? 'success.main' : 'text.secondary'}
+                            >
+                              {req.text}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        );
 
-  const renderLoginStep = () => (
-    <div className="max-w-md mx-auto">
-      <div className="mb-6">
-        <div className="text-2xl mb-2">🏃‍♀️ <span className="text-teal-600 font-semibold">Testez rapidement</span></div>
-        <div className="flex items-start space-x-2 text-sm text-gray-600">
-          <span>💡</span>
-          <p>Testez gratuitement Octopus HACCP, en créant votre compte en quelques minutes. Pas de carte bancaire requise pour tester l&apos;application.</p>
-        </div>
-      </div>
+      case 'info':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Avatar sx={{ 
+                  width: 64, 
+                  height: 64, 
+                  bgcolor: 'primary.main', 
+                  mx: 'auto', 
+                  mb: 2,
+                  fontSize: '2rem'
+                }}>
+                  👋
+                </Avatar>
+                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                  Parlez-nous un peu de vous
+                </Typography>
+              </Box>
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email :</label>
-          <div className="relative">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            />
-            <div className="absolute right-3 top-3 text-green-500">✓</div>
-          </div>
-        </div>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Secteur d&apos;activité</InputLabel>
+                    <Select
+                      value={activitySector}
+                      onChange={(e) => setActivitySector(e.target.value)}
+                      label="Secteur d'activité"
+                    >
+                      <MenuItem value="Restauration collective">Restauration collective</MenuItem>
+                      <MenuItem value="Restaurant">Restaurant</MenuItem>
+                      <MenuItem value="Boulangerie">Boulangerie</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Nom de l&apos;établissement"
+                    value={establishmentName}
+                    onChange={(e) => setEstablishmentName(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Prénom"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Nom"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Numéro de téléphone"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        );
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe :</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 pr-20"
-            />
-            <div className="absolute right-3 top-3 flex items-center space-x-2">
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-gray-400 hover:text-gray-600"
+      case 'users':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Avatar sx={{ 
+                  width: 64, 
+                  height: 64, 
+                  bgcolor: 'primary.main', 
+                  mx: 'auto', 
+                  mb: 2 
+                }}>
+                  <PeopleIcon fontSize="large" />
+                </Avatar>
+                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                  Utilisateurs
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  Veuillez indiquer le nom ou le poste des personnes qui effectueront des relevés HACCP, 
+                  y compris vous-même si vous réalisez des relevés.
+                </Typography>
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  Vos équipes changent souvent ? Aucun problème, vous pourrez modifier, ajouter ou 
+                  supprimer des utilisateurs par la suite dans vos paramètres.
+                </Alert>
+              </Box>
+
+              <Grid container spacing={2}>
+                {users.map((user, index) => (
+                  <Grid item xs={12} key={user.id}>
+                    <TextField
+                      fullWidth
+                      value={user.name}
+                      onChange={(e) => {
+                        const newUsers = [...users];
+                        newUsers[index] = { ...user, name: e.target.value };
+                        setUsers(newUsers);
+                      }}
+                      placeholder="Nom de l&apos;utilisateur"
+                      variant="outlined"
+                    />
+                  </Grid>
+                ))}
+                <Grid item xs={12}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={addUser}
+                    startIcon={<AddIcon />}
+                    sx={{ py: 2, borderStyle: 'dashed' }}
+                  >
+                    Ajouter un utilisateur
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        );
+
+      case 'suppliers':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Avatar sx={{ 
+                  width: 64, 
+                  height: 64, 
+                  bgcolor: 'primary.main', 
+                  mx: 'auto', 
+                  mb: 2 
+                }}>
+                  <TruckIcon fontSize="large" />
+                </Avatar>
+                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                  Fournisseurs
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Veuillez ajouter le nom de vos fournisseurs chez qui vous effectuez des contrôles de produits.
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2}>
+                {suppliers.map((supplier, index) => (
+                  <Grid item xs={12} key={supplier.id}>
+                    <TextField
+                      fullWidth
+                      value={supplier.name}
+                      onChange={(e) => {
+                        const newSuppliers = [...suppliers];
+                        newSuppliers[index] = { ...supplier, name: e.target.value };
+                        setSuppliers(newSuppliers);
+                      }}
+                      placeholder="Ex : Pomona, Transgourmet, Metro..."
+                      variant="outlined"
+                    />
+                  </Grid>
+                ))}
+                <Grid item xs={12}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={addSupplier}
+                    startIcon={<AddIcon />}
+                    sx={{ py: 2, borderStyle: 'dashed' }}
+                  >
+                    Ajouter un fournisseur
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        );
+
+      case 'enclosures':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Avatar sx={{ 
+                  width: 64, 
+                  height: 64, 
+                  bgcolor: 'primary.main', 
+                  mx: 'auto', 
+                  mb: 2 
+                }}>
+                  <SnowflakeIcon fontSize="large" />
+                </Avatar>
+                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                  Enceintes froides
+                </Typography>
+                <Alert severity="info" sx={{ mt: 2, mb: 3 }}>
+                  Nous vous recommandons de créer vos enceintes froides en respectant l&apos;ordre 
+                  dans lequel vous effectuez vos relevés de température.
+                </Alert>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={showExample}
+                      onChange={(e) => setShowExample(e.target.checked)}
+                    />
+                  }
+                  label="💡 Affichez-moi un exemple"
+                />
+              </Box>
+
+              <Grid container spacing={3}>
+                {coldEnclosures.map((enclosure) => (
+                  <Grid item xs={12} key={enclosure.id}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              label="Nom de l&apos;enceinte"
+                              value={enclosure.name}
+                              onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
+                              placeholder="Ex : Enceinte, congélateur..."
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <FormControl component="fieldset">
+                              <Typography variant="subtitle2" gutterBottom>
+                                Sélectionner la température de l&apos;enceinte
+                              </Typography>
+                              <RadioGroup
+                                row
+                                value={enclosure.temperatureType}
+                                onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
+                              >
+                                <FormControlLabel
+                                  value="positive"
+                                  control={<Radio />}
+                                  label="Température positive"
+                                />
+                                <FormControlLabel
+                                  value="negative"
+                                  control={<Radio />}
+                                  label="Température négative"
+                                />
+                              </RadioGroup>
+                            </FormControl>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="caption" display="block" gutterBottom>
+                                T° max
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
+                                >
+                                  <RemoveIcon />
+                                </IconButton>
+                                <Chip label={`${enclosure.maxTemp} °C`} />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="caption" display="block" gutterBottom>
+                                T° min
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
+                                >
+                                  <RemoveIcon />
+                                </IconButton>
+                                <Chip label={`${enclosure.minTemp} °C`} />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+                <Grid item xs={12}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={addColdEnclosure}
+                    startIcon={<AddIcon />}
+                    sx={{ py: 2, borderStyle: 'dashed' }}
+                  >
+                    Ajouter une enceinte froide
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        );
+
+      case 'cleaning':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Avatar sx={{ 
+                  width: 64, 
+                  height: 64, 
+                  bgcolor: 'primary.main', 
+                  mx: 'auto', 
+                  mb: 2 
+                }}>
+                  <CleaningIcon fontSize="large" />
+                </Avatar>
+                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                  Plan de nettoyage
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  Nous vous proposons une liste de tâches avec leur fréquence. 
+                  Nous vous invitons à choisir les tâches dans chaque zone et à modifier la fréquence proposée si besoin.
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Grid container spacing={1}>
+                  {zones.map((zone) => (
+                    <Grid item key={zone}>
+                      <Chip
+                        label={zone}
+                        onClick={() => setActiveZone(zone)}
+                        color={activeZone === zone ? 'primary' : 'default'}
+                        variant={activeZone === zone ? 'filled' : 'outlined'}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={getFilteredTasks().every(task => task.enabled)}
+                    onChange={toggleAllTasks}
+                  />
+                }
+                label="Sélectionner toutes les tâches"
+                sx={{ mb: 2 }}
+              />
+
+              <List>
+                {getFilteredTasks().map((task) => (
+                  <ListItem
+                    key={task.id}
+                    sx={{
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Switch
+                        checked={task.enabled}
+                        onChange={() => toggleTask(task.id)}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={task.name}
+                      secondary={task.frequency}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<AddIcon />}
+                sx={{ mt: 2, py: 2, borderStyle: 'dashed' }}
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-              <div className="text-green-500">✓</div>
-            </div>
-          </div>
-          
-          <div className="mt-2 space-y-1">
-            {passwordRequirements.map((req, index) => (
-              <div key={index} className="flex items-center space-x-2 text-xs">
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${req.met ? 'bg-green-500' : 'bg-gray-300'}`}>
-                  {req.met && <span className="text-white text-xs">✓</span>}
-                </div>
-                <span className={req.met ? 'text-green-600' : 'text-gray-500'}>{req.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+                Ajouter une tâche
+              </Button>
+            </CardContent>
+          </Card>
+        );
 
-  const renderInfoStep = () => (
-    <div className="max-w-md mx-auto">
-      <div className="mb-6">
-        <div className="text-2xl mb-4">👋 <span className="text-teal-600 font-semibold">Parlez-nous un peu de vous</span></div>
-      </div>
+      case 'complete':
+        return (
+          <Card>
+            <CardContent sx={{ p: 4, textAlign: 'center' }}>
+              <Avatar sx={{ 
+                width: 96, 
+                height: 96, 
+                bgcolor: 'success.main', 
+                mx: 'auto', 
+                mb: 3,
+                fontSize: '3rem'
+              }}>
+                💝
+              </Avatar>
+              <Typography variant="h3" component="h1" gutterBottom fontWeight={700} color="success.main">
+                C&apos;est parfait !
+              </Typography>
+              <Typography variant="h6" color="text.secondary" paragraph>
+                Vous avez terminé vos paramétrages
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                En avant pour utiliser l&apos;application !
+              </Typography>
+              <Button
+                variant="contained"
+                size="large"
+                color="success"
+                sx={{ mt: 2, py: 2, px: 4 }}
+              >
+                Continuer
+              </Button>
+            </CardContent>
+          </Card>
+        );
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Secteur d&apos;activité :</label>
-          <select
-            value={activitySector}
-            onChange={(e) => setActivitySector(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          >
-            <option>Restauration collective</option>
-            <option>Restaurant</option>
-            <option>Boulangerie</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l&apos;établissement :</label>
-          <input
-            type="text"
-            value={establishmentName}
-            onChange={(e) => setEstablishmentName(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Prénom :</label>
-          <input
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nom :</label>
-          <input
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Numéro de téléphone :</label>
-          <input
-            type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderUsersStep = () => (
-    <div className="max-w-md mx-auto">
-      <div className="mb-6">
-        <div className="text-2xl mb-4">👥 <span className="text-teal-600 font-semibold">Utilisateurs</span></div>
-        <p className="text-sm text-gray-600">Veuillez indiquer le nom ou le poste des personnes qui effectueront des relevés HACCP, y compris vous-même si vous réalisez des relevés.</p>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
-          <p className="text-sm text-yellow-800">⚠️ Vos équipes changent souvent ? Aucun problème, vous pourrez modifier, ajouter ou supprimer des utilisateurs par la suite dans vos paramètres.</p>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {users.map((user, index) => (
-          <input
-            key={user.id}
-            type="text"
-            value={user.name}
-            onChange={(e) => {
-              const newUsers = [...users];
-              newUsers[index] = { ...user, name: e.target.value };
-              setUsers(newUsers);
-            }}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            placeholder="Nom de l&apos;utilisateur"
-          />
-        ))}
-        
-        <button
-          onClick={addUser}
-          className="w-full p-3 border-2 border-dashed border-teal-300 rounded-lg text-teal-600 hover:border-teal-400 hover:bg-teal-50 transition-colors flex items-center justify-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Ajouter un utilisateur</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderSuppliersStep = () => (
-    <div className="max-w-md mx-auto">
-      <div className="mb-6">
-        <div className="text-2xl mb-4">🚚 <span className="text-teal-600 font-semibold">Fournisseurs</span></div>
-        <p className="text-sm text-gray-600">Veuillez ajouter le nom de vos fournisseurs chez qui vous effectuez des contrôles de produits.</p>
-      </div>
-
-      <div className="space-y-3">
-        {suppliers.map((supplier, index) => (
-          <input
-            key={supplier.id}
-            type="text"
-            value={supplier.name}
-            onChange={(e) => {
-              const newSuppliers = [...suppliers];
-              newSuppliers[index] = { ...supplier, name: e.target.value };
-              setSuppliers(newSuppliers);
-            }}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            placeholder="Ex : Pomona, Transgourmet, Metro..."
-          />
-        ))}
-        
-        <button
-          onClick={addSupplier}
-          className="w-full p-3 border-2 border-dashed border-teal-300 rounded-lg text-teal-600 hover:border-teal-400 hover:bg-teal-50 transition-colors flex items-center justify-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Ajouter un fournisseur</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderEnclosuresStep = () => (
-    <div className="max-w-md mx-auto">
-      <div className="mb-6">
-        <div className="text-2xl mb-4">🧊 <span className="text-teal-600 font-semibold">Enceintes froides</span></div>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <p className="text-sm text-yellow-800">💡 Nous vous recommandons de créer vos enceintes froides en respectant l&apos;ordre dans lequel vous effectuez vos relevés de température.</p>
-        </div>
-        
-        <div className="mt-4">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showExample}
-              onChange={(e) => setShowExample(e.target.checked)}
-              className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-            />
-            <span className="text-sm text-teal-600">💡 Affichez-moi un exemple</span>
-          </label>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {coldEnclosures.map((enclosure) => (
-          <div key={enclosure.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l&apos;enceinte :</label>
-              <input
-                type="text"
-                value={enclosure.name}
-                onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="Ex : Enceinte, congélateur..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sélectionner la température de l&apos;enceinte :</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={`temp-${enclosure.id}`}
-                    value="positive"
-                    checked={enclosure.temperatureType === 'positive'}
-                    onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
-                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
-                  />
-                  <span className="text-sm">Température positive</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={`temp-${enclosure.id}`}
-                    value="negative"
-                    checked={enclosure.temperatureType === 'negative'}
-                    onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
-                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
-                  />
-                  <span className="text-sm">Température négative</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex space-x-4">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-600 mb-1">T° max</label>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
-                    className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <span className="text-center min-w-12">{enclosure.maxTemp} °C</span>
-                  <button
-                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
-                    className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs text-gray-600 mb-1">T° min</label>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
-                    className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <span className="text-center min-w-12">{enclosure.minTemp} °C</span>
-                  <button
-                    onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
-                    className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-        
-        <button
-          onClick={addColdEnclosure}
-          className="w-full p-3 border-2 border-dashed border-teal-300 rounded-lg text-teal-600 hover:border-teal-400 hover:bg-teal-50 transition-colors flex items-center justify-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Ajouter une enceinte froide</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderCleaningStep = () => (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <div className="text-2xl mb-4">🧽 <span className="text-teal-600 font-semibold">Plan de nettoyage</span></div>
-        <p className="text-sm text-gray-600">Nous vous proposons une liste de tâches avec leur fréquence. Nous vous invitons à choisir les tâches dans chaque zone et à modifier la fréquence proposée si besoin.</p>
-      </div>
-
-      <div className="flex space-x-1 mb-6 border-b">
-        {zones.map((zone) => (
-          <button
-            key={zone}
-            onClick={() => setActiveZone(zone)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeZone === zone
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {zone}
-          </button>
-        ))}
-        <button className="px-4 py-2 text-sm font-medium text-gray-400">
-          <Plus size={16} />
-        </button>
-      </div>
-
-      <div className="mb-4 flex items-center justify-between">
-        <label className="flex items-center space-x-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={getFilteredTasks().every(task => task.enabled)}
-            onChange={toggleAllTasks}
-            className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-          />
-          <span className="text-sm font-medium">Sélectionner toutes les tâches</span>
-        </label>
-      </div>
-
-      <div className="space-y-2">
-        {getFilteredTasks().map((task) => (
-          <div key={task.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={task.enabled}
-                onChange={() => toggleTask(task.id)}
-                className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-              />
-              <span className="text-sm">{task.name}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-500">{task.frequency}</span>
-              <div className={`w-8 h-5 rounded-full flex items-center justify-center ${
-                task.enabled ? 'bg-teal-500' : 'bg-gray-300'
-              }`}>
-                <div className={`w-3 h-3 rounded-full bg-white transition-transform ${
-                  task.enabled ? 'transform translate-x-1' : 'transform -translate-x-1'
-                }`} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <button
-        className="w-full p-3 border-2 border-dashed border-teal-300 rounded-lg text-teal-600 hover:border-teal-400 hover:bg-teal-50 transition-colors flex items-center justify-center space-x-2 mt-6"
-      >
-        <Plus size={20} />
-        <span>Ajouter une tâche</span>
-      </button>
-    </div>
-  );
-
-  const renderCompleteStep = () => (
-    <div className="max-w-md mx-auto text-center">
-      <div className="mb-8">
-        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <div className="text-4xl">💝</div>
-        </div>
-        
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">C&apos;est parfait !</h2>
-        <p className="text-gray-600 mb-2">Vous avez terminé vos paramétrages</p>
-        <p className="text-gray-600">En avant pour utiliser l&apos;application !</p>
-      </div>
-
-      <button
-        onClick={() => {}}
-        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-      >
-        Continuer
-      </button>
-    </div>
-  );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto p-6">
-        {renderHeader()}
-        {renderProgressBar()}
-        
-        <div className="mb-8">
-          {currentStep === 'login' && renderLoginStep()}
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'users' && renderUsersStep()}
-          {currentStep === 'suppliers' && renderSuppliersStep()}
-          {currentStep === 'enclosures' && renderEnclosuresStep()}
-          {currentStep === 'cleaning' && renderCleaningStep()}
-          {currentStep === 'complete' && renderCompleteStep()}
-        </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header */}
+      <Paper
+        sx={{
+          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+          color: 'white',
+          p: 4,
+          mb: 4,
+          borderRadius: 3,
+          textAlign: 'center',
+        }}
+      >
+        <Typography variant="h2" component="h1" fontWeight={800} gutterBottom>
+          Configuration HACCP
+        </Typography>
+        <Typography variant="h6" sx={{ opacity: 0.9 }}>
+          Configuration initiale de votre système HACCP
+        </Typography>
+      </Paper>
 
-        <div className="flex justify-between">
-          {currentStep !== 'login' && (
-            <button
-              onClick={handlePrevious}
-              disabled={loading}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Précédent
-            </button>
-          )}
-          
-          <button
-            onClick={handleNext}
-            disabled={loading}
-            className={`px-6 py-3 rounded-lg text-white font-medium transition-colors disabled:opacity-50 ${
-              currentStep === 'complete' ? 'bg-green-600 hover:bg-green-700' : 'bg-teal-600 hover:bg-teal-700'
-            }`}
-          >
-            {loading ? 'Chargement...' : currentStep === 'complete' ? 'Terminer' : 'Suivant'}
-          </button>
-        </div>
-      </div>
-    </div>
+      {/* Progress Stepper */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Stepper activeStep={getCurrentStepIndex()} alternativeLabel>
+          {steps.map((step) => (
+            <Step key={step.id}>
+              <StepLabel
+                StepIconComponent={({ active, completed }) => (
+                  <Avatar
+                    sx={{
+                      bgcolor: completed ? 'success.main' : active ? 'primary.main' : 'grey.300',
+                      color: 'white',
+                      width: 40,
+                      height: 40,
+                    }}
+                  >
+                    <step.icon />
+                  </Avatar>
+                )}
+              >
+                {step.label}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+        <LinearProgress 
+          variant="determinate" 
+          value={(getCurrentStepIndex() + 1) / steps.length * 100} 
+          sx={{ mt: 2 }}
+        />
+      </Paper>
+
+      {/* Step Content */}
+      <Box sx={{ mb: 4 }}>
+        {renderStepContent()}
+      </Box>
+
+      {/* Navigation */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={handlePrevious}
+          disabled={currentStep === 'login' || loading}
+          sx={{ minWidth: 120 }}
+        >
+          Précédent
+        </Button>
+        
+        <Button
+          variant="contained"
+          endIcon={<ArrowForwardIcon />}
+          onClick={handleNext}
+          disabled={loading}
+          sx={{ minWidth: 120 }}
+        >
+          {loading ? 'Chargement...' : currentStep === 'complete' ? 'Terminer' : 'Suivant'}
+        </Button>
+      </Box>
+    </Container>
   );
 }
