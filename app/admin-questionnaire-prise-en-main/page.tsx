@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Box,
   Card,
@@ -87,8 +89,12 @@ const steps = [
 ];
 
 export default function HACCPSetupComponent() {
+  const { signUp } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>('login');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   
   // Login data
   const [email, setEmail] = useState('');
@@ -141,17 +147,211 @@ export default function HACCPSetupComponent() {
     { text: '8 caractères minimum', met: password.length >= 8 }
   ];
 
+  // Database save functions
+  const saveOrganization = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('organizations')
+      .insert({
+        name: establishmentName,
+        user_id: userId,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const saveEmployees = async (organizationId: string, userId: string) => {
+    if (users.length === 0) return [];
+
+    const employeesToInsert = users.map(user => ({
+      organization_id: organizationId,
+      first_name: user.name.split(' ')[0] || user.name,
+      last_name: user.name.split(' ').slice(1).join(' ') || '',
+      role: 'employee',
+      user_id: userId,
+    }));
+
+    const { data, error } = await supabase
+      .from('employees')
+      .insert(employeesToInsert)
+      .select();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const saveSuppliers = async (organizationId: string, userId: string) => {
+    if (suppliers.length === 0) return [];
+
+    const suppliersToInsert = suppliers.map(supplier => ({
+      organization_id: organizationId,
+      name: supplier.name,
+      user_id: userId,
+    }));
+
+    const { data, error } = await supabase
+      .from('suppliers')
+      .insert(suppliersToInsert)
+      .select();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const saveColdStorageUnits = async (organizationId: string, userId: string) => {
+    if (coldEnclosures.length === 0) return [];
+
+    const unitsToInsert = coldEnclosures.map(enclosure => ({
+      organization_id: organizationId,
+      name: enclosure.name,
+      type: enclosure.temperatureType === 'positive' ? 'Réfrigérateur' : 'Congélateur',
+      location: 'Cuisine', // Default location
+      min_temperature: enclosure.minTemp,
+      max_temperature: enclosure.maxTemp,
+      user_id: userId,
+    }));
+
+    const { data, error } = await supabase
+      .from('cold_storage_units')
+      .insert(unitsToInsert)
+      .select();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const saveCleaningData = async (organizationId: string, userId: string) => {
+    const activeZones = [...new Set(cleaningTasks.filter(task => task.enabled).map(task => task.zone))];
+    
+    // Save cleaning zones first
+    const zonesToInsert = activeZones.map(zoneName => ({
+      organization_id: organizationId,
+      name: zoneName,
+      user_id: userId,
+    }));
+
+    const { data: zonesData, error: zonesError } = await supabase
+      .from('cleaning_zones')
+      .insert(zonesToInsert)
+      .select();
+
+    if (zonesError) throw zonesError;
+
+    // Create a mapping of zone names to IDs
+    const zoneMap = zonesData.reduce((acc, zone) => {
+      acc[zone.name] = zone.id;
+      return acc;
+    }, {} as Record<string, string>);
+
+    // Save cleaning tasks
+    const enabledTasks = cleaningTasks.filter(task => task.enabled);
+    const tasksToInsert = enabledTasks.map(task => ({
+      organization_id: organizationId,
+      cleaning_zone_id: zoneMap[task.zone],
+      name: task.name,
+      frequency: task.frequency,
+      action_to_perform: task.name,
+      user_id: userId,
+    }));
+
+    const { data: tasksData, error: tasksError } = await supabase
+      .from('cleaning_tasks')
+      .insert(tasksToInsert)
+      .select();
+
+    if (tasksError) throw tasksError;
+
+    return { zones: zonesData, tasks: tasksData };
+  };
+
   const handleNext = useCallback(async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
-    const currentIndex = stepOrder.indexOf(currentStep);
-    if (currentIndex < stepOrder.length - 1) {
-      setCurrentStep(stepOrder[currentIndex + 1]);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
+      const currentIndex = stepOrder.indexOf(currentStep);
+
+      // Handle login step - create account
+      if (currentStep === 'login') {
+        if (!email || !password) {
+          throw new Error('Veuillez remplir tous les champs');
+        }
+        
+        if (!passwordRequirements.every(req => req.met)) {
+          throw new Error('Le mot de passe ne respecte pas tous les critères');
+        }
+
+        const { error } = await signUp(email, password);
+        if (error) throw error;
+        
+        setSuccess('Compte créé avec succès !');
+      }
+
+      // Handle complete step - save all data
+      if (currentStep === 'complete') {
+        setSaving(true);
+        
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Utilisateur non connecté');
+
+        // Update user profile with name
+        const { error: profileError } = await supabase
+          .from('users')
+          .upsert({
+            id: user.id,
+            email: user.email!,
+            first_name: firstName,
+            last_name: lastName,
+          });
+
+        if (profileError) throw profileError;
+
+        // Save organization
+        const organization = await saveOrganization(user.id);
+        
+        // Save all related data
+        await Promise.all([
+          saveEmployees(organization.id, user.id),
+          saveSuppliers(organization.id, user.id),
+          saveColdStorageUnits(organization.id, user.id),
+          saveCleaningData(organization.id, user.id),
+        ]);
+
+        // Update user with organization_id
+        await supabase
+          .from('users')
+          .update({ organization_id: organization.id })
+          .eq('id', user.id);
+
+        setSuccess('Configuration sauvegardée avec succès !');
+        setSaving(false);
+        
+        // Redirect to main app after a delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+        
+        setLoading(false);
+        return;
+      }
+
+      // Move to next step
+      if (currentIndex < stepOrder.length - 1) {
+        setCurrentStep(stepOrder[currentIndex + 1]);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError(error instanceof Error ? error.message : 'Une erreur est survenue');
+      setSaving(false);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [currentStep]);
+  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, saveOrganization, saveEmployees, saveSuppliers, saveColdStorageUnits, saveCleaningData]);
 
   const handlePrevious = useCallback(() => {
     const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
@@ -748,16 +948,29 @@ export default function HACCPSetupComponent() {
                 Vous avez terminé vos paramétrages
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                En avant pour utiliser l&apos;application !
+                Cliquez sur &quot;Terminer&quot; pour sauvegarder votre configuration et commencer à utiliser l&apos;application !
               </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                color="success"
-                sx={{ mt: 2, py: 2, px: 4 }}
-              >
-                Continuer
-              </Button>
+              
+              {saving && (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                  <Typography variant="body2" color="primary">
+                    Sauvegarde en cours...
+                  </Typography>
+                  <LinearProgress sx={{ mt: 1 }} />
+                </Box>
+              )}
+
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Configuration à sauvegarder :
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1 }}>
+                  <Chip label={`${users.length} utilisateur(s)`} size="small" />
+                  <Chip label={`${suppliers.length} fournisseur(s)`} size="small" />
+                  <Chip label={`${coldEnclosures.length} enceinte(s) froide(s)`} size="small" />
+                  <Chip label={`${cleaningTasks.filter(t => t.enabled).length} tâche(s) de nettoyage`} size="small" />
+                </Box>
+              </Box>
             </CardContent>
           </Card>
         );
@@ -819,6 +1032,19 @@ export default function HACCPSetupComponent() {
         />
       </Paper>
 
+      {/* Error and Success Messages */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
+          {success}
+        </Alert>
+      )}
+
       {/* Step Content */}
       <Box sx={{ mb: 4 }}>
         {renderStepContent()}
@@ -840,10 +1066,10 @@ export default function HACCPSetupComponent() {
           variant="contained"
           endIcon={<ArrowForwardIcon />}
           onClick={handleNext}
-          disabled={loading}
+          disabled={loading || saving}
           sx={{ minWidth: 120 }}
         >
-          {loading ? 'Chargement...' : currentStep === 'complete' ? 'Terminer' : 'Suivant'}
+          {saving ? 'Sauvegarde...' : loading ? 'Chargement...' : currentStep === 'complete' ? 'Terminer' : 'Suivant'}
         </Button>
       </Box>
     </Container>
