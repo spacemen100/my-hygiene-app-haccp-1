@@ -320,21 +320,22 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </Box>
             )}
             
-            {/* User Email */}
-            <Typography 
-              variant="body1" 
+            {/* User Avatar with first letter */}
+            <Avatar 
               sx={{ 
-                mr: 1, 
-                display: { xs: 'none', lg: 'block' },
-                fontSize: { md: '0.875rem', lg: '1rem' },
-                maxWidth: { md: '150px', lg: 'none' },
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
+                width: 32,
+                height: 32,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                mr: 1,
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                border: '1px solid rgba(255,255,255,0.3)',
+                display: { xs: 'none', sm: 'flex' }
               }}
             >
-              {session.user.email}
-            </Typography>
+              {session.user.email?.charAt(0).toUpperCase() || 'U'}
+            </Avatar>
             
             <Button 
               color="inherit" 
