@@ -163,6 +163,11 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
     for (let day = 1; day <= daysInMonth; day++) {
       const dayRecords = getRecordsForDate(day);
       const stats = getTaskStats(dayRecords);
+      
+      // Debug: Log pour voir les données
+      if (dayRecords.length > 0) {
+        console.log(`Jour ${day}: ${dayRecords.length} tâches trouvées`, dayRecords);
+      }
       const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = new Date().toDateString() === dayDate.toDateString();
       const isSelected = selectedDate?.toDateString() === dayDate.toDateString();
@@ -180,7 +185,7 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
               bgcolor: isToday ? 'primary.50' : isWeekend ? 'grey.50' : 'background.paper',
               cursor: 'pointer',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'visible'
             }}
           >
             {/* Day number with task count badge */}
@@ -211,7 +216,15 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
 
             {/* Task indicators */}
             {dayRecords.length > 0 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, maxHeight: isMobile ? 30 : 50, overflow: 'hidden' }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 0.25, 
+                maxHeight: isMobile ? 30 : 50, 
+                overflow: 'visible',
+                position: 'relative',
+                zIndex: 10
+              }}>
                 {dayRecords.slice(0, isMobile ? 1 : 2).map(record => (
                   <Tooltip
                     key={record.id}
@@ -276,7 +289,8 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
                   position: 'absolute',
                   top: 4,
                   right: 4,
-                  opacity: 1
+                  opacity: 1,
+                  zIndex: 5
                 }}
               >
                 <IconButton 
