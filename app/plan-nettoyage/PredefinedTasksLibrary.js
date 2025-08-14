@@ -1,11 +1,9 @@
 // PredefinedTasksLibrary.js
 export const predefinedTasks = {
   CUISINE: {
-    "APRÈS CHAQUE UTILISATION": [
-      { name: "Nettoyage des friteuses", defaultFrequency: "after_each_use" },
-      { name: "Essuyage des surfaces (Essa)", defaultFrequency: "after_each_use" }
-    ],
     "QUOTIDIEN": [
+      { name: "Nettoyage des friteuses", defaultFrequency: "daily" },
+      { name: "Essuyage des surfaces (Essa)", defaultFrequency: "daily" },
       { name: "Sols, plinthes, grilles et siphons", defaultFrequency: "daily" },
       { name: "Désinfection des poignées de portes et interrupteurs", defaultFrequency: "daily" },
       { name: "Nettoyage des ustensiles, planches et couteaux", defaultFrequency: "daily" },
@@ -68,10 +66,8 @@ export const predefinedTasks = {
     ]
   },
   "AUTRES ZONES": {
-    "APRÈS CHAQUE UTILISATION": [
-      { name: "Essuyage des surfaces (Essa)", defaultFrequency: "after_each_use" }
-    ],
     "QUOTIDIEN": [
+      { name: "Essuyage des surfaces (Essa)", defaultFrequency: "daily" },
       { name: "Nettoyage des lave-mains", defaultFrequency: "daily" },
       { name: "Balayage/lavage des sols", defaultFrequency: "daily" },
       { name: "Désinfection des toilettes/urinoirs (si présents)", defaultFrequency: "daily" },
@@ -95,10 +91,14 @@ export const predefinedTasks = {
 };
 
 export const frequencyOptions = [
-  { value: "after_each_use", label: "Après chaque utilisation" },
   { value: "after_each_service", label: "Après chaque service" },
   { value: "daily", label: "Quotidien (avant 23h)" },
-  { value: "weekly", label: "Hebdomadaire" },
-  { value: "monthly", label: "Mensuel" },
+  { value: "every_2_days", label: "Tous les 2 jours (avant 23h)" },
+  { value: "every_3_days", label: "Tous les 3 jours (avant 23h)" },
+  { value: "every_4_days", label: "Tous les 4 jours (avant 23h)" },
+  { value: "every_5_days", label: "Tous les 5 jours (avant 23h)" },
+  { value: "every_10_days", label: "Tous les 10 jours (avant 23h)" },
+  { value: "weekly", label: "Hebdomadaire (avant 23h)" },
+  { value: "monthly", label: "Mensuel (avant 23h)" },
   { value: "custom", label: "Personnalisé" }
 ];
