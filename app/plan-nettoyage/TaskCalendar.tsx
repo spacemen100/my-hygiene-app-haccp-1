@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Tables } from '@/src/types/database';
 
 type CleaningRecordWithTask = Tables<'cleaning_records'> & {
@@ -47,30 +47,21 @@ interface TaskCalendarProps {
   records: Tables<'cleaning_records'>[];
   onEditRecord: (record: Tables<'cleaning_records'>) => void;
   onCreateTask?: (date: Date) => void;
+  onMonthChange?: (date: Date) => void;
 }
 
 type ViewType = 'day' | 'week' | 'month';
 
-export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTask }: TaskCalendarProps) {
+export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTask, onMonthChange }: TaskCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('month');
   
-  // Initialiser le calendrier avec le premier mois qui contient des records
-  const initialDate = useMemo(() => {
-    if (records.length === 0) return new Date();
-    
-    // Trouver le mois le plus ancien avec des records
-    const dates = records.map(r => new Date(r.scheduled_date));
-    const oldestDate = new Date(Math.min(...dates.map(d => d.getTime())));
-    return oldestDate;
-  }, [records]);
-  
-  // Mettre à jour la date courante quand les records changent
+  // Charger les données quand le mois change
   useEffect(() => {
-    if (records.length > 0) {
-      setCurrentDate(initialDate);
+    if (onMonthChange) {
+      onMonthChange(currentDate);
     }
-  }, [initialDate, records.length]);
+  }, [currentDate, onMonthChange]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{ element: HTMLElement; records: Tables<'cleaning_records'>[] } | null>(null);
   const theme = useTheme();

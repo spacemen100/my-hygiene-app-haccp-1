@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tables } from '@/src/types/database';
 import { useSnackbar } from 'notistack';
@@ -31,7 +31,8 @@ export default function CleaningPlan() {
 
   useEffect(() => {
     fetchTasks();
-    fetchRecords();
+    // Charger les records du mois actuel au démarrage
+    fetchRecordsForMonth(new Date());
   }, []);
 
   const fetchTasks = async () => {
@@ -53,7 +54,7 @@ export default function CleaningPlan() {
     }
   };
 
-  const fetchRecords = async (limit?: number) => {
+  const fetchRecords = async (limit?: number, startDate?: string, endDate?: string) => {
     let query = supabase
       .from('cleaning_records')
       .select(`
@@ -73,6 +74,11 @@ export default function CleaningPlan() {
       `)
       .order('scheduled_date', { ascending: false });
     
+    // Filtrage par plage de dates si spécifiée
+    if (startDate && endDate) {
+      query = query.gte('scheduled_date', startDate).lte('scheduled_date', endDate);
+    }
+    
     if (limit) {
       query = query.limit(limit);
     }
@@ -85,6 +91,44 @@ export default function CleaningPlan() {
       setRecords(data || []);
     }
   };
+
+  // Nouvelle fonction pour charger les records d'un mois spécifique
+  const fetchRecordsForMonth = useCallback(async (date: Date) => {
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    
+    const startDate = startOfMonth.toISOString().split('T')[0];
+    const endDate = endOfMonth.toISOString().split('T')[0];
+    
+    let query = supabase
+      .from('cleaning_records')
+      .select(`
+        *,
+        cleaning_tasks:cleaning_task_id(
+          id, 
+          name, 
+          frequency, 
+          action_to_perform,
+          cleaning_zones:cleaning_zone_id(id, name),
+          cleaning_sub_zones:cleaning_sub_zone_id(id, name),
+          cleaning_products:cleaning_product_id(id, name),
+          cleaning_equipment:cleaning_equipment_id(id, name)
+        ),
+        users:user_id(id, email),
+        employees:employee_id(id, first_name, last_name)
+      `)
+      .gte('scheduled_date', startDate)
+      .lte('scheduled_date', endDate)
+      .order('scheduled_date', { ascending: false });
+    
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching records for month:', error);
+    } else {
+      console.log('Fetched records for month:', data);
+      setRecords(data || []);
+    }
+  }, []);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -461,6 +505,7 @@ export default function CleaningPlan() {
           tasks={tasks} 
           records={records} 
           onRefresh={() => fetchRecords()}
+          onMonthChange={fetchRecordsForMonth}
         />
       </Container>
       

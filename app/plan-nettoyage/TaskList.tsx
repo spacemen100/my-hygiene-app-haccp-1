@@ -49,11 +49,12 @@ interface TaskListProps {
   tasks: Tables<'cleaning_tasks'>[];
   records: Tables<'cleaning_records'>[];
   onRefresh: () => void;
+  onMonthChange?: (date: Date) => void;
 }
 
 type TabValue = 'all' | 'todo' | 'completed' | 'overdue' | 'today' | 'calendar';
 
-export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
+export default function TaskList({ tasks, records, onRefresh, onMonthChange }: TaskListProps) {
   const { employee } = useEmployee();
   const { user } = useAuth();
   const [loadingMore, setLoadingMore] = useState(false);
@@ -294,6 +295,7 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
             tasks={tasks} 
             records={records} 
             onEditRecord={handleEditRecord}
+            onMonthChange={onMonthChange}
           />
         ) : (
           <>
