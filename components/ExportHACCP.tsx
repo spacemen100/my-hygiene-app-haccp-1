@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useEmployee } from '@/contexts/EmployeeContext';
 import { useSnackbar } from 'notistack';
+import jsPDF from 'jspdf';
 import {
   AssignmentTurnedIn as ClipboardCheckIcon,
   Label as TagIcon,
@@ -323,194 +324,332 @@ export default function ExportHACCP() {
     }
   }, [startDate, endDate, selectedModules, employee, fetchDeliveries, fetchLabels, fetchDLCPrints, fetchTemperatureControls, fetchCoolingTracking, fetchCleaningPlan, enqueueSnackbar]);
 
-  const generatePDFContent = (data: HACCPReportData): string => {
-    let content = `Rapport Complet - Contrôle HACCP
-Fait le ${data.period.reportDate}
-Période couverte : du ${data.period.startDate} au ${data.period.endDate}
+  const generatePDF = (data: HACCPReportData): jsPDF => {
+    const doc = new jsPDF();
+    
+    // Configuration des couleurs
+    const primaryColor = '#1976d2';
+    const secondaryColor = '#f5f5f5';
+    const textColor = '#333333';
+    const successColor = '#4caf50';
+    const warningColor = '#ff9800';
+    const errorColor = '#f44336';
 
-1. Profil de l'établissement
-Nom : ${data.establishment.name}
-`;
+    let yPos = 20;
 
-    // Contrôle à réception
+    // Fonction utilitaire pour ajouter une nouvelle page si nécessaire
+    const checkPageBreak = (neededSpace: number = 20) => {
+      if (yPos + neededSpace > 280) {
+        doc.addPage();
+        yPos = 20;
+        return true;
+      }
+      return false;
+    };
+
+    // Header avec logo et titre
+    doc.setFillColor(primaryColor);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RAPPORT HACCP', 20, 25);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Généré le ${data.period.reportDate}`, 150, 25);
+    doc.text(`Période : du ${data.period.startDate} au ${data.period.endDate}`, 150, 32);
+
+    yPos = 60;
+
+    // Section 1: Profil de l'établissement
+    doc.setTextColor(textColor);
+    doc.setFillColor(secondaryColor);
+    doc.rect(10, yPos - 5, 190, 15, 'F');
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('1. PROFIL DE L\'ÉTABLISSEMENT', 15, yPos + 5);
+    
+    yPos += 25;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Nom : ${data.establishment.name}`, 20, yPos);
+    
+    yPos += 20;
+
+    // Section 2: Contrôle à réception
     if (selectedModules.controleReception && data.deliveries) {
-      content += `
-2. Contrôle à réception
-Liste des livraisons contrôlées :
-
-Fournisseur    N° de BL    Date et heure de livraison
-`;
-      data.deliveries.forEach((delivery: any) => {
-        const supplierName = delivery.supplier?.name || 'Non spécifié';
-        const deliveryNumber = delivery.delivery_number || '(vide)';
-        const deliveryDate = delivery.delivery_date ? 
-          format(new Date(delivery.delivery_date), 'dd/MM/yyyy - HH\'h\'mm', { locale: fr }) : 
-          'Non spécifié';
-        content += `${supplierName}    ${deliveryNumber}    ${deliveryDate}\n`;
-      });
-
-      const missingBLs = data.deliveries.filter((d: any) => !d.delivery_number);
-      if (missingBLs.length > 0) {
-        content += `
-Observations :
-Numéros de BL manquants : ${missingBLs.map((d: any) => d.supplier?.name || 'Fournisseur non spécifié').join(', ')}.
-`;
-      }
-
-      const nonCompliantDeliveries = data.deliveries.filter((d: any) => !d.is_compliant);
-      if (nonCompliantDeliveries.length === 0) {
-        content += `
-Aucune anomalie signalée pour les livraisons.
-`;
-      }
-    }
-
-    // Enregistrement des étiquettes
-    if (selectedModules.etiquettes && data.labels) {
-      content += `
-3. Enregistrement des étiquettes
-`;
-      if (data.labels.length > 0) {
-        content += `Étiquettes enregistrées : ${data.labels.length}\n`;
-        data.labels.slice(0, 5).forEach((label: any) => {
-          const labelDate = label.created_at ? 
-            format(new Date(label.created_at), 'dd/MM/yyyy - HH\'h\'mm', { locale: fr }) : 
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('2. CONTRÔLE À RÉCEPTION', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Nombre de livraisons contrôlées : ${data.deliveries.length}`, 20, yPos);
+      
+      yPos += 15;
+      
+      // Tableau des livraisons
+      if (data.deliveries.length > 0) {
+        // Headers du tableau
+        doc.setFont('helvetica', 'bold');
+        doc.text('Fournisseur', 20, yPos);
+        doc.text('N° BL', 80, yPos);
+        doc.text('Date/Heure', 130, yPos);
+        doc.text('Statut', 170, yPos);
+        
+        yPos += 8;
+        doc.line(15, yPos, 195, yPos); // Ligne de séparation
+        yPos += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        
+        data.deliveries.slice(0, 10).forEach((delivery: any) => {
+          checkPageBreak();
+          
+          const supplierName = (delivery.supplier?.name || 'Non spécifié').substring(0, 15);
+          const deliveryNumber = (delivery.delivery_number || '(vide)').substring(0, 12);
+          const deliveryDate = delivery.delivery_date ? 
+            format(new Date(delivery.delivery_date), 'dd/MM/yy HH:mm', { locale: fr }) : 
             'Non spécifié';
-          content += `Date et heure : ${labelDate}\n`;
+          
+          doc.text(supplierName, 20, yPos);
+          doc.text(deliveryNumber, 80, yPos);
+          doc.text(deliveryDate, 130, yPos);
+          
+          // Statut avec couleur
+          if (delivery.is_compliant) {
+            doc.setTextColor(successColor);
+            doc.text('✓', 170, yPos);
+          } else {
+            doc.setTextColor(errorColor);
+            doc.text('✗', 170, yPos);
+          }
+          doc.setTextColor(textColor);
+          
+          yPos += 8;
         });
-      } else {
-        content += `Aucune étiquette enregistrée pour cette période.\n`;
+
+        if (data.deliveries.length > 10) {
+          yPos += 5;
+          doc.setFont('helvetica', 'italic');
+          doc.text(`... et ${data.deliveries.length - 10} autres livraisons`, 20, yPos);
+          doc.setFont('helvetica', 'normal');
+        }
       }
+
+      yPos += 15;
+
+      // Observations
+      const missingBLs = data.deliveries.filter((d: any) => !d.delivery_number);
+      const nonCompliantDeliveries = data.deliveries.filter((d: any) => !d.is_compliant);
+      
+      if (missingBLs.length > 0 || nonCompliantDeliveries.length > 0) {
+        checkPageBreak(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Observations :', 20, yPos);
+        yPos += 10;
+        doc.setFont('helvetica', 'normal');
+        
+        if (missingBLs.length > 0) {
+          doc.setTextColor(warningColor);
+          doc.text(`• ${missingBLs.length} numéro(s) de BL manquant(s)`, 25, yPos);
+          yPos += 8;
+        }
+        
+        if (nonCompliantDeliveries.length > 0) {
+          doc.setTextColor(errorColor);
+          doc.text(`• ${nonCompliantDeliveries.length} livraison(s) non conforme(s)`, 25, yPos);
+          yPos += 8;
+        }
+        
+        doc.setTextColor(textColor);
+      }
+
+      yPos += 15;
     }
 
-    // Impression des DLC secondaires
-    if (selectedModules.impressionDLC && data.dlcPrints) {
-      content += `
-4. Impression des DLC secondaires
-Produits contrôlés :
-
-Signataire    Panier    Produit    Quantité    Date d'impression    Date de péremption
-`;
-      if (data.dlcPrints.length > 0) {
-        data.dlcPrints.forEach((print: any) => {
-          content += `${print.employee_name || 'Non spécifié'}    ${print.basket || 'Non spécifié'}    ${print.product_name || 'Non spécifié'}    ${print.quantity || 0}    ${print.print_date ? format(new Date(print.print_date), 'dd/MM/yyyy') : 'Non spécifié'}    ${print.expiry_date ? format(new Date(print.expiry_date), 'dd/MM/yyyy') : 'Non spécifié'}\n`;
-        });
-      } else {
-        content += `Aucune impression DLC enregistrée pour cette période.\n`;
-      }
-    }
-
-    // Contrôle des enceintes froides
+    // Section 3: Enceintes froides
     if (selectedModules.enceintesFroides && data.temperatureControls) {
-      const totalExpected = 16; // À adapter selon votre configuration
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('3. CONTRÔLE DES ENCEINTES FROIDES', 15, yPos + 5);
+      
+      yPos += 25;
+      
+      const totalExpected = 16;
       const actualReadings = data.temperatureControls.length;
       const conformityRate = actualReadings > 0 ? (actualReadings / totalExpected * 100).toFixed(1) : '0.0';
       
-      content += `
-5. Contrôle des enceintes froides
-Statut : ${actualReadings}/${totalExpected} relevés réalisés (${conformityRate} % de conformité).
-Détails des relevés :
-
-Signataire    Tâche    Zone    Date    Heure    Température    Conformité    Action corrective
-`;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Relevés réalisés : ${actualReadings}/${totalExpected} (${conformityRate}%)`, 20, yPos);
       
-      data.temperatureControls.forEach((control: any) => {
-        const controlDate = control.control_date ? format(new Date(control.control_date), 'dd/MM/yyyy') : 'Non spécifié';
-        const controlTime = control.control_date ? format(new Date(control.control_date), 'HH\'h\'mm') : 'Non spécifié';
-        const compliance = control.is_compliant ? 'Conforme' : 'Non conforme';
-        content += `${control.employee_name || 'Non spécifié'}    Relevé température    ${control.zone_name || control.storage_type}    ${controlDate}    ${controlTime}    ${control.temperature} °C    ${compliance}    ${control.corrective_action || '-'}\n`;
-      });
+      // Barre de progression
+      const progressWidth = 100;
+      const progressFill = (actualReadings / totalExpected) * progressWidth;
+      
+      yPos += 10;
+      doc.setFillColor(220, 220, 220);
+      doc.rect(20, yPos - 3, progressWidth, 6, 'F');
+      
+      const progressColor = parseFloat(conformityRate) >= 80 ? successColor : 
+                           parseFloat(conformityRate) >= 50 ? warningColor : errorColor;
+      doc.setFillColor(progressColor);
+      doc.rect(20, yPos - 3, progressFill, 6, 'F');
+      
+      yPos += 15;
 
-      const compliantControls = data.temperatureControls.filter((c: any) => c.is_compliant);
-      if (compliantControls.length === data.temperatureControls.length && data.temperatureControls.length > 0) {
-        content += `
-Observations :
-Toutes les températures sont conformes aux normes HACCP.
-`;
+      // Détails des relevés
+      if (data.temperatureControls.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Zone', 20, yPos);
+        doc.text('Date', 80, yPos);
+        doc.text('Température', 120, yPos);
+        doc.text('Conformité', 160, yPos);
+        
+        yPos += 8;
+        doc.line(15, yPos, 195, yPos);
+        yPos += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        
+        data.temperatureControls.slice(0, 8).forEach((control: any) => {
+          checkPageBreak();
+          
+          const zoneName = (control.zone_name || control.storage_type || 'Zone').substring(0, 15);
+          const controlDate = control.control_date ? 
+            format(new Date(control.control_date), 'dd/MM/yy', { locale: fr }) : 
+            'N/A';
+          const temperature = `${control.temperature || 0}°C`;
+          
+          doc.text(zoneName, 20, yPos);
+          doc.text(controlDate, 80, yPos);
+          doc.text(temperature, 120, yPos);
+          
+          if (control.is_compliant) {
+            doc.setTextColor(successColor);
+            doc.text('Conforme', 160, yPos);
+          } else {
+            doc.setTextColor(errorColor);
+            doc.text('Non conforme', 160, yPos);
+          }
+          doc.setTextColor(textColor);
+          
+          yPos += 8;
+        });
       }
+      
+      yPos += 15;
     }
 
-    // Suivi de refroidissement
-    if (selectedModules.suiviRefroidissement) {
-      content += `
-6. Suivi de refroidissement
-`;
-      if (data.coolingTracking && data.coolingTracking.length > 0) {
-        content += `Suivi enregistré pour ${data.coolingTracking.length} produit(s).\n`;
-      } else {
-        content += `Aucune donnée enregistrée pour cette période.\n`;
-      }
-    }
-
-    // Plan de nettoyage
+    // Section 4: Plan de nettoyage
     if (selectedModules.planNettoyage && data.cleaningPlan) {
-      const totalExpectedTasks = 157; // À adapter selon votre configuration
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('4. PLAN DE NETTOYAGE', 15, yPos + 5);
+      
+      yPos += 25;
+      
+      const totalExpectedTasks = 157;
       const completedTasks = data.cleaningPlan.length;
       const completionRate = completedTasks > 0 ? (completedTasks / totalExpectedTasks * 100).toFixed(1) : '0.0';
       
-      content += `
-7. Plan de nettoyage
-Statut : ${completedTasks}/${totalExpectedTasks} tâches réalisées (${completionRate} %).
-Détails des tâches :
-
-Signataire    Échéance    Fréquence    Zone    Action    Date et heure
-`;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Tâches réalisées : ${completedTasks}/${totalExpectedTasks} (${completionRate}%)`, 20, yPos);
       
-      data.cleaningPlan.forEach((task: any) => {
-        const completedDate = task.completed_at ? 
-          format(new Date(task.completed_at), 'dd/MM/yyyy - HH\'h\'mm', { locale: fr }) : 
-          'Non spécifié';
-        content += `${task.employee_name || 'Non spécifié'}    ${task.frequency || 'Non spécifié'}    ${task.frequency}    ${task.zone || 'Non spécifié'}    ${task.task_name || 'Non spécifié'}    ${completedDate}\n`;
-      });
-
-      if (parseFloat(completionRate) < 50) {
-        content += `
-Observations :
-Tâches de nettoyage partiellement réalisées (${completionRate} %).
-Priorité à accorder aux zones critiques.
-`;
-      }
+      // Barre de progression pour le nettoyage
+      yPos += 10;
+      const cleaningProgressFill = (completedTasks / totalExpectedTasks) * 100;
+      
+      doc.setFillColor(220, 220, 220);
+      doc.rect(20, yPos - 3, 100, 6, 'F');
+      
+      const cleaningColor = parseFloat(completionRate) >= 80 ? successColor : 
+                           parseFloat(completionRate) >= 50 ? warningColor : errorColor;
+      doc.setFillColor(cleaningColor);
+      doc.rect(20, yPos - 3, cleaningProgressFill, 6, 'F');
+      
+      yPos += 20;
     }
 
-    // Actions correctives recommandées
-    content += `
-8. Actions correctives recommandées
-`;
+    // Section 5: Actions correctives recommandées
+    checkPageBreak(40);
+    
+    doc.setFillColor(secondaryColor);
+    doc.rect(10, yPos - 5, 190, 15, 'F');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('5. ACTIONS CORRECTIVES RECOMMANDÉES', 15, yPos + 5);
+    
+    yPos += 25;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+
+    let hasRecommendations = false;
 
     if (selectedModules.controleReception && data.deliveries) {
       const missingBLs = data.deliveries.filter((d: any) => !d.delivery_number);
       if (missingBLs.length > 0) {
-        content += `Contrôle à réception :
-Vérifier systématiquement les numéros de BL manquants avec les fournisseurs concernés.
-`;
+        hasRecommendations = true;
+        doc.setTextColor(warningColor);
+        doc.text('• Vérifier les numéros de BL manquants avec les fournisseurs', 20, yPos);
+        yPos += 8;
       }
     }
 
     if (selectedModules.planNettoyage && data.cleaningPlan) {
       const completionRate = data.cleaningPlan.length / 157 * 100;
       if (completionRate < 80) {
-        content += `Plan de nettoyage :
-Augmenter le taux de réalisation des tâches (objectif : 100 %).
-Contrôler la fréquence des nettoyages dans les zones critiques.
-`;
+        hasRecommendations = true;
+        doc.setTextColor(errorColor);
+        doc.text('• Augmenter le taux de réalisation des tâches de nettoyage', 20, yPos);
+        yPos += 8;
       }
     }
 
     if (selectedModules.enceintesFroides && data.temperatureControls) {
       const completionRate = data.temperatureControls.length / 16 * 100;
       if (completionRate < 100) {
-        content += `Enceintes froides :
-Compléter les relevés manquants pour atteindre 100 % de conformité.
-`;
+        hasRecommendations = true;
+        doc.setTextColor(errorColor);
+        doc.text('• Compléter les relevés de température manquants', 20, yPos);
+        yPos += 8;
       }
     }
 
-    content += `
-Signature du responsable :
-[À compléter]
-Date : ${data.period.reportDate}`;
+    if (!hasRecommendations) {
+      doc.setTextColor(successColor);
+      doc.text('Aucune action corrective nécessaire pour cette période.', 20, yPos);
+    }
 
-    return content;
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(10);
+      doc.text(`Rapport HACCP - Page ${i}/${pageCount}`, 15, 285);
+      doc.text(`Généré le ${format(new Date(), 'dd/MM/yyyy à HH:mm')}`, 140, 285);
+    }
+
+    return doc;
   };
 
   const handleGenerateReport = async () => {
@@ -523,20 +662,13 @@ Date : ${data.period.reportDate}`;
     try {
       const reportData = await generateHACCPReport();
       if (reportData) {
-        const pdfContent = generatePDFContent(reportData);
+        const pdf = generatePDF(reportData);
         
-        // Créer et télécharger le fichier
-        const blob = new Blob([pdfContent], { type: 'text/plain;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `rapport-haccp-${format(startDate, 'yyyy-MM-dd')}-au-${format(endDate, 'yyyy-MM-dd')}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        // Télécharger le PDF
+        const fileName = `rapport-haccp-${format(startDate, 'yyyy-MM-dd')}-au-${format(endDate, 'yyyy-MM-dd')}.pdf`;
+        pdf.save(fileName);
 
-        enqueueSnackbar('Rapport généré avec succès', { variant: 'success' });
+        enqueueSnackbar('Rapport PDF généré avec succès', { variant: 'success' });
       }
     } catch (error) {
       console.error('Erreur lors de la génération du rapport:', error);
@@ -561,14 +693,14 @@ Date : ${data.period.reportDate}`;
     try {
       const reportData = await generateHACCPReport();
       if (reportData) {
-        const pdfContent = generatePDFContent(reportData);
+        const pdf = generatePDF(reportData);
         
         // Ici vous pouvez implémenter l'envoi par email
         // Par exemple, utiliser une API ou service d'email
         console.log('Envoi du rapport par email:', {
           recipients: emailRecipients,
           message: customMessage,
-          reportContent: pdfContent,
+          pdf: pdf,
         });
 
         enqueueSnackbar('Rapport envoyé avec succès', { variant: 'success' });
