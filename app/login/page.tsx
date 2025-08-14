@@ -1,7 +1,8 @@
 // app/login/page.tsx
 'use client';
 import { useAuth } from '@/components/AuthProvider';
-import { Box, Button, TextField, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, TextField, Typography, CircularProgress, IconButton, InputAdornment, Link } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -119,12 +121,28 @@ export default function LoginPage() {
         <TextField
           fullWidth
           label="Mot de passe"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           margin="normal"
           required
           sx={{ mb: { xs: 2, md: 3 } }}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                    aria-label="toggle password visibility"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+          }}
         />
 
         <Button
@@ -149,7 +167,32 @@ export default function LoginPage() {
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
         </Button>
 
-        <Box sx={{ textAlign: 'center', mt: { xs: 2, md: 3 } }}>
+        {/* Lien vers l'inscription */}
+        <Box sx={{ textAlign: 'center', mt: { xs: 2, md: 3 }, mb: { xs: 2, md: 3 } }}>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+          >
+            Vous n'avez pas de compte ?{' '}
+            <Link
+              href="/register"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  textDecoration: 'underline',
+                  color: 'primary.dark'
+                }
+              }}
+            >
+              Créez-en un ici
+            </Link>
+          </Typography>
+        </Box>
+
+        <Box sx={{ textAlign: 'center', mt: { xs: 1, md: 2 } }}>
           <Typography 
             variant="body2" 
             color="text.secondary"

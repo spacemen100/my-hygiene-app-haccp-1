@@ -27,7 +27,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton
+  IconButton,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Print,
@@ -39,7 +41,8 @@ import {
   CalendarMonth,
   Category,
   Close,
-  HelpOutline
+  HelpOutline,
+  Search
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import JsBarcode from 'jsbarcode';
@@ -107,6 +110,7 @@ export default function LabelPrinting() {
   });
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [refreshHistory, setRefreshHistory] = useState(0);
+  const [currentTab, setCurrentTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
 
   // Fonction pour générer un code-barres unique
@@ -333,8 +337,47 @@ export default function LabelPrinting() {
       </Paper>
 
       <Container maxWidth="xl">
-        
-        {/* Statistiques rapides */}
+        {/* Onglets */}
+        <Paper sx={{ mb: 4 }}>
+          <Tabs
+            value={currentTab}
+            onChange={(e, newValue) => setCurrentTab(newValue)}
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                minHeight: 60,
+                fontSize: '1rem',
+                fontWeight: 500,
+              },
+            }}
+          >
+            <Tab
+              icon={<Print />}
+              label="Impression"
+              iconPosition="start"
+              sx={{
+                '& .MuiTab-iconWrapper': {
+                  mr: 1
+                }
+              }}
+            />
+            <Tab
+              icon={<Search />}
+              label="Recherche"
+              iconPosition="start"
+              sx={{
+                '& .MuiTab-iconWrapper': {
+                  mr: 1
+                }
+              }}
+            />
+          </Tabs>
+        </Paper>
+
+        {/* Contenu de l'onglet Impression */}
+        {currentTab === 0 && (
+          <Box>
+            {/* Statistiques rapides */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }, gap: 3, mb: 4 }}>
           <Box>
             <Card sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { transform: 'translateY(-2px)' } }}>
@@ -751,13 +794,183 @@ export default function LabelPrinting() {
           </Box>
         </Box>
 
-        {/* Historique des étiquettes */}
-        <Box sx={{ mt: 4 }}>
-          <LabelHistoryViewer 
-            onReprint={handleReprint}
-            refreshTrigger={refreshHistory}
-          />
-        </Box>
+            {/* Historique des étiquettes */}
+            <Box sx={{ mt: 4 }}>
+              <LabelHistoryViewer 
+                onReprint={handleReprint}
+                refreshTrigger={refreshHistory}
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Contenu de l'onglet Recherche */}
+        {currentTab === 1 && (
+          <Box>
+            <Card>
+              <CardContent sx={{ p: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+                  <Avatar sx={{ bgcolor: '#2196f320', color: '#2196f3' }}>
+                    <Search />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      Recherche de types d'étiquettes
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Trouvez rapidement le type d'étiquette adapté à vos besoins
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3, mb: 4 }}>
+                  <TextField
+                    label="Recherche par catégorie"
+                    variant="outlined"
+                    fullWidth
+                    placeholder="Ex: Viande, Poisson, Légumes..."
+                    slotProps={{
+                      input: {
+                        startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />
+                      }
+                    }}
+                  />
+                  <TextField
+                    label="Recherche par sous-catégorie"
+                    variant="outlined"
+                    fullWidth
+                    placeholder="Ex: Hachée, Tranchée, Cuite..."
+                    slotProps={{
+                      input: {
+                        startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />
+                      }
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      // Filtrer par durée courte (1-2 jours)
+                    }}
+                  >
+                    Courte durée (1-2j)
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      // Filtrer par durée moyenne (3-5 jours)
+                    }}
+                  >
+                    Durée moyenne (3-5j)
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      // Filtrer par longue durée (6+ jours)
+                    }}
+                  >
+                    Longue durée (6j+)
+                  </Button>
+                  <Button variant="outlined" color="secondary" size="small">
+                    Réinitialiser
+                  </Button>
+                </Box>
+
+                {/* Résultats de recherche */}
+                <Paper sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                    Types d'étiquettes disponibles
+                  </Typography>
+                  
+                  <Box sx={{ display: 'grid', gap: 2, maxHeight: 400, overflowY: 'auto' }}>
+                    {labelTypes.map((type) => {
+                      const calculatedDate = new Date();
+                      calculatedDate.setDate(calculatedDate.getDate() + type.shelf_life_days);
+                      
+                      return (
+                        <Paper
+                          key={type.id}
+                          sx={{
+                            p: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              bgcolor: 'primary.light',
+                              transform: 'translateY(-1px)',
+                              boxShadow: 2
+                            }
+                          }}
+                          onClick={() => {
+                            handleLabelTypeChange(type.id);
+                            setCurrentTab(0); // Revenir à l'onglet impression
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 1 }}>
+                                {type.category} - {type.sub_category}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Durée de conservation : {type.shelf_life_days} jour{type.shelf_life_days > 1 ? 's' : ''}
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Chip
+                                  label={`${type.shelf_life_days}j`}
+                                  size="small"
+                                  color={
+                                    type.shelf_life_days <= 2 ? 'error' :
+                                    type.shelf_life_days <= 5 ? 'warning' : 'success'
+                                  }
+                                />
+                                <Typography variant="body2" color="text.secondary">
+                                  DLC automatique → {calculatedDate.toLocaleDateString('fr-FR')}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                                <LocalOffer sx={{ fontSize: 18 }} />
+                              </Avatar>
+                              <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
+                                Sélectionner
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+                  
+                  {labelTypes.length === 0 && (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                      <Typography variant="body1" color="text.secondary">
+                        Aucun type d'étiquette trouvé
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Vérifiez vos critères de recherche
+                      </Typography>
+                    </Box>
+                  )}
+                </Paper>
+
+                <Alert severity="info">
+                  <Typography variant="body2">
+                    💡 <strong>Conseil :</strong> Cliquez sur un type d'étiquette pour le sélectionner automatiquement dans l'onglet Impression. 
+                    La date d'expiration sera calculée automatiquement selon la durée de conservation.
+                  </Typography>
+                </Alert>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
 
         {/* Modal Guide */}
         <Dialog 
