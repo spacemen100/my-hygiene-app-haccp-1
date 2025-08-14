@@ -126,7 +126,7 @@ const CleaningScheduler = () => {
       let zoneId = null;
       if (selectedZone) {
         // First try to find existing zone
-        let { data: zoneData, error: zoneError } = await supabase
+        const { data: zoneData, error: zoneError } = await supabase
           .from('cleaning_zones')
           .select('id')
           .eq('name', selectedZone)
