@@ -122,6 +122,39 @@ const CleaningScheduler = () => {
         return;
       }
 
+      // Create or find the zone UUID by name
+      let zoneId = null;
+      if (selectedZone) {
+        // First try to find existing zone
+        let { data: zoneData, error: zoneError } = await supabase
+          .from('cleaning_zones')
+          .select('id')
+          .eq('name', selectedZone)
+          .single();
+        
+        if (zoneError && zoneError.code === 'PGRST116') {
+          // Zone doesn't exist, create it
+          const { data: newZone, error: createError } = await supabase
+            .from('cleaning_zones')
+            .insert([{
+              name: selectedZone,
+              description: `Zone ${selectedZone} créée automatiquement`
+            }])
+            .select('id')
+            .single();
+          
+          if (createError) {
+            throw new Error(`Erreur lors de la création de la zone ${selectedZone}: ${createError.message}`);
+          }
+          
+          zoneId = newZone.id;
+        } else if (zoneError) {
+          throw new Error(`Erreur lors de la recherche de la zone ${selectedZone}: ${zoneError.message}`);
+        } else {
+          zoneId = zoneData.id;
+        }
+      }
+
       // Create all tasks and their schedules
       for (const task of tasksToSubmit) {
         // First, create the base task
@@ -130,7 +163,8 @@ const CleaningScheduler = () => {
           .insert([{
             name: task.name,
             frequency: task.customFrequency,
-            cleaning_zone_id: selectedZone, // You might need to adjust this based on your actual zone IDs
+            cleaning_zone_id: zoneId,
+            action_to_perform: `Tâche ${task.name} - ${task.category}`,
             is_active: true
           }])
           .select();
@@ -155,7 +189,13 @@ const CleaningScheduler = () => {
         }
       }
 
-      // Success feedback could be handled here with a proper notification system
+      // Success feedback
+      alert(`Plan de nettoyage créé avec succès ! ${tasksToSubmit.length} tâches ont été programmées pour ${daysToSchedule} jours.`);
+      
+      // Reset form
+      setSelectedZone('');
+      setSelectedTasks([]);
+      
     } catch (error) {
       console.error("Erreur lors de la création du plan:", error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
