@@ -240,7 +240,7 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
                           ? record.is_compliant 
                             ? 'success' 
                             : 'warning'
-                          : stats.overdue > 0 ? 'error' : 'default'
+                          : 'error'
                       }
                       variant={record.is_completed ? 'filled' : 'outlined'}
                     />
