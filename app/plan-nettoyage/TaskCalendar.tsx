@@ -22,7 +22,9 @@ import {
   Badge,
   useTheme,
   useMediaQuery,
-  Fab
+  Fab,
+  Menu,
+  MenuList
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -45,6 +47,7 @@ interface TaskCalendarProps {
 export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTask }: TaskCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<{ element: HTMLElement; records: Tables<'cleaning_records'>[] } | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -244,9 +247,24 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
                   </Tooltip>
                 ))}
                 {dayRecords.length > (isMobile ? 1 : 2) && (
-                  <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '0.6rem' }}>
-                    +{dayRecords.length - (isMobile ? 1 : 2)} autres
-                  </Typography>
+                  <Chip
+                    size="small"
+                    label={`+${dayRecords.length - (isMobile ? 1 : 2)} autres`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuAnchor({ element: e.currentTarget as HTMLElement, records: dayRecords });
+                    }}
+                    sx={{
+                      fontSize: '0.6rem',
+                      height: 16,
+                      cursor: 'pointer',
+                      '& .MuiChip-label': {
+                        px: 0.5
+                      }
+                    }}
+                    color="info"
+                    variant="outlined"
+                  />
                 )}
               </Box>
             )}
@@ -501,6 +519,73 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
           </Fab>
         )}
       </CardContent>
+
+      {/* Menu pour afficher toutes les tâches d'un jour */}
+      <Menu
+        anchorEl={menuAnchor?.element}
+        open={Boolean(menuAnchor)}
+        onClose={() => setMenuAnchor(null)}
+        transformOrigin={{ horizontal: 'center', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+        PaperProps={{
+          sx: {
+            maxWidth: 300,
+            maxHeight: 400
+          }
+        }}
+      >
+        <MenuList dense>
+          <Typography variant="subtitle2" sx={{ px: 2, py: 1, fontWeight: 600, borderBottom: 1, borderColor: 'divider' }}>
+            Toutes les tâches du jour
+          </Typography>
+          {menuAnchor?.records.map((record) => (
+            <MenuItem
+              key={record.id}
+              onClick={() => {
+                onEditRecord(record);
+                setMenuAnchor(null);
+              }}
+              sx={{
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                py: 1.5,
+                borderLeft: 3,
+                borderColor: record.is_completed 
+                  ? record.is_compliant 
+                    ? 'success.main' 
+                    : 'warning.main'
+                  : 'error.main',
+                '&:hover': {
+                  bgcolor: 'grey.50'
+                }
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {getTaskName(record.cleaning_task_id || '', record)}
+              </Typography>
+              <Chip
+                size="small"
+                label={
+                  record.is_completed 
+                    ? record.is_compliant 
+                      ? 'Conforme' 
+                      : 'Non conforme'
+                    : 'En attente'
+                }
+                color={
+                  record.is_completed 
+                    ? record.is_compliant 
+                      ? 'success' 
+                      : 'warning'
+                    : 'error'
+                }
+                variant="outlined"
+                sx={{ mt: 0.5 }}
+              />
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
     </Card>
   );
 }
