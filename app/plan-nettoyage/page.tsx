@@ -28,6 +28,7 @@ export default function CleaningPlan() {
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [activeForm, setActiveForm] = useState<'none' | 'scheduler' | 'single' | 'repeat'>('none');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
@@ -48,43 +49,6 @@ export default function CleaningPlan() {
     }
   }, []);
 
-  const fetchRecords = async (limit?: number, startDate?: string, endDate?: string) => {
-    let query = supabase
-      .from('cleaning_records')
-      .select(`
-        *,
-        cleaning_tasks:cleaning_task_id(
-          id, 
-          name, 
-          frequency, 
-          action_to_perform,
-          cleaning_zones:cleaning_zone_id(id, name),
-          cleaning_sub_zones:cleaning_sub_zone_id(id, name),
-          cleaning_products:cleaning_product_id(id, name),
-          cleaning_equipment:cleaning_equipment_id(id, name)
-        ),
-        users:user_id(id, email),
-        employees:employee_id(id, first_name, last_name)
-      `)
-      .order('scheduled_date', { ascending: false });
-    
-    // Filtrage par plage de dates si spécifiée
-    if (startDate && endDate) {
-      query = query.gte('scheduled_date', startDate).lte('scheduled_date', endDate);
-    }
-    
-    if (limit) {
-      query = query.limit(limit);
-    }
-    
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error fetching records:', error);
-    } else {
-      console.log('Fetched records with relations:', data);
-      setRecords(data || []);
-    }
-  };
 
   // Nouvelle fonction pour charger les records d'un mois spécifique
   const fetchRecordsForMonth = useCallback(async (date: Date) => {
@@ -93,6 +57,9 @@ export default function CleaningPlan() {
     
     const startDate = startOfMonth.toISOString().split('T')[0];
     const endDate = endOfMonth.toISOString().split('T')[0];
+    
+    // Mettre à jour le mois courant
+    setCurrentMonth(date);
     
     const query = supabase
       .from('cleaning_records')
@@ -123,6 +90,11 @@ export default function CleaningPlan() {
       setRecords(data || []);
     }
   }, []);
+
+  // Fonction pour rafraîchir les données du mois actuel
+  const refreshCurrentMonth = useCallback(() => {
+    fetchRecordsForMonth(currentMonth);
+  }, [fetchRecordsForMonth, currentMonth]);
 
   useEffect(() => {
     fetchTasks();
@@ -185,7 +157,7 @@ export default function CleaningPlan() {
       } else {
         console.log('Test data created successfully!');
         fetchTasks();
-        fetchRecords();
+        refreshCurrentMonth();
         enqueueSnackbar('Données de test créées!', { variant: 'success' });
       }
     } catch (error) {
@@ -470,7 +442,7 @@ export default function CleaningPlan() {
             <Box sx={{ p: 3 }}>
               <CleaningTaskForm 
                 tasks={tasks}
-                onSuccess={() => fetchRecords()} 
+                onSuccess={refreshCurrentMonth} 
                 enqueueSnackbar={enqueueSnackbar}
               />
             </Box>
@@ -494,7 +466,7 @@ export default function CleaningPlan() {
             <Box sx={{ p: 3 }}>
               <RepeatTaskForm 
                 tasks={tasks} 
-                onSuccess={() => fetchRecords()}
+                onSuccess={refreshCurrentMonth}
               />
             </Box>
           </Card>
@@ -504,7 +476,7 @@ export default function CleaningPlan() {
         <TaskList 
           tasks={tasks} 
           records={records} 
-          onRefresh={() => fetchRecords()}
+          onRefresh={refreshCurrentMonth}
           onMonthChange={fetchRecordsForMonth}
         />
       </Container>
