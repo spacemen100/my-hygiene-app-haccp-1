@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { User, Building2, Truck, Thermometer, ClipboardList, CheckCircle, Plus, Minus, Eye, EyeOff } from 'lucide-react';
+import { User, Plus, Minus, Eye, EyeOff } from 'lucide-react';
 
 interface User {
   id: string;
@@ -140,7 +140,7 @@ export default function HACCPSetupComponent() {
     setColdEnclosures([...coldEnclosures, newEnclosure]);
   };
 
-  const updateEnclosure = (id: string, field: keyof ColdEnclosure, value: any) => {
+  const updateEnclosure = (id: string, field: keyof ColdEnclosure, value: string | number) => {
     setColdEnclosures(prev => prev.map(enc => 
       enc.id === id ? { ...enc, [field]: value } : enc
     ));
@@ -198,7 +198,7 @@ export default function HACCPSetupComponent() {
         <div className="text-2xl mb-2">🏃‍♀️ <span className="text-teal-600 font-semibold">Testez rapidement</span></div>
         <div className="flex items-start space-x-2 text-sm text-gray-600">
           <span>💡</span>
-          <p>Testez gratuitement Octopus HACCP, en créant votre compte en quelques minutes. Pas de carte bancaire requise pour tester l'application.</p>
+          <p>Testez gratuitement Octopus HACCP, en créant votre compte en quelques minutes. Pas de carte bancaire requise pour tester l&apos;application.</p>
         </div>
       </div>
 
@@ -259,7 +259,7 @@ export default function HACCPSetupComponent() {
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Secteur d'activité :</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Secteur d&apos;activité :</label>
           <select
             value={activitySector}
             onChange={(e) => setActivitySector(e.target.value)}
@@ -272,7 +272,7 @@ export default function HACCPSetupComponent() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l'établissement :</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l&apos;établissement :</label>
           <input
             type="text"
             value={establishmentName}
@@ -336,7 +336,7 @@ export default function HACCPSetupComponent() {
               setUsers(newUsers);
             }}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            placeholder="Nom de l'utilisateur"
+            placeholder="Nom de l&apos;utilisateur"
           />
         ))}
         
@@ -390,7 +390,7 @@ export default function HACCPSetupComponent() {
       <div className="mb-6">
         <div className="text-2xl mb-4">🧊 <span className="text-teal-600 font-semibold">Enceintes froides</span></div>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <p className="text-sm text-yellow-800">💡 Nous vous recommandons de créer vos enceintes froides en respectant l'ordre dans lequel vous effectuez vos relevés de température.</p>
+          <p className="text-sm text-yellow-800">💡 Nous vous recommandons de créer vos enceintes froides en respectant l&apos;ordre dans lequel vous effectuez vos relevés de température.</p>
         </div>
         
         <div className="mt-4">
@@ -410,7 +410,7 @@ export default function HACCPSetupComponent() {
         {coldEnclosures.map((enclosure) => (
           <div key={enclosure.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l'enceinte :</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l&apos;enceinte :</label>
               <input
                 type="text"
                 value={enclosure.name}
@@ -421,7 +421,7 @@ export default function HACCPSetupComponent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sélectionner la température de l'enceinte :</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sélectionner la température de l&apos;enceinte :</label>
               <div className="flex space-x-4">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -580,9 +580,9 @@ export default function HACCPSetupComponent() {
           <div className="text-4xl">💝</div>
         </div>
         
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">C'est parfait !</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">C&apos;est parfait !</h2>
         <p className="text-gray-600 mb-2">Vous avez terminé vos paramétrages</p>
-        <p className="text-gray-600">En avant pour utiliser l'application !</p>
+        <p className="text-gray-600">En avant pour utiliser l&apos;application !</p>
       </div>
 
       <button
