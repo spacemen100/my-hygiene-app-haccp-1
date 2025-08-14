@@ -33,7 +33,7 @@ export default function CleaningPlan() {
     fetchTasks();
     // Charger les records du mois actuel au démarrage
     fetchRecordsForMonth(new Date());
-  }, []);
+  }, [fetchRecordsForMonth]);
 
   const fetchTasks = async () => {
     const { data, error } = await supabase
@@ -100,7 +100,7 @@ export default function CleaningPlan() {
     const startDate = startOfMonth.toISOString().split('T')[0];
     const endDate = endOfMonth.toISOString().split('T')[0];
     
-    let query = supabase
+    const query = supabase
       .from('cleaning_records')
       .select(`
         *,
