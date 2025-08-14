@@ -7,7 +7,6 @@ import {
   TextField,
   Button,
   Paper,
-  Grid,
   Card,
   CardContent,
 } from '@mui/material';
@@ -135,26 +134,32 @@ export default function ExportHACCP() {
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: 'primary.main' }}>
               SÉLECTIONNEZ LA PÉRIODE :
             </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
                 <DatePicker
                   label="DU"
                   value={startDate}
                   onChange={setStartDate}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                  inputFormat="dd/MM/yyyy"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Box>
+              <Box>
                 <DatePicker
                   label="AU"
                   value={endDate}
                   onChange={setEndDate}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                  inputFormat="dd/MM/yyyy"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true
+                    }
+                  }}
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
@@ -164,9 +169,9 @@ export default function ExportHACCP() {
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: 'primary.main' }}>
               SÉLECTIONNEZ LES MODULES DONT VOUS VOULEZ LES DONNÉES :
             </Typography>
-            <Grid container spacing={2}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 2 }}>
               {modules.map((module) => (
-                <Grid item xs={12} sm={6} md={4} key={module.key}>
+                <Box key={module.key}>
                   <Button
                     variant={selectedModules[module.key] ? 'contained' : 'outlined'}
                     fullWidth
@@ -190,9 +195,9 @@ export default function ExportHACCP() {
                       {module.label}
                     </Box>
                   </Button>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           </CardContent>
         </Card>
 
@@ -249,8 +254,8 @@ export default function ExportHACCP() {
 
         {/* Actions finales */}
         <Paper sx={{ p: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 3 }}>
+            <Box>
               <Button
                 variant="contained"
                 fullWidth
@@ -260,8 +265,8 @@ export default function ExportHACCP() {
               >
                 Générer le rapport
               </Button>
-            </Grid>
-            <Grid item xs={12} sm={6}>
+            </Box>
+            <Box>
               <Button
                 variant="outlined"
                 fullWidth
@@ -271,8 +276,8 @@ export default function ExportHACCP() {
               >
                 Envoyer le rapport par mail
               </Button>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Paper>
       </Box>
     </LocalizationProvider>

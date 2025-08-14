@@ -174,7 +174,7 @@ export default function LoginPage() {
             color="text.secondary"
             sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
           >
-            Vous n'avez pas de compte ?{' '}
+            Vous n&apos;avez pas de compte ?{' '}
             <Link
               href="/register"
               sx={{

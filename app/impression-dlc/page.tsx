@@ -815,10 +815,10 @@ export default function LabelPrinting() {
                   </Avatar>
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      Recherche de types d'étiquettes
+                      Recherche de types d&apos;étiquettes
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Trouvez rapidement le type d'étiquette adapté à vos besoins
+                      Trouvez rapidement le type d&apos;étiquette adapté à vos besoins
                     </Typography>
                   </Box>
                 </Box>
@@ -884,7 +884,7 @@ export default function LabelPrinting() {
                 {/* Résultats de recherche */}
                 <Paper sx={{ p: 3, mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                    Types d'étiquettes disponibles
+                    Types d&apos;étiquettes disponibles
                   </Typography>
                   
                   <Box sx={{ display: 'grid', gap: 2, maxHeight: 400, overflowY: 'auto' }}>
@@ -952,7 +952,7 @@ export default function LabelPrinting() {
                   {labelTypes.length === 0 && (
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
-                        Aucun type d'étiquette trouvé
+                        Aucun type d&apos;étiquette trouvé
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                         Vérifiez vos critères de recherche
@@ -963,8 +963,8 @@ export default function LabelPrinting() {
 
                 <Alert severity="info">
                   <Typography variant="body2">
-                    💡 <strong>Conseil :</strong> Cliquez sur un type d'étiquette pour le sélectionner automatiquement dans l'onglet Impression. 
-                    La date d'expiration sera calculée automatiquement selon la durée de conservation.
+                    💡 <strong>Conseil :</strong> Cliquez sur un type d&apos;étiquette pour le sélectionner automatiquement dans l&apos;onglet Impression. 
+                    La date d&apos;expiration sera calculée automatiquement selon la durée de conservation.
                   </Typography>
                 </Alert>
               </CardContent>
