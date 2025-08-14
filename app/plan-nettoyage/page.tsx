@@ -29,13 +29,7 @@ export default function CleaningPlan() {
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [activeForm, setActiveForm] = useState<'none' | 'scheduler' | 'single' | 'repeat'>('none');
 
-  useEffect(() => {
-    fetchTasks();
-    // Charger les records du mois actuel au démarrage
-    fetchRecordsForMonth(new Date());
-  }, [fetchRecordsForMonth]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
       .from('cleaning_tasks')
       .select(`
@@ -52,7 +46,7 @@ export default function CleaningPlan() {
       console.log('Fetched tasks with relations:', data);
       setTasks(data || []);
     }
-  };
+  }, []);
 
   const fetchRecords = async (limit?: number, startDate?: string, endDate?: string) => {
     let query = supabase
@@ -129,6 +123,12 @@ export default function CleaningPlan() {
       setRecords(data || []);
     }
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+    // Charger les records du mois actuel au démarrage
+    fetchRecordsForMonth(new Date());
+  }, [fetchTasks, fetchRecordsForMonth]);
 
   const { enqueueSnackbar } = useSnackbar();
 
