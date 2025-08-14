@@ -61,7 +61,7 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
   const [hasMoreRecords, setHasMoreRecords] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Tables<'cleaning_records'> | null>(null);
-  const [tabValue, setTabValue] = useState<TabValue>('all');
+  const [tabValue, setTabValue] = useState<TabValue>('calendar');
 
   // Debug logs
   console.log('TaskList received:', { 
