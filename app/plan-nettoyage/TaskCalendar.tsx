@@ -51,6 +51,9 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Debug temporaire
+  console.log(`TaskCalendar reçoit ${records.length} records:`, records.slice(0, 3));
+
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -164,10 +167,6 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
       const dayRecords = getRecordsForDate(day);
       const stats = getTaskStats(dayRecords);
       
-      // Debug: Log pour voir les données
-      if (dayRecords.length > 0) {
-        console.log(`Jour ${day}: ${dayRecords.length} tâches trouvées`, dayRecords);
-      }
       const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = new Date().toDateString() === dayDate.toDateString();
       const isSelected = selectedDate?.toDateString() === dayDate.toDateString();
