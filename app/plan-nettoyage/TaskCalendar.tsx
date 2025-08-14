@@ -176,12 +176,6 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
               borderColor: isSelected ? 'secondary.main' : isToday ? 'primary.main' : 'divider',
               bgcolor: isToday ? 'primary.50' : isWeekend ? 'grey.50' : 'background.paper',
               cursor: 'pointer',
-              transition: 'all 0.2s',
-              '&:hover': {
-                bgcolor: isToday ? 'primary.100' : 'grey.100',
-                transform: 'translateY(-1px)',
-                boxShadow: 2
-              },
               position: 'relative',
               overflow: 'hidden'
             }}
@@ -264,9 +258,7 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
                   position: 'absolute',
                   top: 4,
                   right: 4,
-                  opacity: 0,
-                  transition: 'opacity 0.2s',
-                  '.MuiPaper-root:hover &': { opacity: 1 }
+                  opacity: 1
                 }}
               >
                 <IconButton 
@@ -279,8 +271,7 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
                     width: 16, 
                     height: 16, 
                     bgcolor: 'primary.main', 
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' }
+                    color: 'white'
                   }}
                 >
                   <Add sx={{ fontSize: 10 }} />
