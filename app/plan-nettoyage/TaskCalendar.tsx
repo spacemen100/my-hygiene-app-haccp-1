@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tables } from '@/src/types/database';
 
 type CleaningRecordWithTask = Tables<'cleaning_records'> & {
@@ -46,37 +46,28 @@ interface TaskCalendarProps {
 
 export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTask }: TaskCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Initialiser le calendrier avec le premier mois qui contient des records
+  const initialDate = useMemo(() => {
+    if (records.length === 0) return new Date();
+    
+    // Trouver le mois le plus ancien avec des records
+    const dates = records.map(r => new Date(r.scheduled_date));
+    const oldestDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    return oldestDate;
+  }, [records]);
+  
+  // Mettre à jour la date courante quand les records changent
+  useEffect(() => {
+    if (records.length > 0) {
+      setCurrentDate(initialDate);
+    }
+  }, [initialDate, records.length]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{ element: HTMLElement; records: Tables<'cleaning_records'>[] } | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Debug temporaire
-  console.log(`TaskCalendar reçoit ${records.length} records:`, records.slice(0, 3));
-  
-  // Debug: vérifier les dates des records
-  if (records.length > 0) {
-    const dates = records.slice(0, 20).map(r => r.scheduled_date);
-    console.log('Dates des 20 premiers records:', dates);
-    console.log('Mois affiché:', currentDate.getMonth() + 1, currentDate.getFullYear());
-    
-    // Debug: analyser la répartition par mois
-    const monthCounts = records.reduce((acc, record) => {
-      const recordDate = new Date(record.scheduled_date);
-      const key = `${recordDate.getFullYear()}-${recordDate.getMonth() + 1}`;
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    console.log('Répartition des records par mois:', monthCounts);
-    
-    // Debug: vérifier le filtrage pour le mois actuel
-    const monthRecords = records.filter(r => {
-      const recordDate = new Date(r.scheduled_date);
-      return recordDate.getMonth() === currentDate.getMonth() && 
-             recordDate.getFullYear() === currentDate.getFullYear();
-    });
-    console.log(`Records pour ${currentDate.getMonth() + 1}/${currentDate.getFullYear()}:`, monthRecords.length);
-  }
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -564,10 +555,12 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
         onClose={() => setMenuAnchor(null)}
         transformOrigin={{ horizontal: 'center', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
-        PaperProps={{
-          sx: {
-            maxWidth: 300,
-            maxHeight: 400
+        slotProps={{
+          paper: {
+            sx: {
+              maxWidth: 300,
+              maxHeight: 400
+            }
           }
         }}
       >
