@@ -24,7 +24,9 @@ import {
   useMediaQuery,
   Fab,
   Menu,
-  MenuList
+  MenuList,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -34,7 +36,10 @@ import {
   Schedule,
   Today,
   Add,
-  CalendarMonth
+  CalendarMonth,
+  ViewDay,
+  ViewWeek,
+  ViewModule
 } from '@mui/icons-material';
 
 interface TaskCalendarProps {
@@ -44,8 +49,11 @@ interface TaskCalendarProps {
   onCreateTask?: (date: Date) => void;
 }
 
+type ViewType = 'day' | 'week' | 'month';
+
 export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTask }: TaskCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewType, setViewType] = useState<ViewType>('month');
   
   // Initialiser le calendrier avec le premier mois qui contient des records
   const initialDate = useMemo(() => {
@@ -85,6 +93,24 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
     });
   };
 
+  const getRecordsForDateRange = (startDate: Date, endDate: Date) => {
+    return records.filter(record => {
+      const recordDate = new Date(record.scheduled_date);
+      return recordDate >= startDate && recordDate <= endDate;
+    });
+  };
+
+  const getWeekStart = (date: Date) => {
+    const day = date.getDay();
+    const diff = date.getDate() - day;
+    return new Date(date.getFullYear(), date.getMonth(), diff);
+  };
+
+  const getWeekEnd = (date: Date) => {
+    const weekStart = getWeekStart(date);
+    return new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+  };
+
   const getTaskName = (taskId: string, record?: Tables<'cleaning_records'>) => {
     // First try to get task from joined data in the record
     const recordWithTask = record as CleaningRecordWithTask;
@@ -96,13 +122,27 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
     return task ? task.name : 'N/A';
   };
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  const navigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(prev.getMonth() - 1);
-      } else {
-        newDate.setMonth(prev.getMonth() + 1);
+      if (viewType === 'day') {
+        if (direction === 'prev') {
+          newDate.setDate(prev.getDate() - 1);
+        } else {
+          newDate.setDate(prev.getDate() + 1);
+        }
+      } else if (viewType === 'week') {
+        if (direction === 'prev') {
+          newDate.setDate(prev.getDate() - 7);
+        } else {
+          newDate.setDate(prev.getDate() + 7);
+        }
+      } else { // month
+        if (direction === 'prev') {
+          newDate.setMonth(prev.getMonth() - 1);
+        } else {
+          newDate.setMonth(prev.getMonth() + 1);
+        }
       }
       return newDate;
     });
@@ -372,6 +412,204 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
     return weeks;
   };
 
+  const renderDayView = () => {
+    const dayRecords = records.filter(record => {
+      const recordDate = new Date(record.scheduled_date);
+      return recordDate.toDateString() === currentDate.toDateString();
+    });
+
+    const stats = getTaskStats(dayRecords);
+
+    return (
+      <Box sx={{ p: 2 }}>
+        {/* Day header */}
+        <Box sx={{ mb: 3, textAlign: 'center' }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
+            {currentDate.toLocaleDateString('fr-FR', { 
+              weekday: 'long', 
+              day: 'numeric', 
+              month: 'long', 
+              year: 'numeric' 
+            })}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Chip label={`${stats.total} tâches`} color="primary" />
+            <Chip label={`${stats.completed} complétées`} color="success" variant={stats.completed > 0 ? "filled" : "outlined"} />
+            <Chip label={`${stats.overdue} en retard`} color="error" variant={stats.overdue > 0 ? "filled" : "outlined"} />
+          </Box>
+        </Box>
+
+        {/* Tasks list */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {dayRecords.length === 0 ? (
+            <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
+              <Typography variant="h6" color="text.secondary">
+                Aucune tâche prévue pour cette journée
+              </Typography>
+            </Paper>
+          ) : (
+            dayRecords.map(record => (
+              <Paper
+                key={record.id}
+                onClick={() => onEditRecord(record)}
+                sx={{
+                  p: 3,
+                  cursor: 'pointer',
+                  borderLeft: 4,
+                  borderColor: record.is_completed 
+                    ? record.is_compliant 
+                      ? 'success.main' 
+                      : 'warning.main'
+                    : 'error.main',
+                  '&:hover': {
+                    bgcolor: 'grey.50',
+                    transform: 'translateY(-2px)',
+                    boxShadow: 2
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                      {getTaskName(record.cleaning_task_id || '', record)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Programmé à {new Date(record.scheduled_date).toLocaleTimeString('fr-FR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={
+                      record.is_completed 
+                        ? record.is_compliant 
+                          ? 'Conforme' 
+                          : 'Non conforme'
+                        : 'En attente'
+                    }
+                    color={
+                      record.is_completed 
+                        ? record.is_compliant 
+                          ? 'success' 
+                          : 'warning'
+                        : 'error'
+                    }
+                    variant="filled"
+                  />
+                </Box>
+              </Paper>
+            ))
+          )}
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderWeekView = () => {
+    const weekStart = getWeekStart(currentDate);
+    const weekDays = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + i);
+      return day;
+    });
+
+    const weekRecords = getRecordsForDateRange(weekStart, getWeekEnd(currentDate));
+    const weekStats = getTaskStats(weekRecords);
+
+    return (
+      <Box sx={{ p: 2 }}>
+        {/* Week header */}
+        <Box sx={{ mb: 3, textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+            Semaine du {weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} 
+            au {getWeekEnd(currentDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Chip label={`${weekStats.total} tâches`} color="primary" />
+            <Chip label={`${weekStats.completed} complétées`} color="success" variant={weekStats.completed > 0 ? "filled" : "outlined"} />
+            <Chip label={`${weekStats.overdue} en retard`} color="error" variant={weekStats.overdue > 0 ? "filled" : "outlined"} />
+          </Box>
+        </Box>
+
+        {/* Week grid */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {/* Day headers */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {weekDays.map(day => (
+              <Box key={day.toISOString()} sx={{ flex: 1, textAlign: 'center', p: 1 }}>
+                <Typography variant="body2" fontWeight="bold" color="text.secondary">
+                  {day.toLocaleDateString('fr-FR', { weekday: 'short' })}
+                </Typography>
+                <Typography variant="h6" fontWeight="600">
+                  {day.getDate()}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Day cells */}
+          <Box sx={{ display: 'flex', gap: 1, minHeight: 300 }}>
+            {weekDays.map(day => {
+              const dayRecords = records.filter(record => {
+                const recordDate = new Date(record.scheduled_date);
+                return recordDate.toDateString() === day.toDateString();
+              });
+              const isToday = new Date().toDateString() === day.toDateString();
+
+              return (
+                <Paper
+                  key={day.toISOString()}
+                  onClick={() => setCurrentDate(day)}
+                  sx={{
+                    flex: 1,
+                    p: 1,
+                    cursor: 'pointer',
+                    border: isToday ? 2 : 1,
+                    borderColor: isToday ? 'primary.main' : 'divider',
+                    bgcolor: isToday ? 'primary.50' : 'background.paper',
+                    '&:hover': {
+                      bgcolor: 'grey.50'
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, height: '100%' }}>
+                    {dayRecords.slice(0, 5).map(record => (
+                      <Chip
+                        key={record.id}
+                        size="small"
+                        label={getTaskName(record.cleaning_task_id || '', record).slice(0, 12) + '...'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditRecord(record);
+                        }}
+                        sx={{ fontSize: '0.7rem', height: 20 }}
+                        color={
+                          record.is_completed 
+                            ? record.is_compliant 
+                              ? 'success' 
+                              : 'warning'
+                            : 'error'
+                        }
+                        variant={record.is_completed ? 'filled' : 'outlined'}
+                      />
+                    ))}
+                    {dayRecords.length > 5 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+                        +{dayRecords.length - 5} autres
+                      </Typography>
+                    )}
+                  </Box>
+                </Paper>
+              );
+            })}
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+
   // Generate years and months for selectors
   const currentYear = currentDate.getFullYear();
   const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
@@ -386,11 +624,11 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
         {/* Enhanced Navigation Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton onClick={() => navigateMonth('prev')} size="small">
+            <IconButton onClick={() => navigate('prev')} size="small">
               <ChevronLeft />
             </IconButton>
             
-            {!isMobile && (
+            {!isMobile && viewType === 'month' && (
               <>
                 <FormControl size="small" sx={{ minWidth: 120 }}>
                   <Select
@@ -430,18 +668,40 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
               </>
             )}
 
-            {isMobile && (
+            {(isMobile || viewType !== 'month') && (
               <Typography variant="h6" sx={{ textTransform: 'capitalize', fontWeight: 600 }}>
-                {monthName}
+                {viewType === 'day' 
+                  ? currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                  : viewType === 'week'
+                  ? `Semaine du ${getWeekStart(currentDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
+                  : monthName}
               </Typography>
             )}
 
-            <IconButton onClick={() => navigateMonth('next')} size="small">
+            <IconButton onClick={() => navigate('next')} size="small">
               <ChevronRight />
             </IconButton>
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            {/* View selector */}
+            <ToggleButtonGroup
+              value={viewType}
+              exclusive
+              onChange={(_, newView) => newView && setViewType(newView)}
+              size="small"
+            >
+              <ToggleButton value="day" aria-label="vue jour">
+                <ViewDay />
+              </ToggleButton>
+              <ToggleButton value="week" aria-label="vue semaine">
+                <ViewWeek />
+              </ToggleButton>
+              <ToggleButton value="month" aria-label="vue mois">
+                <ViewModule />
+              </ToggleButton>
+            </ToggleButtonGroup>
+
             <Button
               variant="outlined"
               size="small"
@@ -454,81 +714,90 @@ export default function TaskCalendar({ tasks, records, onEditRecord, onCreateTas
           </Box>
         </Box>
 
-        {/* Calendar Statistics Summary */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {(() => {
-            const monthRecords = records.filter(r => {
-              const recordDate = new Date(r.scheduled_date);
-              return recordDate.getMonth() === currentDate.getMonth() && 
-                     recordDate.getFullYear() === currentDate.getFullYear();
-            });
-            const monthStats = getTaskStats(monthRecords);
-            
-            return (
-              <>
-                <Chip 
-                  size="small" 
-                  label={`${monthStats.total} tâches`} 
-                  color="primary" 
-                  variant="outlined" 
-                />
-                <Chip 
-                  size="small" 
-                  label={`${monthStats.completed} complétées`} 
-                  color="success" 
-                  variant={monthStats.completed > 0 ? "filled" : "outlined"} 
-                />
-                <Chip 
-                  size="small" 
-                  label={`${monthStats.overdue} en retard`} 
-                  color="error" 
-                  variant={monthStats.overdue > 0 ? "filled" : "outlined"} 
-                />
-              </>
-            );
-          })()}
-        </Box>
+        {/* Calendar Content */}
+        {viewType === 'day' && renderDayView()}
+        {viewType === 'week' && renderWeekView()}
+        {viewType === 'month' && (
+          <>
+            {/* Calendar Statistics Summary */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {(() => {
+                const monthRecords = records.filter(r => {
+                  const recordDate = new Date(r.scheduled_date);
+                  return recordDate.getMonth() === currentDate.getMonth() && 
+                         recordDate.getFullYear() === currentDate.getFullYear();
+                });
+                const monthStats = getTaskStats(monthRecords);
+                
+                return (
+                  <>
+                    <Chip 
+                      size="small" 
+                      label={`${monthStats.total} tâches`} 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                    <Chip 
+                      size="small" 
+                      label={`${monthStats.completed} complétées`} 
+                      color="success" 
+                      variant={monthStats.completed > 0 ? "filled" : "outlined"} 
+                    />
+                    <Chip 
+                      size="small" 
+                      label={`${monthStats.overdue} en retard`} 
+                      color="error" 
+                      variant={monthStats.overdue > 0 ? "filled" : "outlined"} 
+                    />
+                  </>
+                );
+              })()}
+            </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          {renderCalendarDays()}
-        </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              {renderCalendarDays()}
+            </Box>
+          </>
+        )}
 
-        {/* Enhanced Legend */}
-        <Box sx={{ 
-          mt: 3, 
-          display: 'flex', 
-          gap: 3, 
-          flexWrap: 'wrap', 
-          justifyContent: 'center',
-          p: 2,
-          bgcolor: 'grey.50',
-          borderRadius: 2
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <CheckCircle color="success" fontSize="small" />
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>Tâche conforme</Typography>
+        {/* Enhanced Legend - only show in month view */}
+        {viewType === 'month' && (
+          <Box sx={{ 
+            mt: 3, 
+            display: 'flex', 
+            gap: 3, 
+            flexWrap: 'wrap', 
+            justifyContent: 'center',
+            p: 2,
+            bgcolor: 'grey.50',
+            borderRadius: 2
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <CheckCircle color="success" fontSize="small" />
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>Tâche conforme</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Warning color="warning" fontSize="small" />
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>Non conforme</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Schedule color="error" fontSize="small" />
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>En retard</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Schedule color="disabled" fontSize="small" />
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>En attente</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 2, borderLeft: 1, borderColor: 'divider', pl: 2 }}>
+              <Box sx={{ width: 12, height: 12, bgcolor: 'primary.50', border: 2, borderColor: 'primary.main', borderRadius: 0.5 }} />
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>Aujourd&apos;hui</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box sx={{ width: 12, height: 12, bgcolor: 'grey.50', border: 1, borderColor: 'divider', borderRadius: 0.5 }} />
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>Week-end</Typography>
+            </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Warning color="warning" fontSize="small" />
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>Non conforme</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Schedule color="error" fontSize="small" />
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>En retard</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Schedule color="disabled" fontSize="small" />
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>En attente</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 2, borderLeft: 1, borderColor: 'divider', pl: 2 }}>
-            <Box sx={{ width: 12, height: 12, bgcolor: 'primary.50', border: 2, borderColor: 'primary.main', borderRadius: 0.5 }} />
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>Aujourd&apos;hui</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box sx={{ width: 12, height: 12, bgcolor: 'grey.50', border: 1, borderColor: 'divider', borderRadius: 0.5 }} />
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>Week-end</Typography>
-          </Box>
-        </Box>
+        )}
 
         {/* Floating Action Button for Quick Add */}
         {onCreateTask && (
