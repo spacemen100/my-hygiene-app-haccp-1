@@ -222,6 +222,15 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
             scrollButtons="auto"
           >
             <Tab 
+              value="calendar" 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CalendarToday fontSize="small" />
+                  Calendrier
+                </Box>
+              }
+            />
+            <Tab 
               value="all" 
               label={
                 <Badge badgeContent={counts.all} color="default">
@@ -274,15 +283,6 @@ export default function TaskList({ tasks, records, onRefresh }: TaskListProps) {
                     Aujourd&apos;hui
                   </Box>
                 </Badge>
-              }
-            />
-            <Tab 
-              value="calendar" 
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CalendarToday fontSize="small" />
-                  Calendrier
-                </Box>
               }
             />
           </Tabs>
