@@ -9,13 +9,12 @@ import {
   Typography,
   Box,
   Card,
-  Tabs,
-  Tab,
+  CardContent,
   Paper,
   Avatar,
   Button
 } from '@mui/material';
-import { CleaningServices, Help, Schedule } from '@mui/icons-material';
+import { CleaningServices, Help, Schedule, Assignment } from '@mui/icons-material';
 import CleaningStats from './CleaningStats';
 import CleaningTaskForm from './CleaningTaskForm';
 import RepeatTaskForm from './RepeatTaskForm';
@@ -23,34 +22,12 @@ import TaskList from './TaskList';
 import UserGuideModal from './UserGuideModal';
 import CleaningScheduler from './CleaningScheduler';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 export default function CleaningPlan() {
   const [tasks, setTasks] = useState<Tables<'cleaning_tasks'>[]>([]);
   const [records, setRecords] = useState<Tables<'cleaning_records'>[]>([]);
-  const [tabValue, setTabValue] = useState(0);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
-  const [showScheduler, setShowScheduler] = useState(false);
+  const [activeForm, setActiveForm] = useState<'none' | 'scheduler' | 'single' | 'repeat'>('none');
 
   useEffect(() => {
     fetchTasks();
@@ -256,49 +233,144 @@ export default function CleaningPlan() {
         {/* Statistiques */}
         <CleaningStats tasks={tasks} records={records} />
 
-        {/* Bouton pour programmer un plan de nettoyage standard */}
-        <Card sx={{ mb: 4, background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' }}>
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-              <Avatar
-                sx={{
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  width: 56,
-                  height: 56,
-                  mr: 2
+        {/* Interface avec 3 boutons principaux */}
+        <Card sx={{ mb: 4 }}>
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 3, textAlign: 'center' }}>
+              Choisissez votre mode de planification
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+              gap: 3
+            }}>
+              {/* Bouton Plan Standard */}
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  border: activeForm === 'scheduler' ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                    transform: 'translateY(-2px)'
+                  }
                 }}
+                onClick={() => setActiveForm(activeForm === 'scheduler' ? 'none' : 'scheduler')}
               >
-                <Schedule fontSize="large" />
-              </Avatar>
-              <Box sx={{ textAlign: 'left' }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Planification automatique
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Créez un plan de nettoyage complet avec des tâches pré-remplies
-                </Typography>
-              </Box>
+                <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      width: 64,
+                      height: 64,
+                      mx: 'auto',
+                      mb: 2
+                    }}
+                  >
+                    <Schedule fontSize="large" />
+                  </Avatar>
+                  <Typography variant="h6" component="h4" sx={{ fontWeight: 600, mb: 1 }}>
+                    Plan de Nettoyage Standard
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Créez un plan complet avec des tâches pré-remplies par zone
+                  </Typography>
+                  <Button
+                    variant={activeForm === 'scheduler' ? 'contained' : 'outlined'}
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {activeForm === 'scheduler' ? 'Fermer' : 'Configurer'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Bouton Tâche Unique */}
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  border: activeForm === 'single' ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+                onClick={() => setActiveForm(activeForm === 'single' ? 'none' : 'single')}
+              >
+                <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'secondary.main',
+                      color: 'white',
+                      width: 64,
+                      height: 64,
+                      mx: 'auto',
+                      mb: 2
+                    }}
+                  >
+                    <Assignment fontSize="large" />
+                  </Avatar>
+                  <Typography variant="h6" component="h4" sx={{ fontWeight: 600, mb: 1 }}>
+                    Tâche Unique
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Ajoutez une tâche ponctuelle à effectuer une seule fois
+                  </Typography>
+                  <Button
+                    variant={activeForm === 'single' ? 'contained' : 'outlined'}
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {activeForm === 'single' ? 'Fermer' : 'Ajouter'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Bouton Tâches Répétitives */}
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  border: activeForm === 'repeat' ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+                onClick={() => setActiveForm(activeForm === 'repeat' ? 'none' : 'repeat')}
+              >
+                <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'success.main',
+                      color: 'white',
+                      width: 64,
+                      height: 64,
+                      mx: 'auto',
+                      mb: 2
+                    }}
+                  >
+                    <CleaningServices fontSize="large" />
+                  </Avatar>
+                  <Typography variant="h6" component="h4" sx={{ fontWeight: 600, mb: 1 }}>
+                    Tâches Répétitives
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Programmez des tâches récurrentes avec une fréquence définie
+                  </Typography>
+                  <Button
+                    variant={activeForm === 'repeat' ? 'contained' : 'outlined'}
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {activeForm === 'repeat' ? 'Fermer' : 'Programmer'}
+                  </Button>
+                </CardContent>
+              </Card>
             </Box>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<Schedule />}
-              onClick={() => setShowScheduler(true)}
-              sx={{
-                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-                '&:hover': {
-                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
-                }
-              }}
-            >
-              Programmer un plan de Nettoyage standard
-            </Button>
           </Box>
         </Card>
 
@@ -318,46 +390,69 @@ export default function CleaningPlan() {
           </Box>
         )}
 
-        {/* Affichage conditionnel: soit le scheduler soit les tabs normaux */}
-        {showScheduler ? (
+        {/* Affichage conditionnel des formulaires */}
+        {activeForm === 'scheduler' && (
           <Card sx={{ mb: 4 }}>
             <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
-                Programmeur de plan de nettoyage
+                Programmeur de plan de nettoyage standard
               </Typography>
               <Button 
                 variant="outlined" 
-                onClick={() => setShowScheduler(false)}
+                onClick={() => setActiveForm('none')}
                 size="small"
               >
-                Retour
+                Fermer
               </Button>
             </Box>
             <CleaningScheduler />
           </Card>
-        ) : (
+        )}
+
+        {activeForm === 'single' && (
           <Card sx={{ mb: 4 }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} aria-label="cleaning tabs">
-                <Tab label="Tâche unique" />
-                <Tab label="Tâches répétitives" />
-              </Tabs>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                Ajouter une tâche unique
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={() => setActiveForm('none')}
+                size="small"
+              >
+                Fermer
+              </Button>
             </Box>
-            
-            <TabPanel value={tabValue} index={0}>
+            <Box sx={{ p: 3 }}>
               <CleaningTaskForm 
                 tasks={tasks}
                 onSuccess={() => fetchRecords()} 
                 enqueueSnackbar={enqueueSnackbar}
               />
-            </TabPanel>
-            
-            <TabPanel value={tabValue} index={1}>
+            </Box>
+          </Card>
+        )}
+
+        {activeForm === 'repeat' && (
+          <Card sx={{ mb: 4 }}>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                Programmer des tâches répétitives
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={() => setActiveForm('none')}
+                size="small"
+              >
+                Fermer
+              </Button>
+            </Box>
+            <Box sx={{ p: 3 }}>
               <RepeatTaskForm 
                 tasks={tasks} 
                 onSuccess={() => fetchRecords()}
               />
-            </TabPanel>
+            </Box>
           </Card>
         )}
 
