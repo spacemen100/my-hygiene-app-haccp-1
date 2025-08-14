@@ -1364,7 +1364,7 @@ export default function DeliveryComponent() {
                               ) : (
                                 <Cancel color="error" fontSize="small" />
                               )}
-                              <Typography variant="body2" color={control.is_compliant ? 'success.main' : 'error.main'}>
+                              <Typography variant="body2" component="span" color={control.is_compliant ? 'success.main' : 'error.main'}>
                                 {control.is_compliant ? 'Conforme' : 'Non conforme'}
                               </Typography>
                             </Box>
@@ -1832,7 +1832,7 @@ export default function DeliveryComponent() {
                                     ) : (
                                       <Cancel color="error" fontSize="small" />
                                     )}
-                                    <Typography variant="body2" color={control.is_compliant ? 'success.main' : 'error.main'}>
+                                    <Typography variant="body2" component="span" color={control.is_compliant ? 'success.main' : 'error.main'}>
                                       {control.is_compliant ? 'Conforme' : 'Non conforme'}
                                     </Typography>
                                   </Box>
@@ -1874,7 +1874,7 @@ export default function DeliveryComponent() {
                                       ) : (
                                         <Cancel color="error" fontSize="small" />
                                       )}
-                                      <Typography variant="body2" color={control.is_compliant ? 'success.main' : 'error.main'}>
+                                      <Typography variant="body2" component="span" color={control.is_compliant ? 'success.main' : 'error.main'}>
                                         {control.is_compliant ? 'Conforme' : 'Non conforme'}
                                       </Typography>
                                     </Box>
