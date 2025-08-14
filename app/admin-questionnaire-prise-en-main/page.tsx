@@ -17,7 +17,6 @@ import {
   Step,
   StepLabel,
   Container,
-  Grid2 as Grid,
   Alert,
   IconButton,
   InputAdornment,
@@ -251,24 +250,22 @@ export default function HACCPSetupComponent() {
                 </Alert>
               </Box>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <CheckCircleIcon color="success" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <CheckCircleIcon color="success" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Box>
                   <TextField
                     fullWidth
                     label="Mot de passe"
@@ -286,28 +283,24 @@ export default function HACCPSetupComponent() {
                       ),
                     }}
                   />
-                  <Box sx={{ mt: 2 }}>
-                    <Grid container spacing={1}>
-                      {passwordRequirements.map((req, index) => (
-                        <Grid item xs={6} key={index}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CheckCircleIcon 
-                              fontSize="small" 
-                              color={req.met ? 'success' : 'disabled'} 
-                            />
-                            <Typography 
-                              variant="caption" 
-                              color={req.met ? 'success.main' : 'text.secondary'}
-                            >
-                              {req.text}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      ))}
-                    </Grid>
+                  <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {passwordRequirements.map((req, index) => (
+                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CheckCircleIcon 
+                          fontSize="small" 
+                          color={req.met ? 'success' : 'disabled'} 
+                        />
+                        <Typography 
+                          variant="caption" 
+                          color={req.met ? 'success.main' : 'text.secondary'}
+                        >
+                          {req.text}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
         );
@@ -332,55 +325,47 @@ export default function HACCPSetupComponent() {
                 </Typography>
               </Box>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Secteur d&apos;activité</InputLabel>
-                    <Select
-                      value={activitySector}
-                      onChange={(e) => setActivitySector(e.target.value)}
-                      label="Secteur d'activité"
-                    >
-                      <MenuItem value="Restauration collective">Restauration collective</MenuItem>
-                      <MenuItem value="Restaurant">Restaurant</MenuItem>
-                      <MenuItem value="Boulangerie">Boulangerie</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Nom de l&apos;établissement"
-                    value={establishmentName}
-                    onChange={(e) => setEstablishmentName(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Secteur d&apos;activité</InputLabel>
+                  <Select
+                    value={activitySector}
+                    onChange={(e) => setActivitySector(e.target.value)}
+                    label="Secteur d'activité"
+                  >
+                    <MenuItem value="Restauration collective">Restauration collective</MenuItem>
+                    <MenuItem value="Restaurant">Restaurant</MenuItem>
+                    <MenuItem value="Boulangerie">Boulangerie</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="Nom de l&apos;établissement"
+                  value={establishmentName}
+                  onChange={(e) => setEstablishmentName(e.target.value)}
+                />
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
                   <TextField
                     fullWidth
                     label="Prénom"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Nom"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                   />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Numéro de téléphone"
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+                </Box>
+                <TextField
+                  fullWidth
+                  label="Numéro de téléphone"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </Box>
             </CardContent>
           </Card>
         );
@@ -402,7 +387,7 @@ export default function HACCPSetupComponent() {
                 <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
                   Utilisateurs
                 </Typography>
-                <Typography variant="body1" color="text.secondary" paragraph>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                   Veuillez indiquer le nom ou le poste des personnes qui effectueront des relevés HACCP, 
                   y compris vous-même si vous réalisez des relevés.
                 </Typography>
@@ -412,34 +397,31 @@ export default function HACCPSetupComponent() {
                 </Alert>
               </Box>
 
-              <Grid container spacing={2}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {users.map((user, index) => (
-                  <Grid item xs={12} key={user.id}>
-                    <TextField
-                      fullWidth
-                      value={user.name}
-                      onChange={(e) => {
-                        const newUsers = [...users];
-                        newUsers[index] = { ...user, name: e.target.value };
-                        setUsers(newUsers);
-                      }}
-                      placeholder="Nom de l&apos;utilisateur"
-                      variant="outlined"
-                    />
-                  </Grid>
-                ))}
-                <Grid item xs={12}>
-                  <Button
+                  <TextField
+                    key={user.id}
                     fullWidth
+                    value={user.name}
+                    onChange={(e) => {
+                      const newUsers = [...users];
+                      newUsers[index] = { ...user, name: e.target.value };
+                      setUsers(newUsers);
+                    }}
+                    placeholder="Nom de l&apos;utilisateur"
                     variant="outlined"
-                    onClick={addUser}
-                    startIcon={<AddIcon />}
-                    sx={{ py: 2, borderStyle: 'dashed' }}
-                  >
-                    Ajouter un utilisateur
-                  </Button>
-                </Grid>
-              </Grid>
+                  />
+                ))}
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={addUser}
+                  startIcon={<AddIcon />}
+                  sx={{ py: 2, borderStyle: 'dashed' }}
+                >
+                  Ajouter un utilisateur
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         );
@@ -466,34 +448,31 @@ export default function HACCPSetupComponent() {
                 </Typography>
               </Box>
 
-              <Grid container spacing={2}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {suppliers.map((supplier, index) => (
-                  <Grid item xs={12} key={supplier.id}>
-                    <TextField
-                      fullWidth
-                      value={supplier.name}
-                      onChange={(e) => {
-                        const newSuppliers = [...suppliers];
-                        newSuppliers[index] = { ...supplier, name: e.target.value };
-                        setSuppliers(newSuppliers);
-                      }}
-                      placeholder="Ex : Pomona, Transgourmet, Metro..."
-                      variant="outlined"
-                    />
-                  </Grid>
-                ))}
-                <Grid item xs={12}>
-                  <Button
+                  <TextField
+                    key={supplier.id}
                     fullWidth
+                    value={supplier.name}
+                    onChange={(e) => {
+                      const newSuppliers = [...suppliers];
+                      newSuppliers[index] = { ...supplier, name: e.target.value };
+                      setSuppliers(newSuppliers);
+                    }}
+                    placeholder="Ex : Pomona, Transgourmet, Metro..."
                     variant="outlined"
-                    onClick={addSupplier}
-                    startIcon={<AddIcon />}
-                    sx={{ py: 2, borderStyle: 'dashed' }}
-                  >
-                    Ajouter un fournisseur
-                  </Button>
-                </Grid>
-              </Grid>
+                  />
+                ))}
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={addSupplier}
+                  startIcon={<AddIcon />}
+                  sx={{ py: 2, borderStyle: 'dashed' }}
+                >
+                  Ajouter un fournisseur
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         );
@@ -530,105 +509,95 @@ export default function HACCPSetupComponent() {
                 />
               </Box>
 
-              <Grid container spacing={3}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {coldEnclosures.map((enclosure) => (
-                  <Grid item xs={12} key={enclosure.id}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12}>
-                            <TextField
-                              fullWidth
-                              label="Nom de l&apos;enceinte"
-                              value={enclosure.name}
-                              onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
-                              placeholder="Ex : Enceinte, congélateur..."
+                  <Card key={enclosure.id} variant="outlined">
+                    <CardContent>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                          fullWidth
+                          label="Nom de l&apos;enceinte"
+                          value={enclosure.name}
+                          onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
+                          placeholder="Ex : Enceinte, congélateur..."
+                        />
+                        <FormControl component="fieldset">
+                          <Typography variant="subtitle2" gutterBottom>
+                            Sélectionner la température de l&apos;enceinte
+                          </Typography>
+                          <RadioGroup
+                            row
+                            value={enclosure.temperatureType}
+                            onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
+                          >
+                            <FormControlLabel
+                              value="positive"
+                              control={<Radio />}
+                              label="Température positive"
                             />
-                          </Grid>
-                          <Grid item xs={12}>
-                            <FormControl component="fieldset">
-                              <Typography variant="subtitle2" gutterBottom>
-                                Sélectionner la température de l&apos;enceinte
-                              </Typography>
-                              <RadioGroup
-                                row
-                                value={enclosure.temperatureType}
-                                onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
+                            <FormControlLabel
+                              value="negative"
+                              control={<Radio />}
+                              label="Température négative"
+                            />
+                          </RadioGroup>
+                        </FormControl>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="caption" display="block" gutterBottom>
+                              T° max
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
                               >
-                                <FormControlLabel
-                                  value="positive"
-                                  control={<Radio />}
-                                  label="Température positive"
-                                />
-                                <FormControlLabel
-                                  value="negative"
-                                  control={<Radio />}
-                                  label="Température négative"
-                                />
-                              </RadioGroup>
-                            </FormControl>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="caption" display="block" gutterBottom>
-                                T° max
-                              </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
-                                >
-                                  <RemoveIcon />
-                                </IconButton>
-                                <Chip label={`${enclosure.maxTemp} °C`} />
-                                <IconButton
-                                  size="small"
-                                  onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
-                                >
-                                  <AddIcon />
-                                </IconButton>
-                              </Box>
+                                <RemoveIcon />
+                              </IconButton>
+                              <Chip label={`${enclosure.maxTemp} °C`} />
+                              <IconButton
+                                size="small"
+                                onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
+                              >
+                                <AddIcon />
+                              </IconButton>
                             </Box>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="caption" display="block" gutterBottom>
-                                T° min
-                              </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
-                                >
-                                  <RemoveIcon />
-                                </IconButton>
-                                <Chip label={`${enclosure.minTemp} °C`} />
-                                <IconButton
-                                  size="small"
-                                  onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
-                                >
-                                  <AddIcon />
-                                </IconButton>
-                              </Box>
+                          </Box>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="caption" display="block" gutterBottom>
+                              T° min
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
+                              >
+                                <RemoveIcon />
+                              </IconButton>
+                              <Chip label={`${enclosure.minTemp} °C`} />
+                              <IconButton
+                                size="small"
+                                onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
+                              >
+                                <AddIcon />
+                              </IconButton>
                             </Box>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
                 ))}
-                <Grid item xs={12}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={addColdEnclosure}
-                    startIcon={<AddIcon />}
-                    sx={{ py: 2, borderStyle: 'dashed' }}
-                  >
-                    Ajouter une enceinte froide
-                  </Button>
-                </Grid>
-              </Grid>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={addColdEnclosure}
+                  startIcon={<AddIcon />}
+                  sx={{ py: 2, borderStyle: 'dashed' }}
+                >
+                  Ajouter une enceinte froide
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         );
@@ -650,25 +619,24 @@ export default function HACCPSetupComponent() {
                 <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
                   Plan de nettoyage
                 </Typography>
-                <Typography variant="body1" color="text.secondary" paragraph>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                   Nous vous proposons une liste de tâches avec leur fréquence. 
                   Nous vous invitons à choisir les tâches dans chaque zone et à modifier la fréquence proposée si besoin.
                 </Typography>
               </Box>
 
               <Box sx={{ mb: 3 }}>
-                <Grid container spacing={1}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {zones.map((zone) => (
-                    <Grid item key={zone}>
-                      <Chip
-                        label={zone}
-                        onClick={() => setActiveZone(zone)}
-                        color={activeZone === zone ? 'primary' : 'default'}
-                        variant={activeZone === zone ? 'filled' : 'outlined'}
-                      />
-                    </Grid>
+                    <Chip
+                      key={zone}
+                      label={zone}
+                      onClick={() => setActiveZone(zone)}
+                      color={activeZone === zone ? 'primary' : 'default'}
+                      variant={activeZone === zone ? 'filled' : 'outlined'}
+                    />
                   ))}
-                </Grid>
+                </Box>
               </Box>
 
               <FormControlLabel
@@ -736,10 +704,10 @@ export default function HACCPSetupComponent() {
               <Typography variant="h3" component="h1" gutterBottom fontWeight={700} color="success.main">
                 C&apos;est parfait !
               </Typography>
-              <Typography variant="h6" color="text.secondary" paragraph>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
                 Vous avez terminé vos paramétrages
               </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 En avant pour utiliser l&apos;application !
               </Typography>
               <Button
