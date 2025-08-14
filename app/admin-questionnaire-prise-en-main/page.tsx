@@ -91,33 +91,26 @@ export default function HACCPSetupComponent() {
   const [loading, setLoading] = useState(false);
   
   // Login data
-  const [email, setEmail] = useState('decin10022@mardiek.com');
-  const [password, setPassword] = useState('123456789gR@');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
   // Company info
-  const [activitySector, setActivitySector] = useState('Restauration collective');
-  const [establishmentName, setEstablishmentName] = useState('sdfd');
-  const [firstName, setFirstName] = useState('sdfs');
-  const [lastName, setLastName] = useState('lkmlm');
-  const [phoneNumber, setPhoneNumber] = useState('534354646344');
+  const [activitySector, setActivitySector] = useState('');
+  const [establishmentName, setEstablishmentName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   
   // Users
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'sdfs' },
-    { id: '2', name: 'remi' },
-    { id: '3', name: 'julien' }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
   
   // Suppliers
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   
   // Cold enclosures
   const [showExample, setShowExample] = useState(false);
-  const [coldEnclosures, setColdEnclosures] = useState<ColdEnclosure[]>([
-    { id: '1', name: 'Enceinte froide', temperatureType: 'positive', maxTemp: 5, minTemp: 0 },
-    { id: '2', name: 'Congélateur', temperatureType: 'negative', maxTemp: -15, minTemp: -24 }
-  ]);
+  const [coldEnclosures, setColdEnclosures] = useState<ColdEnclosure[]>([]);
   
   // Cleaning tasks
   const [activeZone, setActiveZone] = useState('Cuisine');
@@ -258,11 +251,11 @@ export default function HACCPSetupComponent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   InputProps={{
-                    endAdornment: (
+                    endAdornment: email ? (
                       <InputAdornment position="end">
                         <CheckCircleIcon color="success" />
                       </InputAdornment>
-                    ),
+                    ) : undefined,
                   }}
                 />
                 <Box>
@@ -278,7 +271,9 @@ export default function HACCPSetupComponent() {
                           <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                             {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
-                          <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                          {password && passwordRequirements.every(req => req.met) && (
+                            <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                          )}
                         </InputAdornment>
                       ),
                     }}
@@ -333,6 +328,9 @@ export default function HACCPSetupComponent() {
                     onChange={(e) => setActivitySector(e.target.value)}
                     label="Secteur d'activité"
                   >
+                    <MenuItem value="">
+                      <em>Sélectionnez un secteur</em>
+                    </MenuItem>
                     <MenuItem value="Restauration collective">Restauration collective</MenuItem>
                     <MenuItem value="Restaurant">Restaurant</MenuItem>
                     <MenuItem value="Boulangerie">Boulangerie</MenuItem>
@@ -398,29 +396,43 @@ export default function HACCPSetupComponent() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {users.map((user, index) => (
-                  <TextField
-                    key={user.id}
+                {users.length === 0 ? (
+                  <Button
                     fullWidth
-                    value={user.name}
-                    onChange={(e) => {
-                      const newUsers = [...users];
-                      newUsers[index] = { ...user, name: e.target.value };
-                      setUsers(newUsers);
-                    }}
-                    placeholder="Nom de l&apos;utilisateur"
                     variant="outlined"
-                  />
-                ))}
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={addUser}
-                  startIcon={<AddIcon />}
-                  sx={{ py: 2, borderStyle: 'dashed' }}
-                >
-                  Ajouter un utilisateur
-                </Button>
+                    onClick={addUser}
+                    startIcon={<AddIcon />}
+                    sx={{ py: 3, borderStyle: 'dashed' }}
+                  >
+                    Ajouter votre premier utilisateur
+                  </Button>
+                ) : (
+                  <>
+                    {users.map((user, index) => (
+                      <TextField
+                        key={user.id}
+                        fullWidth
+                        value={user.name}
+                        onChange={(e) => {
+                          const newUsers = [...users];
+                          newUsers[index] = { ...user, name: e.target.value };
+                          setUsers(newUsers);
+                        }}
+                        placeholder="Nom de l&apos;utilisateur"
+                        variant="outlined"
+                      />
+                    ))}
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={addUser}
+                      startIcon={<AddIcon />}
+                      sx={{ py: 2, borderStyle: 'dashed' }}
+                    >
+                      Ajouter un utilisateur
+                    </Button>
+                  </>
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -449,29 +461,43 @@ export default function HACCPSetupComponent() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {suppliers.map((supplier, index) => (
-                  <TextField
-                    key={supplier.id}
+                {suppliers.length === 0 ? (
+                  <Button
                     fullWidth
-                    value={supplier.name}
-                    onChange={(e) => {
-                      const newSuppliers = [...suppliers];
-                      newSuppliers[index] = { ...supplier, name: e.target.value };
-                      setSuppliers(newSuppliers);
-                    }}
-                    placeholder="Ex : Pomona, Transgourmet, Metro..."
                     variant="outlined"
-                  />
-                ))}
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={addSupplier}
-                  startIcon={<AddIcon />}
-                  sx={{ py: 2, borderStyle: 'dashed' }}
-                >
-                  Ajouter un fournisseur
-                </Button>
+                    onClick={addSupplier}
+                    startIcon={<AddIcon />}
+                    sx={{ py: 3, borderStyle: 'dashed' }}
+                  >
+                    Ajouter votre premier fournisseur
+                  </Button>
+                ) : (
+                  <>
+                    {suppliers.map((supplier, index) => (
+                      <TextField
+                        key={supplier.id}
+                        fullWidth
+                        value={supplier.name}
+                        onChange={(e) => {
+                          const newSuppliers = [...suppliers];
+                          newSuppliers[index] = { ...supplier, name: e.target.value };
+                          setSuppliers(newSuppliers);
+                        }}
+                        placeholder="Ex : Pomona, Transgourmet, Metro..."
+                        variant="outlined"
+                      />
+                    ))}
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={addSupplier}
+                      startIcon={<AddIcon />}
+                      sx={{ py: 2, borderStyle: 'dashed' }}
+                    >
+                      Ajouter un fournisseur
+                    </Button>
+                  </>
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -510,93 +536,107 @@ export default function HACCPSetupComponent() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {coldEnclosures.map((enclosure) => (
-                  <Card key={enclosure.id} variant="outlined">
-                    <CardContent>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField
-                          fullWidth
-                          label="Nom de l&apos;enceinte"
-                          value={enclosure.name}
-                          onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
-                          placeholder="Ex : Enceinte, congélateur..."
-                        />
-                        <FormControl component="fieldset">
-                          <Typography variant="subtitle2" gutterBottom>
-                            Sélectionner la température de l&apos;enceinte
-                          </Typography>
-                          <RadioGroup
-                            row
-                            value={enclosure.temperatureType}
-                            onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
-                          >
-                            <FormControlLabel
-                              value="positive"
-                              control={<Radio />}
-                              label="Température positive"
+                {coldEnclosures.length === 0 ? (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={addColdEnclosure}
+                    startIcon={<AddIcon />}
+                    sx={{ py: 3, borderStyle: 'dashed' }}
+                  >
+                    Ajouter votre première enceinte froide
+                  </Button>
+                ) : (
+                  <>
+                    {coldEnclosures.map((enclosure) => (
+                      <Card key={enclosure.id} variant="outlined">
+                        <CardContent>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <TextField
+                              fullWidth
+                              label="Nom de l&apos;enceinte"
+                              value={enclosure.name}
+                              onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
+                              placeholder="Ex : Enceinte, congélateur..."
                             />
-                            <FormControlLabel
-                              value="negative"
-                              control={<Radio />}
-                              label="Température négative"
-                            />
-                          </RadioGroup>
-                        </FormControl>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" display="block" gutterBottom>
-                              T° max
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                              <IconButton
-                                size="small"
-                                onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
+                            <FormControl component="fieldset">
+                              <Typography variant="subtitle2" gutterBottom>
+                                Sélectionner la température de l&apos;enceinte
+                              </Typography>
+                              <RadioGroup
+                                row
+                                value={enclosure.temperatureType}
+                                onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
                               >
-                                <RemoveIcon />
-                              </IconButton>
-                              <Chip label={`${enclosure.maxTemp} °C`} />
-                              <IconButton
-                                size="small"
-                                onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
-                              >
-                                <AddIcon />
-                              </IconButton>
+                                <FormControlLabel
+                                  value="positive"
+                                  control={<Radio />}
+                                  label="Température positive"
+                                />
+                                <FormControlLabel
+                                  value="negative"
+                                  control={<Radio />}
+                                  label="Température négative"
+                                />
+                              </RadioGroup>
+                            </FormControl>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="caption" display="block" gutterBottom>
+                                  T° max
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
+                                  >
+                                    <RemoveIcon />
+                                  </IconButton>
+                                  <Chip label={`${enclosure.maxTemp} °C`} />
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
+                                  >
+                                    <AddIcon />
+                                  </IconButton>
+                                </Box>
+                              </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="caption" display="block" gutterBottom>
+                                  T° min
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
+                                  >
+                                    <RemoveIcon />
+                                  </IconButton>
+                                  <Chip label={`${enclosure.minTemp} °C`} />
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
+                                  >
+                                    <AddIcon />
+                                  </IconButton>
+                                </Box>
+                              </Box>
                             </Box>
                           </Box>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" display="block" gutterBottom>
-                              T° min
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                              <IconButton
-                                size="small"
-                                onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
-                              >
-                                <RemoveIcon />
-                              </IconButton>
-                              <Chip label={`${enclosure.minTemp} °C`} />
-                              <IconButton
-                                size="small"
-                                onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
-                              >
-                                <AddIcon />
-                              </IconButton>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                ))}
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={addColdEnclosure}
-                  startIcon={<AddIcon />}
-                  sx={{ py: 2, borderStyle: 'dashed' }}
-                >
-                  Ajouter une enceinte froide
-                </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={addColdEnclosure}
+                      startIcon={<AddIcon />}
+                      sx={{ py: 2, borderStyle: 'dashed' }}
+                    >
+                      Ajouter une enceinte froide
+                    </Button>
+                  </>
+                )}
               </Box>
             </CardContent>
           </Card>
