@@ -31,6 +31,7 @@ import {
   Build as EquipmentIcon,
   ListAlt as MethodsIcon,
   LocalDining as OilIcon,
+  GetApp as ExportIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -61,6 +62,7 @@ const menuItems = [
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
   { href: "/admin-imprimantes", icon: PrinterIcon, label: "Administrateur des Imprimantes" },
+  { href: "/admin-export-haccp", icon: ExportIcon, label: "Administrateur Export HACCP" },
 ];
 
 interface AppProviderProps {
