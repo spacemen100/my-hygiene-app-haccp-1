@@ -63,6 +63,7 @@ const menuItems = [
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
   { href: "/admin-imprimantes", icon: PrinterIcon, label: "Administrateur des Imprimantes" },
   { href: "/admin-export-haccp", icon: ExportIcon, label: "Administrateur Export HACCP" },
+  { href: "/admin-questionnaire-prise-en-main", icon: AdminIcon, label: "Administrateur Questionnaire de prise en main de l'app" },
 ];
 
 interface AppProviderProps {
