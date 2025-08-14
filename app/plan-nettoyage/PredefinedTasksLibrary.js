@@ -35,7 +35,63 @@ export const predefinedTasks = {
       { name: "Nettoyage des murs et portes", defaultFrequency: "monthly" }
     ]
   },
-  // Add all other zones similarly...
+  PLONGE: {
+    "QUOTIDIEN": [
+      { name: "Sols, plinthes, grilles et siphons", defaultFrequency: "daily" },
+      { name: "Désinfection des poignées et interrupteurs", defaultFrequency: "daily" },
+      { name: "Vidange et nettoyage des poubelles et supports", defaultFrequency: "daily" },
+      { name: "Nettoyage du bac de plonge", defaultFrequency: "daily" }
+    ],
+    "MENSUEL": [
+      { name: "Nettoyage des murs et portes", defaultFrequency: "monthly" },
+      { name: "Désinfection des étagères", defaultFrequency: "monthly" }
+    ]
+  },
+  TOILETTES: {
+    "QUOTIDIEN": [
+      { name: "Nettoyage complet des toilettes (sanitaires, urinoirs, lave-mains)", defaultFrequency: "daily" },
+      { name: "Désinfection des miroirs et surfaces vitrées", defaultFrequency: "daily" }
+    ],
+    "HEBDOMADAIRE": [
+      { name: "Nettoyage des murs et portes", defaultFrequency: "weekly" }
+    ]
+  },
+  VESTIAIRES: {
+    "QUOTIDIEN": [
+      { name: "Nettoyage général (sols, bancs, surfaces)", defaultFrequency: "daily" }
+    ],
+    "HEBDOMADAIRE": [
+      { name: "Nettoyage des douches", defaultFrequency: "weekly" }
+    ],
+    "MENSUEL": [
+      { name: "Désinfection des armoires", defaultFrequency: "monthly" }
+    ]
+  },
+  "AUTRES ZONES": {
+    "APRÈS CHAQUE UTILISATION": [
+      { name: "Essuyage des surfaces (Essa)", defaultFrequency: "after_each_use" }
+    ],
+    "QUOTIDIEN": [
+      { name: "Nettoyage des lave-mains", defaultFrequency: "daily" },
+      { name: "Balayage/lavage des sols", defaultFrequency: "daily" },
+      { name: "Désinfection des toilettes/urinoirs (si présents)", defaultFrequency: "daily" },
+      { name: "Nettoyage des miroirs et surfaces vitrées", defaultFrequency: "daily" },
+      { name: "Vidange du bac de plonge (si applicable)", defaultFrequency: "daily" }
+    ],
+    "HEBDOMADAIRE": [
+      { name: "Nettoyage des échelles (si présentes)", defaultFrequency: "weekly" },
+      { name: "Détartrage des hottes/filtres (si applicable)", defaultFrequency: "weekly" },
+      { name: "Nettoyage de la cellule de refroidissement (si présente)", defaultFrequency: "weekly" },
+      { name: "Nettoyage des douches (si présentes)", defaultFrequency: "weekly" },
+      { name: "Nettoyage des murs et portes", defaultFrequency: "weekly" }
+    ],
+    "MENSUEL": [
+      { name: "Nettoyage approfondi des murs et portes", defaultFrequency: "monthly" },
+      { name: "Désinfection des tiroirs/étagères (si présents)", defaultFrequency: "monthly" },
+      { name: "Nettoyage de l'armoire froide (si présente)", defaultFrequency: "monthly" },
+      { name: "Désinfection des étagères/armoires", defaultFrequency: "monthly" }
+    ]
+  }
 };
 
 export const frequencyOptions = [
