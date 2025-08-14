@@ -103,7 +103,16 @@ export default function EditTaskDialog({ open, onClose, record, tasks, onSave }:
             control={
               <Switch
                 checked={formData.is_completed || false}
-                onChange={(e) => setFormData({...formData, is_completed: e.target.checked})}
+                onChange={(e) => {
+                  const isCompleted = e.target.checked;
+                  setFormData({
+                    ...formData, 
+                    is_completed: isCompleted,
+                    // Auto-cocher "Conforme aux standards HACCP" et auto-remplir la date/heure
+                    is_compliant: isCompleted ? true : formData.is_compliant,
+                    completion_date: isCompleted ? new Date().toISOString() : formData.completion_date
+                  });
+                }}
               />
             }
             label="Tâche réalisée"
