@@ -20,6 +20,21 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import { Database } from '@/src/types/database';
+
+type DeliveryWithRelations = Database['public']['Tables']['deliveries']['Row'] & {
+  supplier?: Database['public']['Tables']['suppliers']['Row'] | null;
+  temperature_controls?: Database['public']['Tables']['truck_temperature_controls']['Row'][];
+  product_controls?: Database['public']['Tables']['product_reception_controls']['Row'][];
+  non_conformities?: Database['public']['Tables']['non_conformities']['Row'][];
+};
+
+type LabelPrinting = Database['public']['Tables']['label_printings']['Row'];
+type LabelRecord = Database['public']['Tables']['label_records']['Row'];
+type TruckTemperatureControl = Database['public']['Tables']['truck_temperature_controls']['Row'];
+type CoolingRecord = Database['public']['Tables']['cooling_records']['Row'];
+type CleaningTask = Database['public']['Tables']['cleaning_tasks']['Row'];
+type CleaningRecord = Database['public']['Tables']['cleaning_records']['Row'];
 import { useEmployee } from '@/contexts/EmployeeContext';
 import { useSnackbar } from 'notistack';
 import jsPDF from 'jspdf';
@@ -54,12 +69,12 @@ interface HACCPReportData {
     endDate: string;
     reportDate: string;
   };
-  deliveries?: any[];
-  labels?: any[];
-  dlcPrints?: any[];
-  temperatureControls?: any[];
-  coolingTracking?: any[];
-  cleaningPlan?: any[];
+  deliveries?: DeliveryWithRelations[];
+  labels?: (LabelPrinting | LabelRecord)[];
+  dlcPrints?: LabelPrinting[];
+  temperatureControls?: TruckTemperatureControl[];
+  coolingTracking?: CoolingRecord[];
+  cleaningPlan?: (CleaningTask | CleaningRecord)[];
 }
 
 export default function ExportHACCP() {
@@ -200,7 +215,7 @@ export default function ExportHACCP() {
       console.warn('Erreur lors de la récupération des contrôles température:', err);
       return [];
     }
-  }, [employee?.organization_id]);
+  }, []);
 
   const fetchCoolingTracking = useCallback(async (startDate: Date, endDate: Date) => {
     try {
@@ -411,7 +426,7 @@ export default function ExportHACCP() {
         
         doc.setFont('helvetica', 'normal');
         
-        data.deliveries.slice(0, 10).forEach((delivery: any) => {
+        data.deliveries.slice(0, 10).forEach((delivery: DeliveryWithRelations) => {
           checkPageBreak();
           
           const supplierName = (delivery.supplier?.name || 'Non spécifié').substring(0, 15);
@@ -448,8 +463,8 @@ export default function ExportHACCP() {
       yPos += 15;
 
       // Observations
-      const missingBLs = data.deliveries.filter((d: any) => !d.delivery_number);
-      const nonCompliantDeliveries = data.deliveries.filter((d: any) => !d.is_compliant);
+      const missingBLs = data.deliveries.filter((d: DeliveryWithRelations) => !d.delivery_number);
+      const nonCompliantDeliveries = data.deliveries.filter((d: DeliveryWithRelations) => !d.is_compliant);
       
       if (missingBLs.length > 0 || nonCompliantDeliveries.length > 0) {
         checkPageBreak(20);
@@ -525,14 +540,14 @@ export default function ExportHACCP() {
         
         doc.setFont('helvetica', 'normal');
         
-        data.temperatureControls.slice(0, 8).forEach((control: any) => {
+        data.temperatureControls.slice(0, 8).forEach((control: TruckTemperatureControl) => {
           checkPageBreak();
           
-          const zoneName = (control.zone_name || control.storage_type || 'Zone').substring(0, 15);
+          const zoneName = (control.storage_type || 'Zone').substring(0, 15);
           const controlDate = control.control_date ? 
             format(new Date(control.control_date), 'dd/MM/yy', { locale: fr }) : 
             'N/A';
-          const temperature = `${control.temperature || 0}°C`;
+          const temperature = `${control.truck_temperature || 0}°C`;
           
           doc.text(zoneName, 20, yPos);
           doc.text(controlDate, 80, yPos);
@@ -605,7 +620,7 @@ export default function ExportHACCP() {
     let hasRecommendations = false;
 
     if (selectedModules.controleReception && data.deliveries) {
-      const missingBLs = data.deliveries.filter((d: any) => !d.delivery_number);
+      const missingBLs = data.deliveries.filter((d: DeliveryWithRelations) => !d.delivery_number);
       if (missingBLs.length > 0) {
         hasRecommendations = true;
         doc.setTextColor(warningColor);
