@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import {
   Box,
@@ -11,6 +11,8 @@ import {
   Button,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
   Paper,
   Stepper,
   Step,
@@ -56,7 +58,7 @@ const steps = [
 ];
 
 export default function HACCPSetupComponent() {
-  const { signUp, user } = useAuth();
+  const { signUp } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,13 +83,6 @@ export default function HACCPSetupComponent() {
     { text: '8 caractères minimum', met: password.length >= 8 }
   ], [password]);
 
-  // Check if current step is completed
-  const isStepCompleted = useCallback((stepId: Step) => {
-    const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
-    const currentIndex = stepOrder.indexOf(currentStep);
-    const stepIndex = stepOrder.indexOf(stepId);
-    return stepIndex < currentIndex;
-  }, [currentStep]);
 
   const handleNext = useCallback(async () => {
     setLoading(true);

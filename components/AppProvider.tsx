@@ -32,6 +32,7 @@ import {
   ListAlt as MethodsIcon,
   LocalDining as OilIcon,
   GetApp as ExportIcon,
+  ChecklistRtl as ChecklistIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -51,9 +52,11 @@ const menuItems = [
   { href: "/controle-huile", icon: OilIcon, label: "Contrôle qualité de l'huile" },
   { href: "/suivi-refroidissement", icon: ThermometerIcon, label: "Suivi de refroidissement" },
   { href: "/plan-nettoyage", icon: SprayCanIcon, label: "Plan de nettoyage" },
+  { href: "/checklist", icon: ChecklistIcon, label: "Checklists HACCP" },
   { href: "/admin-organisation", icon: BusinessIcon, label: "Administrateur Organisation" },
   { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
+  { href: "/admin-checklist", icon: ChecklistIcon, label: "Administrateur des Checklists" },
   { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Administrateur Zones et Sous-zones de Nettoyage" },
   { href: "/admin-produits-nettoyage", icon: ProductsIcon, label: "Administrateur des Produits de Nettoyage" },
   { href: "/admin-equipements", icon: EquipmentIcon, label: "Administrateur des Équipements" },
