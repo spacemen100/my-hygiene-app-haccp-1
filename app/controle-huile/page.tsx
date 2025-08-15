@@ -49,7 +49,6 @@ import {
   WaterDrop,
   FactCheck,
   Visibility,
-  ThermostatAuto
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -77,7 +76,7 @@ export default function OilQualityControl() {
   const [currentTab, setCurrentTab] = useState(0);
   const [equipments, setEquipments] = useState<EquipmentWithReadings[]>([]);
   const [oilControls, setOilControls] = useState<OilControlWithReadings[]>([]);
-  const [correctiveActions, setCorrectiveActions] = useState<CorrectiveAction[]>([]);
+  const [, setCorrectiveActions] = useState<CorrectiveAction[]>([]);
   const [loading, setLoading] = useState({ 
     equipments: true, 
     controls: true, 
@@ -137,7 +136,7 @@ export default function OilQualityControl() {
       // Ajouter la dernière lecture pour chaque équipement
       const equipmentsWithLatest = (data || []).map(equipment => {
         const readings = equipment.oil_equipment_readings || [];
-        const latestReading = readings.sort((a: any, b: any) => 
+        const latestReading = readings.sort((a: OilEquipmentReading, b: OilEquipmentReading) => 
           new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
         )[0] || null;
         
@@ -273,7 +272,7 @@ export default function OilQualityControl() {
       return reading.temperature >= minTemp && reading.temperature <= maxTemp;
     }
     return null;
-  }, []);
+  }, [complianceThresholds.polarity.max, complianceThresholds.temperature.min, complianceThresholds.temperature.max]);
 
   // Sauvegarder une lecture d'équipement
   const saveEquipmentReading = useCallback(async () => {
@@ -348,7 +347,7 @@ export default function OilQualityControl() {
   }, [equipments, oilControls]);
 
   // Gérer le changement d'onglet
-  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   }, []);
 
@@ -596,8 +595,6 @@ export default function OilQualityControl() {
             {/* Analyses et rapports */}
             <AnalysisSection 
               equipments={equipments}
-              oilControls={oilControls}
-              stats={stats}
             />
           </>
         )}
@@ -632,7 +629,7 @@ export default function OilQualityControl() {
             {selectedEquipment && (
               <Box sx={{ mt: 2 }}>
                 <Alert severity="info" sx={{ mb: 3 }}>
-                  Type d'huile: {selectedEquipment.oil_type} • 
+                  Type d&apos;huile: {selectedEquipment.oil_type} • 
                   Localisation: {selectedEquipment.location}
                 </Alert>
 
@@ -642,7 +639,7 @@ export default function OilQualityControl() {
                     <Select
                       value={readingForm.control_type || 'visual'}
                       label="Type de contrôle"
-                      onChange={(e) => setReadingForm({...readingForm, control_type: e.target.value as any})}
+                      onChange={(e) => setReadingForm({...readingForm, control_type: e.target.value as TablesInsert<'oil_equipment_readings'>['control_type']})}
                     >
                       {controlTypes.map(type => (
                         <MenuItem key={type.value} value={type.value}>
@@ -664,7 +661,7 @@ export default function OilQualityControl() {
                     <TextField
                       label="Polarité (%)"
                       type="number"
-                      inputProps={{ step: "0.1", min: "0", max: "100" }}
+                      slotProps={{ htmlInput: { step: "0.1", min: "0", max: "100" } }}
                       value={readingForm.polarity || ''}
                       onChange={(e) => setReadingForm({...readingForm, polarity: e.target.value ? Number(e.target.value) : null})}
                       fullWidth
@@ -681,7 +678,7 @@ export default function OilQualityControl() {
                   <TextField
                     label="Température (°C)"
                     type="number"
-                    inputProps={{ step: "0.1", min: "0", max: "250" }}
+                    slotProps={{ htmlInput: { step: "0.1", min: "0", max: "250" } }}
                     value={readingForm.temperature || ''}
                     onChange={(e) => setReadingForm({...readingForm, temperature: e.target.value ? Number(e.target.value) : null})}
                     fullWidth
@@ -697,7 +694,7 @@ export default function OilQualityControl() {
                   <TextField
                     label="Niveau d'huile (%)"
                     type="number"
-                    inputProps={{ step: "1", min: "0", max: "100" }}
+                    slotProps={{ htmlInput: { step: "1", min: "0", max: "100" } }}
                     value={readingForm.oil_level || ''}
                     onChange={(e) => setReadingForm({...readingForm, oil_level: e.target.value ? Number(e.target.value) : null})}
                     fullWidth
@@ -789,7 +786,7 @@ const EquipmentCard = React.memo(({ equipment, onControl, controlInProgress }: {
           </Box>
           <Chip
             label={equipment.latest_reading?.is_compliant ? 'Conforme' : equipment.latest_reading ? 'Non conforme' : 'Non testé'}
-            color={getStatusColor() as any}
+            color={getStatusColor() as 'success' | 'error' | 'default'}
             size="small"
             variant="outlined"
           />
@@ -797,7 +794,7 @@ const EquipmentCard = React.memo(({ equipment, onControl, controlInProgress }: {
         
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Type d'huile: {equipment.oil_type || 'Non spécifié'}
+            Type d&apos;huile: {equipment.oil_type || 'Non spécifié'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Localisation: {equipment.location || 'Non spécifiée'}
@@ -856,7 +853,7 @@ EquipmentCard.displayName = 'EquipmentCard';
 const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
   oilControls: OilControlWithReadings[];
   loading: boolean;
-  controlTypes: any[];
+  controlTypes: { value: string; label: string; icon: React.ReactNode; description: string }[];
 }) => {
   if (loading) {
     return (
@@ -879,7 +876,7 @@ const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
             Aucun historique
           </Typography>
           <Typography variant="body2" color="text.disabled">
-            Aucun contrôle d'huile n'a encore été effectué
+            Aucun contrôle d&apos;huile n&apos;a encore été effectué
           </Typography>
         </CardContent>
       </Card>
@@ -956,10 +953,8 @@ const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
 HistorySection.displayName = 'HistorySection';
 
 // Composant pour les analyses
-const AnalysisSection = React.memo(({ equipments, oilControls, stats }: {
+const AnalysisSection = React.memo(({ equipments }: {
   equipments: EquipmentWithReadings[];
-  oilControls: OilControlWithReadings[];
-  stats: any;
 }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
