@@ -193,116 +193,41 @@ export default function HACCPSetupComponent() {
   }, [user]);
 
   const addEmployee = useCallback(async (firstName: string, lastName: string, role: string = 'employee') => {
-    if (!user) return;
-
-    try {
-      // Get user's organization
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!userData?.organization_id) {
-        // During setup, organization doesn't exist yet, so we'll add employee locally
-        // and save to database later in the complete step
-        const tempEmployee = {
-          id: `temp_${Date.now()}`,
-          first_name: firstName,
-          last_name: lastName,
-          role: role,
-          is_active: true,
-          created_at: null,
-          organization_id: '',
-          password: '',
-          updated_at: null,
-          user_id: null
-        };
-        setEmployees(prev => [...prev, tempEmployee]);
-        return tempEmployee;
-      }
-
-      const { data, error } = await supabase
-        .from('employees')
-        .insert({
-          organization_id: userData.organization_id,
-          first_name: firstName,
-          last_name: lastName,
-          role: role,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setEmployees(prev => [...prev, data]);
-      return data;
-    } catch (error) {
-      console.error('Error adding employee:', error);
-      throw error;
-    }
-  }, [user]);
+    // During the setup process, we just add employees locally
+    // They will be saved to the database in the complete step
+    const tempEmployee = {
+      id: `temp_${Date.now()}`,
+      first_name: firstName,
+      last_name: lastName,
+      role: role,
+      is_active: true,
+      created_at: null,
+      organization_id: '',
+      password: `temp_password_${Date.now()}`,
+      updated_at: null,
+      user_id: null
+    };
+    setEmployees(prev => [...prev, tempEmployee]);
+    return tempEmployee;
+  }, []);
 
   const deleteEmployee = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('employees')
-        .update({ is_active: false })
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setEmployees(prev => prev.filter(emp => emp.id !== id));
-    } catch (error) {
-      console.error('Error deleting employee:', error);
-      throw error;
-    }
+    // During setup, just remove from local state
+    setEmployees(prev => prev.filter(emp => emp.id !== id));
   };
 
-  // Save new employees immediately when leaving the users step
+  // During setup, we don't save employees until the complete step
   const saveNewEmployees = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      // Get user's organization
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
+    // During setup process, employees are kept in local state
+    // They will be saved to database in the complete step
+    console.log('Keeping employees in local state during setup');
+  }, []);
 
-      if (!userData?.organization_id) {
-        // During setup, organization doesn't exist yet, so we keep employees in local state
-        // They will be saved to database in the complete step
-        console.log('Organization not found, keeping employees in local state for now');
-        return;
-      }
-
-      // Save employees with temporary IDs
-      const newEmployees = employees.filter(emp => emp.id.startsWith('temp_') && emp.first_name.trim() && emp.last_name.trim());
-      
-      for (const employee of newEmployees) {
-        await addEmployee(employee.first_name, employee.last_name, employee.role || 'employee');
-      }
-      
-      // Remove temporary employees from state after saving
-      setEmployees(prev => prev.filter(emp => !emp.id.startsWith('temp_')));
-      
-      // Reload employees to get the fresh data
-      await loadEmployees();
-    } catch (error) {
-      console.error('Error saving employees:', error);
-      setError('Erreur lors de la sauvegarde des employés');
-    }
-  }, [employees, user, addEmployee, loadEmployees]);
-
-  // Load employees when user changes
+  // During setup, we don't load employees from database
   useEffect(() => {
-    if (user && currentStep === 'users') {
-      loadEmployees();
-    }
-  }, [user, currentStep, loadEmployees]);
+    // During setup process, employees are managed in local state only
+    console.log('Setup mode: employees managed locally');
+  }, [user, currentStep]);
 
   // Database save functions
   const saveOrganization = useCallback(async (userId: string) => {
@@ -359,6 +284,7 @@ export default function HACCPSetupComponent() {
       last_name: employee.last_name.trim(),
       role: employee.role || 'employee',
       user_id: userId,
+      password: employee.password.startsWith('temp_password_') ? 'defaultpassword123' : employee.password,
     }));
 
     const { data, error } = await supabase
@@ -883,15 +809,7 @@ export default function HACCPSetupComponent() {
                           />
                           <IconButton
                             color="error"
-                            onClick={() => {
-                              if (employee.id.startsWith('temp_')) {
-                                // Remove from local state if not saved
-                                setEmployees(prev => prev.filter(emp => emp.id !== employee.id));
-                              } else {
-                                // Mark for deletion in database
-                                deleteEmployee(employee.id);
-                              }
-                            }}
+                            onClick={() => deleteEmployee(employee.id)}
                           >
                             <RemoveIcon />
                           </IconButton>
