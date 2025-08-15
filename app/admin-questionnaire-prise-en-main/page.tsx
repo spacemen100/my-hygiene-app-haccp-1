@@ -55,9 +55,6 @@ import { Tables } from '@/src/types/database';
 type Employee = Tables<'employees'>;
 type Supplier = Tables<'suppliers'>;
 type ActivitySector = Tables<'activity_sectors'>;
-type ColdStorageUnit = Tables<'cold_storage_units'>;
-type CleaningZone = Tables<'cleaning_zones'>;
-type CleaningTask = Tables<'cleaning_tasks'>;
 
 interface ColdEnclosure {
   id: string;
@@ -114,7 +111,7 @@ export default function HACCPSetupComponent() {
   
   // Cleaning tasks
   const [activeZone, setActiveZone] = useState('Cuisine');
-  const [cleaningTasks, setCleaningTasks] = useState<(CleaningTask & { enabled: boolean; zone: string })[]>([
+  const [cleaningTasks, setCleaningTasks] = useState<{ id: string; name: string; frequency: string; zone: string; enabled: boolean }[]>([
     { id: '1', name: 'Sol, plinthes, grilles et siphons', frequency: 'Jour', zone: 'Cuisine', enabled: true },
     { id: '2', name: 'Sol, plinthes, grilles et siphons', frequency: 'Jour', zone: 'Cuisine', enabled: true },
     { id: '3', name: 'Murs et portes', frequency: 'Mois', zone: 'Cuisine', enabled: true },
@@ -232,24 +229,6 @@ export default function HACCPSetupComponent() {
     }
   };
 
-  const updateEmployee = async (id: string, updates: Partial<Employee>) => {
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setEmployees(prev => prev.map(emp => emp.id === id ? data : emp));
-      return data;
-    } catch (error) {
-      console.error('Error updating employee:', error);
-      throw error;
-    }
-  };
 
   const deleteEmployee = async (id: string) => {
     try {
@@ -287,7 +266,7 @@ export default function HACCPSetupComponent() {
       const newEmployees = employees.filter(emp => emp.id.startsWith('temp_') && emp.first_name.trim() && emp.last_name.trim());
       
       for (const employee of newEmployees) {
-        await addEmployee(employee.first_name, employee.last_name, employee.role);
+        await addEmployee(employee.first_name, employee.last_name, employee.role || 'employee');
       }
       
       // Remove temporary employees from state after saving
@@ -306,12 +285,12 @@ export default function HACCPSetupComponent() {
     if (user && currentStep === 'users') {
       loadEmployees();
     }
-  }, [user, currentStep]);
+  }, [user, currentStep, loadEmployees]);
 
   // Database save functions
   const saveOrganization = async (userId: string) => {
     // Préparer les données d'insertion
-    const organizationData: any = {
+    const organizationData: Record<string, any> = {
       name: establishmentName,
       user_id: userId,
     };
@@ -550,7 +529,7 @@ export default function HACCPSetupComponent() {
     } finally {
       setLoading(false);
     }
-  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, saveOrganization, saveEmployees, saveSuppliers, saveColdStorageUnits, saveCleaningData]);
+  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, saveOrganization, saveEmployees, saveSuppliers, saveColdStorageUnits, saveCleaningData, saveNewEmployees, user]);
 
   const handlePrevious = useCallback(() => {
     const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
