@@ -131,7 +131,13 @@ export default function OilQualityControl() {
         .eq('equipment_state', true)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01') {
+          enqueueSnackbar('Tables de contrôle d\'huile non configurées. Contactez votre administrateur.', { variant: 'warning' });
+          return;
+        }
+        throw error;
+      }
 
       // Ajouter la dernière lecture pour chaque équipement
       const equipmentsWithLatest = (data || []).map(equipment => {
@@ -230,8 +236,19 @@ export default function OilQualityControl() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01') {
+          enqueueSnackbar('Tables de contrôle d\'huile non configurées. Contactez votre administrateur.', { variant: 'warning' });
+          return null;
+        }
+        if (error.code === 'PGRST301') {
+          enqueueSnackbar('Accès non autorisé aux contrôles d\'huile. Vérifiez vos permissions.', { variant: 'error' });
+          return null;
+        }
+        throw error;
+      }
       setCurrentControl(data);
+      enqueueSnackbar('Nouvelle session de contrôle créée', { variant: 'success' });
       return data;
     } catch (error) {
       console.error('Erreur lors de la création du contrôle:', error);
