@@ -50,9 +50,12 @@ import {
   ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 
-interface User {
+interface Employee {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  is_active: boolean;
 }
 
 interface Supplier {
@@ -108,8 +111,9 @@ export default function HACCPSetupComponent() {
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   
-  // Users
-  const [users, setUsers] = useState<User[]>([]);
+  // Employees
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
   
   // Suppliers
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -154,6 +158,142 @@ export default function HACCPSetupComponent() {
     { text: '8 caractères minimum', met: password.length >= 8 }
   ];
 
+  // Employee management functions
+  const loadEmployees = async () => {
+    if (!user) return;
+    
+    setLoadingEmployees(true);
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (error) {
+      console.error('Error loading employees:', error);
+      setError('Erreur lors du chargement des employés');
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
+  const addEmployee = async (firstName: string, lastName: string, role: string = 'employee') => {
+    if (!user) return;
+
+    try {
+      // Get user's organization
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!userData?.organization_id) {
+        throw new Error('Organisation non trouvée');
+      }
+
+      const { data, error } = await supabase
+        .from('employees')
+        .insert({
+          organization_id: userData.organization_id,
+          first_name: firstName,
+          last_name: lastName,
+          role: role,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setEmployees(prev => [...prev, data]);
+      return data;
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      throw error;
+    }
+  };
+
+  const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setEmployees(prev => prev.map(emp => emp.id === id ? data : emp));
+      return data;
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      throw error;
+    }
+  };
+
+  const deleteEmployee = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setEmployees(prev => prev.filter(emp => emp.id !== id));
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      throw error;
+    }
+  };
+
+  // Save new employees immediately when leaving the users step
+  const saveNewEmployees = async () => {
+    if (!user) return;
+    
+    try {
+      // Get user's organization
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!userData?.organization_id) {
+        throw new Error('Organisation non trouvée');
+      }
+
+      // Save employees with temporary IDs
+      const newEmployees = employees.filter(emp => emp.id.startsWith('temp_') && emp.first_name.trim() && emp.last_name.trim());
+      
+      for (const employee of newEmployees) {
+        await addEmployee(employee.first_name, employee.last_name, employee.role);
+      }
+      
+      // Remove temporary employees from state after saving
+      setEmployees(prev => prev.filter(emp => !emp.id.startsWith('temp_')));
+      
+      // Reload employees to get the fresh data
+      await loadEmployees();
+    } catch (error) {
+      console.error('Error saving employees:', error);
+      setError('Erreur lors de la sauvegarde des employés');
+    }
+  };
+
+  // Load employees when user changes
+  useEffect(() => {
+    if (user && currentStep === 'users') {
+      loadEmployees();
+    }
+  }, [user, currentStep]);
+
   // Database save functions
   const saveOrganization = async (userId: string) => {
     const { data, error } = await supabase
@@ -170,13 +310,15 @@ export default function HACCPSetupComponent() {
   };
 
   const saveEmployees = async (organizationId: string, userId: string) => {
-    if (users.length === 0) return [];
+    // Only save employees with temporary IDs (new employees)
+    const newEmployees = employees.filter(emp => emp.id.startsWith('temp_'));
+    if (newEmployees.length === 0) return [];
 
-    const employeesToInsert = users.map(user => ({
+    const employeesToInsert = newEmployees.map(employee => ({
       organization_id: organizationId,
-      first_name: user.name.split(' ')[0] || user.name,
-      last_name: user.name.split(' ').slice(1).join(' ') || '',
-      role: 'employee',
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      role: employee.role || 'employee',
       user_id: userId,
     }));
 
@@ -353,6 +495,11 @@ export default function HACCPSetupComponent() {
         return;
       }
 
+      // Save employees when leaving the users step
+      if (currentStep === 'users') {
+        await saveNewEmployees();
+      }
+
       // Move to next step
       if (currentIndex < stepOrder.length - 1) {
         setCurrentStep(stepOrder[currentIndex + 1]);
@@ -374,12 +521,15 @@ export default function HACCPSetupComponent() {
     }
   }, [currentStep]);
 
-  const addUser = () => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: ''
+  const addLocalEmployee = () => {
+    const newEmployee: Employee = {
+      id: `temp_${Date.now()}`,
+      first_name: '',
+      last_name: '',
+      role: 'employee',
+      is_active: true
     };
-    setUsers([...users, newUser]);
+    setEmployees([...employees, newEmployee]);
   };
 
   const addSupplier = () => {
@@ -609,11 +759,15 @@ export default function HACCPSetupComponent() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {users.length === 0 ? (
+                {loadingEmployees ? (
+                  <Box sx={{ textAlign: 'center', py: 3 }}>
+                    <Typography>Chargement des employés...</Typography>
+                  </Box>
+                ) : employees.length === 0 ? (
                   <Button
                     fullWidth
                     variant="outlined"
-                    onClick={addUser}
+                    onClick={addLocalEmployee}
                     startIcon={<AddIcon />}
                     sx={{ py: 3, borderStyle: 'dashed' }}
                   >
@@ -621,24 +775,71 @@ export default function HACCPSetupComponent() {
                   </Button>
                 ) : (
                   <>
-                    {users.map((user, index) => (
-                      <TextField
-                        key={user.id}
-                        fullWidth
-                        value={user.name}
-                        onChange={(e) => {
-                          const newUsers = [...users];
-                          newUsers[index] = { ...user, name: e.target.value };
-                          setUsers(newUsers);
-                        }}
-                        placeholder="Nom de l&apos;employé"
-                        variant="outlined"
-                      />
+                    {employees.map((employee, index) => (
+                      <Card key={employee.id} variant="outlined" sx={{ p: 2 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 2 }}>
+                          <TextField
+                            fullWidth
+                            label="Prénom"
+                            value={employee.first_name}
+                            onChange={(e) => {
+                              const newEmployees = [...employees];
+                              newEmployees[index] = { ...employee, first_name: e.target.value };
+                              setEmployees(newEmployees);
+                            }}
+                            placeholder="Prénom"
+                            variant="outlined"
+                            size="small"
+                          />
+                          <TextField
+                            fullWidth
+                            label="Nom"
+                            value={employee.last_name}
+                            onChange={(e) => {
+                              const newEmployees = [...employees];
+                              newEmployees[index] = { ...employee, last_name: e.target.value };
+                              setEmployees(newEmployees);
+                            }}
+                            placeholder="Nom"
+                            variant="outlined"
+                            size="small"
+                          />
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <TextField
+                            fullWidth
+                            label="Rôle"
+                            value={employee.role}
+                            onChange={(e) => {
+                              const newEmployees = [...employees];
+                              newEmployees[index] = { ...employee, role: e.target.value };
+                              setEmployees(newEmployees);
+                            }}
+                            placeholder="Ex: Chef de cuisine, Serveur..."
+                            variant="outlined"
+                            size="small"
+                          />
+                          <IconButton
+                            color="error"
+                            onClick={() => {
+                              if (employee.id.startsWith('temp_')) {
+                                // Remove from local state if not saved
+                                setEmployees(prev => prev.filter(emp => emp.id !== employee.id));
+                              } else {
+                                // Mark for deletion in database
+                                deleteEmployee(employee.id);
+                              }
+                            }}
+                          >
+                            <RemoveIcon />
+                          </IconButton>
+                        </Box>
+                      </Card>
                     ))}
                     <Button
                       fullWidth
                       variant="outlined"
-                      onClick={addUser}
+                      onClick={addLocalEmployee}
                       startIcon={<AddIcon />}
                       sx={{ py: 2, borderStyle: 'dashed' }}
                     >
@@ -978,7 +1179,7 @@ export default function HACCPSetupComponent() {
                   Configuration à sauvegarder :
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1 }}>
-                  <Chip label={`${users.length} employé(s)`} size="small" />
+                  <Chip label={`${employees.length} employé(s)`} size="small" />
                   <Chip label={`${suppliers.length} fournisseur(s)`} size="small" />
                   <Chip label={`${coldEnclosures.length} enceinte(s) froide(s)`} size="small" />
                   <Chip label={`${cleaningTasks.filter(t => t.enabled).length} tâche(s) de nettoyage`} size="small" />
