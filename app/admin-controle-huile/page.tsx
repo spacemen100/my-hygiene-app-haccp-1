@@ -253,7 +253,7 @@ export default function EquipmentAdmin() {
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>Nom</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Type d'huile</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Type d&apos;huile</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Capacité (L)</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Localisation</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
@@ -318,7 +318,7 @@ export default function EquipmentAdmin() {
             />
             
             <FormControl fullWidth required>
-              <InputLabel>Type d'équipement</InputLabel>
+              <InputLabel>Type d&apos;équipement</InputLabel>
               <Select
                 name="equipment_type"
                 value={formState.equipment_type}
