@@ -378,12 +378,45 @@ export default function ChecklistPage() {
                   <Typography variant="h6" color="text.secondary" gutterBottom>
                     Aucune checklist disponible
                   </Typography>
-                  <Typography variant="body2" color="text.disabled">
+                  <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
                     {selectedCategory === 'all' 
                       ? 'Aucune checklist n\'a été configurée'
                       : `Aucune checklist dans la catégorie "${getCategoryLabel(selectedCategory)}"`
                     }
                   </Typography>
+                  
+                  {selectedCategory === 'all' && (
+                    <Box>
+                      <Typography variant="body2" color="text.primary" sx={{ mb: 2, fontWeight: 500 }}>
+                        Besoin d'inspiration ? Voici une checklist par défaut :
+                      </Typography>
+                      <Card variant="outlined" sx={{ maxWidth: 400, mx: 'auto', textAlign: 'left' }}>
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                            Checklist HACCP de base
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {[
+                              'Stockage au sol - Aucun stockage sur le sol',
+                              'Dates d\'expiration - Vérification des dates',
+                              'Étiquetage des produits - Contrôle des étiquettes',
+                              'Port de bijoux - Vérification du personnel',
+                              'Zone de stockage - Contrôle des espaces',
+                              'Tenue du personnel - Vérification des uniformes'
+                            ].map((item, index) => (
+                              <Typography key={index} variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ width: 6, height: 6, bgcolor: 'primary.main', borderRadius: '50%' }} />
+                                {item}
+                              </Typography>
+                            ))}
+                          </Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                            Contactez votre administrateur pour configurer ces checklists
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
