@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -89,7 +89,7 @@ const steps = [
 ];
 
 export default function HACCPSetupComponent() {
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>('login');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -139,6 +139,13 @@ export default function HACCPSetupComponent() {
   ]);
 
   const zones = ['Cuisine', 'Plonge', 'Préparation froide', 'Économat', 'Légumerie', 'Toilettes', 'Vestiaires', 'Autres'];
+
+  // Check if user is already logged in and skip login step
+  useEffect(() => {
+    if (user && currentStep === 'login') {
+      setCurrentStep('info');
+    }
+  }, [user, currentStep]);
 
   const passwordRequirements = [
     { text: '1 majuscule', met: /[A-Z]/.test(password) },
@@ -275,20 +282,26 @@ export default function HACCPSetupComponent() {
       const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
       const currentIndex = stepOrder.indexOf(currentStep);
 
-      // Handle login step - create account
+      // Handle login step - create account (only if not already logged in)
       if (currentStep === 'login') {
-        if (!email || !password) {
-          throw new Error('Veuillez remplir tous les champs');
-        }
-        
-        if (!passwordRequirements.every(req => req.met)) {
-          throw new Error('Le mot de passe ne respecte pas tous les critères');
-        }
+        if (user) {
+          // User is already logged in, skip to next step
+          setSuccess('Utilisateur déjà connecté !');
+        } else {
+          // User needs to create an account
+          if (!email || !password) {
+            throw new Error('Veuillez remplir tous les champs');
+          }
+          
+          if (!passwordRequirements.every(req => req.met)) {
+            throw new Error('Le mot de passe ne respecte pas tous les critères');
+          }
 
-        const result = await signUp(email, password);
-        if (result.error) throw new Error(result.error.message || 'Erreur lors de la création du compte');
-        
-        setSuccess('Compte créé avec succès !');
+          const result = await signUp(email, password);
+          if (result.error) throw new Error(result.error.message || 'Erreur lors de la création du compte');
+          
+          setSuccess('Compte créé avec succès !');
+        }
       }
 
       // Handle complete step - save all data
