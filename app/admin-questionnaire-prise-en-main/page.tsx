@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -141,17 +141,17 @@ export default function HACCPSetupComponent() {
   // Load activity sectors when component mounts
   useEffect(() => {
     loadActivitySectors();
-  }, []);
+  }, [loadActivitySectors]);
 
-  const passwordRequirements = [
+  const passwordRequirements = useMemo(() => [
     { text: '1 majuscule', met: /[A-Z]/.test(password) },
     { text: '1 chiffre', met: /\d/.test(password) },
     { text: '1 caractère spécial', met: /[!@#$%^&*]/.test(password) },
     { text: '8 caractères minimum', met: password.length >= 8 }
-  ];
+  ], [password]);
 
   // Load activity sectors from database
-  const loadActivitySectors = async () => {
+  const loadActivitySectors = useCallback(async () => {
     setLoadingActivitySectors(true);
     try {
       const { data, error } = await supabase
@@ -167,10 +167,10 @@ export default function HACCPSetupComponent() {
     } finally {
       setLoadingActivitySectors(false);
     }
-  };
+  }, []);
 
   // Employee management functions
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
     if (!user) return;
     
     setLoadingEmployees(true);
@@ -190,9 +190,9 @@ export default function HACCPSetupComponent() {
     } finally {
       setLoadingEmployees(false);
     }
-  };
+  }, [user]);
 
-  const addEmployee = async (firstName: string, lastName: string, role: string = 'employee') => {
+  const addEmployee = useCallback(async (firstName: string, lastName: string, role: string = 'employee') => {
     if (!user) return;
 
     try {
@@ -227,7 +227,7 @@ export default function HACCPSetupComponent() {
       console.error('Error adding employee:', error);
       throw error;
     }
-  };
+  }, [user]);
 
 
   const deleteEmployee = async (id: string) => {
@@ -247,7 +247,7 @@ export default function HACCPSetupComponent() {
   };
 
   // Save new employees immediately when leaving the users step
-  const saveNewEmployees = async () => {
+  const saveNewEmployees = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -278,7 +278,7 @@ export default function HACCPSetupComponent() {
       console.error('Error saving employees:', error);
       setError('Erreur lors de la sauvegarde des employés');
     }
-  };
+  }, [employees, user, addEmployee, loadEmployees]);
 
   // Load employees when user changes
   useEffect(() => {
@@ -288,9 +288,9 @@ export default function HACCPSetupComponent() {
   }, [user, currentStep, loadEmployees]);
 
   // Database save functions
-  const saveOrganization = async (userId: string) => {
+  const saveOrganization = useCallback(async (userId: string) => {
     // Préparer les données d'insertion
-    const organizationData: Record<string, any> = {
+    const organizationData: Record<string, string | null> = {
       name: establishmentName,
       user_id: userId,
     };
@@ -325,9 +325,9 @@ export default function HACCPSetupComponent() {
       throw error;
     }
     return data;
-  };
+  }, [establishmentName, activitySector]);
 
-  const saveEmployees = async (organizationId: string, userId: string) => {
+  const saveEmployees = useCallback(async (organizationId: string, userId: string) => {
     // Only save employees with temporary IDs (new employees)
     const newEmployees = employees.filter(emp => emp.id.startsWith('temp_'));
     if (newEmployees.length === 0) return [];
@@ -347,9 +347,9 @@ export default function HACCPSetupComponent() {
 
     if (error) throw error;
     return data;
-  };
+  }, [employees]);
 
-  const saveSuppliers = async (organizationId: string, userId: string) => {
+  const saveSuppliers = useCallback(async (organizationId: string, userId: string) => {
     if (suppliers.length === 0) return [];
 
     const suppliersToInsert = suppliers.map(supplier => ({
@@ -365,9 +365,9 @@ export default function HACCPSetupComponent() {
 
     if (error) throw error;
     return data;
-  };
+  }, [suppliers]);
 
-  const saveColdStorageUnits = async (organizationId: string, userId: string) => {
+  const saveColdStorageUnits = useCallback(async (organizationId: string, userId: string) => {
     if (coldEnclosures.length === 0) return [];
 
     const unitsToInsert = coldEnclosures.map(enclosure => ({
@@ -387,9 +387,9 @@ export default function HACCPSetupComponent() {
 
     if (error) throw error;
     return data;
-  };
+  }, [coldEnclosures]);
 
-  const saveCleaningData = async (organizationId: string, userId: string) => {
+  const saveCleaningData = useCallback(async (organizationId: string, userId: string) => {
     const activeZones = [...new Set(cleaningTasks.filter(task => task.enabled).map(task => task.zone))];
     
     // Save cleaning zones first
@@ -431,7 +431,7 @@ export default function HACCPSetupComponent() {
     if (tasksError) throw tasksError;
 
     return { zones: zonesData, tasks: tasksData };
-  };
+  }, [cleaningTasks]);
 
   const handleNext = useCallback(async () => {
     setLoading(true);
