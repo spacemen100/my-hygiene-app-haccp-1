@@ -60,6 +60,7 @@ const menuItems = [
   { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Administrateur Zones et Sous-zones de Nettoyage" },
   { href: "/admin-produits-nettoyage", icon: ProductsIcon, label: "Administrateur des Produits de Nettoyage" },
   { href: "/admin-equipements", icon: EquipmentIcon, label: "Administrateur des Équipements" },
+  { href: "/admin-controle-huile", icon: OilIcon, label: "Administrateur Contrôle Huile" },
   { href: "/admin-methodes-nettoyage", icon: MethodsIcon, label: "Administrateur des Méthodes de Nettoyage" },
   { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
   { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
