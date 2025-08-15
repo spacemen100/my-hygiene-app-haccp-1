@@ -12,6 +12,7 @@ type AuthContextType = {
   isLoading: boolean;
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: false,
   signOut: async () => {},
   signInWithEmail: async () => null,
+  signUp: async () => ({ error: null }),
 });
 
 export function AuthProvider({
@@ -60,8 +62,19 @@ export function AuthProvider({
     return null;
   };
 
+  const signUp = async (email: string, password: string) => {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    setIsLoading(false);
+    return { error };
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user: session?.user || null, isLoading, signOut, signInWithEmail }}>
+    <AuthContext.Provider value={{ session, user: session?.user || null, isLoading, signOut, signInWithEmail, signUp }}>
       {children}
     </AuthContext.Provider>
   );
