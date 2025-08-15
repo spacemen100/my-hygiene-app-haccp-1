@@ -204,7 +204,22 @@ export default function HACCPSetupComponent() {
         .single();
 
       if (!userData?.organization_id) {
-        throw new Error('Organisation non trouvée');
+        // During setup, organization doesn't exist yet, so we'll add employee locally
+        // and save to database later in the complete step
+        const tempEmployee = {
+          id: `temp_${Date.now()}`,
+          first_name: firstName,
+          last_name: lastName,
+          role: role,
+          is_active: true,
+          created_at: null,
+          organization_id: '',
+          password: '',
+          updated_at: null,
+          user_id: null
+        };
+        setEmployees(prev => [...prev, tempEmployee]);
+        return tempEmployee;
       }
 
       const { data, error } = await supabase
@@ -258,7 +273,10 @@ export default function HACCPSetupComponent() {
         .single();
 
       if (!userData?.organization_id) {
-        throw new Error('Organisation non trouvée');
+        // During setup, organization doesn't exist yet, so we keep employees in local state
+        // They will be saved to database in the complete step
+        console.log('Organization not found, keeping employees in local state for now');
+        return;
       }
 
       // Save employees with temporary IDs
@@ -327,14 +345,18 @@ export default function HACCPSetupComponent() {
   }, [establishmentName, activitySector]);
 
   const saveEmployees = useCallback(async (organizationId: string, userId: string) => {
-    // Only save employees with temporary IDs (new employees)
-    const newEmployees = employees.filter(emp => emp.id.startsWith('temp_'));
+    // Only save employees with temporary IDs (new employees) and valid names
+    const newEmployees = employees.filter(emp => 
+      emp.id.startsWith('temp_') && 
+      emp.first_name.trim() && 
+      emp.last_name.trim()
+    );
     if (newEmployees.length === 0) return [];
 
     const employeesToInsert = newEmployees.map(employee => ({
       organization_id: organizationId,
-      first_name: employee.first_name,
-      last_name: employee.last_name,
+      first_name: employee.first_name.trim(),
+      last_name: employee.last_name.trim(),
       role: employee.role || 'employee',
       user_id: userId,
     }));
@@ -468,15 +490,15 @@ export default function HACCPSetupComponent() {
         setSaving(true);
         
         // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Utilisateur non connecté');
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) throw new Error('Utilisateur non connecté');
 
         // Update user profile with name
         const { error: profileError } = await supabase
           .from('users')
           .upsert({
-            id: user.id,
-            email: user.email!,
+            id: currentUser.id,
+            email: currentUser.email!,
             first_name: firstName,
             last_name: lastName,
           });
@@ -484,21 +506,21 @@ export default function HACCPSetupComponent() {
         if (profileError) throw profileError;
 
         // Save organization
-        const organization = await saveOrganization(user.id);
+        const organization = await saveOrganization(currentUser.id);
         
         // Save all related data
         await Promise.all([
-          saveEmployees(organization.id, user.id),
-          saveSuppliers(organization.id, user.id),
-          saveColdStorageUnits(organization.id, user.id),
-          saveCleaningData(organization.id, user.id),
+          saveEmployees(organization.id, currentUser.id),
+          saveSuppliers(organization.id, currentUser.id),
+          saveColdStorageUnits(organization.id, currentUser.id),
+          saveCleaningData(organization.id, currentUser.id),
         ]);
 
         // Update user with organization_id
         await supabase
           .from('users')
           .update({ organization_id: organization.id })
-          .eq('id', user.id);
+          .eq('id', currentUser.id);
 
         setSuccess('Configuration sauvegardée avec succès !');
         setSaving(false);
@@ -1261,18 +1283,20 @@ export default function HACCPSetupComponent() {
           {steps.map((step) => (
             <Step key={step.id}>
               <StepLabel
-                StepIconComponent={({ active, completed }) => (
-                  <Avatar
-                    sx={{
-                      bgcolor: completed ? 'success.main' : active ? 'primary.main' : 'grey.300',
-                      color: 'white',
-                      width: 40,
-                      height: 40,
-                    }}
-                  >
-                    <step.icon />
-                  </Avatar>
-                )}
+                slots={{
+                  stepIcon: ({ active, completed }) => (
+                    <Avatar
+                      sx={{
+                        bgcolor: completed ? 'success.main' : active ? 'primary.main' : 'grey.300',
+                        color: 'white',
+                        width: 40,
+                        height: 40,
+                      }}
+                    >
+                      <step.icon />
+                    </Avatar>
+                  )
+                }}
               >
                 {step.label}
               </StepLabel>
