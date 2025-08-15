@@ -385,7 +385,7 @@ export default function ChecklistPage() {
                   {selectedCategory === 'all' && (
                     <Box>
                       <Typography variant="body2" color="text.primary" sx={{ mb: 2, fontWeight: 500 }}>
-                        Besoin d'inspiration ? Voici une checklist par défaut :
+                        Besoin d&apos;inspiration ? Voici une checklist par défaut :
                       </Typography>
                       <Card variant="outlined" sx={{ maxWidth: 400, mx: 'auto', textAlign: 'left' }}>
                         <CardContent>

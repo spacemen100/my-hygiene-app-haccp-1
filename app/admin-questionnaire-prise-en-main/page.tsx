@@ -115,8 +115,8 @@ export default function HACCPSetupComponent() {
           setCurrentStep(stepOrder[currentIndex + 1]);
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
