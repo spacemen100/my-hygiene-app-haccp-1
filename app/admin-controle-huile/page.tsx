@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Tables, TablesInsert } from '@/src/types/database';
+import { Tables } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
 import { useSnackbar } from 'notistack';
 import {
@@ -43,6 +43,21 @@ import {
 
 type Equipment = Tables<'equipments'>;
 
+interface EquipmentFormState {
+  name: string;
+  equipment_type: string;
+  equipment_state: boolean;
+  oil_capacity: number | null;
+  oil_type: string;
+  temperature_monitoring: boolean;
+  min_temperature: number | null;
+  max_temperature: number | null;
+  polarity_monitoring: boolean;
+  min_polarity: number | null;
+  max_polarity: number | null;
+  location: string;
+}
+
 export default function EquipmentAdmin() {
   const { employee } = useEmployee();
   const { enqueueSnackbar } = useSnackbar();
@@ -51,7 +66,7 @@ export default function EquipmentAdmin() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentEquipment, setCurrentEquipment] = useState<Equipment | null>(null);
-  const [formState, setFormState] = useState<Partial<TablesInsert<'equipments'>>({
+  const [formState, setFormState] = useState<EquipmentFormState>({
     name: '',
     equipment_type: 'fryer',
     equipment_state: true,
@@ -118,16 +133,16 @@ export default function EquipmentAdmin() {
     setFormState({
       name: equipment.name,
       equipment_type: equipment.equipment_type,
-      equipment_state: equipment.equipment_state,
+      equipment_state: equipment.equipment_state ?? true,
       oil_capacity: equipment.oil_capacity,
-      oil_type: equipment.oil_type,
-      temperature_monitoring: equipment.temperature_monitoring,
+      oil_type: equipment.oil_type ?? '',
+      temperature_monitoring: equipment.temperature_monitoring ?? true,
       min_temperature: equipment.min_temperature,
       max_temperature: equipment.max_temperature,
-      polarity_monitoring: equipment.polarity_monitoring,
+      polarity_monitoring: equipment.polarity_monitoring ?? true,
       min_polarity: equipment.min_polarity,
       max_polarity: equipment.max_polarity,
-      location: equipment.location
+      location: equipment.location ?? ''
     });
     setDialogOpen(true);
   };
