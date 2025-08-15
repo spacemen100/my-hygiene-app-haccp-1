@@ -46,6 +46,9 @@ import {
   History as HistoryIcon,
   Visibility as ViewIcon,
   FilterList as FilterIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon,
+  AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -56,13 +59,17 @@ type ChecklistExecutionHistory = Tables<'checklist_executions'> & {
   checklists: { name: string; category: string } | null;
   checklist_items: { name: string } | null;
 };
+type ChecklistWithLastExecution = Checklist & {
+  lastExecution?: string | null;
+  isOverdue?: boolean;
+};
 
 export default function ChecklistPage() {
   const { employee } = useEmployee();
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   
-  const [checklists, setChecklists] = useState<Checklist[]>([]);
+  const [checklists, setChecklists] = useState<ChecklistWithLastExecution[]>([]);
   const [checklistItems, setChecklistItems] = useState<Record<string, ChecklistItem[]>>({});
   const [executions, setExecutions] = useState<Record<string, boolean>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
@@ -103,7 +110,37 @@ export default function ChecklistPage() {
         .order('name');
 
       if (error) throw error;
-      setChecklists(data || []);
+
+      // Fetch last execution for each checklist and employee
+      const checklistsWithLastExecution = await Promise.all(
+        (data || []).map(async (checklist) => {
+          let lastExecution = null;
+          
+          if (employee) {
+            const { data: lastExecutionData } = await supabase
+              .from('checklist_executions')
+              .select('execution_date')
+              .eq('checklist_id', checklist.id)
+              .eq('employee_id', employee.id)
+              .order('execution_date', { ascending: false })
+              .limit(1)
+              .single();
+            
+            lastExecution = lastExecutionData?.execution_date || null;
+          }
+
+          const checklistWithLastExecution: ChecklistWithLastExecution = {
+            ...checklist,
+            lastExecution,
+            isOverdue: false, // Will be calculated below
+          };
+
+          checklistWithLastExecution.isOverdue = isChecklistOverdue(checklistWithLastExecution);
+          return checklistWithLastExecution;
+        })
+      );
+
+      setChecklists(checklistsWithLastExecution);
 
       // Fetch checklist items for each checklist
       const itemsPromises = (data || []).map(async (checklist) => {
@@ -131,7 +168,7 @@ export default function ChecklistPage() {
     } finally {
       setLoading(prev => ({ ...prev, checklists: false }));
     }
-  }, [enqueueSnackbar]);
+  }, [employee, enqueueSnackbar]);
 
   useEffect(() => {
     fetchChecklists();
@@ -263,6 +300,69 @@ export default function ChecklistPage() {
     return frequencies[frequency] || frequency;
   };
 
+  const isChecklistOverdue = (checklist: ChecklistWithLastExecution): boolean => {
+    if (!checklist.lastExecution || checklist.frequency === 'on_demand') return false;
+    
+    const lastExecution = new Date(checklist.lastExecution);
+    const now = new Date();
+    const diffInHours = (now.getTime() - lastExecution.getTime()) / (1000 * 60 * 60);
+    
+    switch (checklist.frequency) {
+      case 'daily':
+        return diffInHours > 24;
+      case 'weekly':
+        return diffInHours > (7 * 24);
+      case 'monthly':
+        return diffInHours > (30 * 24);
+      default:
+        return false;
+    }
+  };
+
+  const getNextDueDate = (checklist: ChecklistWithLastExecution): Date | null => {
+    if (!checklist.lastExecution || checklist.frequency === 'on_demand') return null;
+    
+    const lastExecution = new Date(checklist.lastExecution);
+    
+    switch (checklist.frequency) {
+      case 'daily':
+        return new Date(lastExecution.getTime() + (24 * 60 * 60 * 1000));
+      case 'weekly':
+        return new Date(lastExecution.getTime() + (7 * 24 * 60 * 60 * 1000));
+      case 'monthly':
+        return new Date(lastExecution.getTime() + (30 * 24 * 60 * 60 * 1000));
+      default:
+        return null;
+    }
+  };
+
+  const formatLastExecution = (lastExecution: string | null | undefined) => {
+    if (!lastExecution) return 'Jamais réalisée';
+    
+    const date = new Date(lastExecution);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      return 'Il y a moins d\'1h';
+    } else if (diffInHours < 24) {
+      return `Il y a ${Math.floor(diffInHours)}h`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      if (diffInDays === 1) {
+        return 'Hier';
+      } else if (diffInDays < 7) {
+        return `Il y a ${diffInDays} jours`;
+      } else {
+        return date.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+    }
+  };
+
   const filteredChecklists = selectedCategory === 'all' 
     ? checklists 
     : checklists.filter(c => c.category === selectedCategory);
@@ -388,12 +488,12 @@ export default function ChecklistPage() {
         {/* Statistics */}
         <Box sx={{ 
           display: 'grid', 
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, 
           gap: { xs: 2, sm: 3 }, 
           mb: { xs: 3, md: 4 }
         }}>
           {loading.checklists ? (
-            Array(3).fill(0).map((_, i) => (
+            Array(4).fill(0).map((_, i) => (
               <Skeleton key={i} variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
             ))
           ) : (
@@ -446,6 +546,24 @@ export default function ChecklistPage() {
                       </Typography>
                       <Typography variant="h5" sx={{ fontWeight: 700 }}>
                         {[...new Set(filteredChecklists.map(c => c.category))].length}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: 'warning.main' }}>
+                      <WarningIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography color="text.secondary" gutterBottom variant="body2">
+                        En retard
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: filteredChecklists.filter(c => isChecklistOverdue(c)).length > 0 ? 'warning.main' : 'text.primary' }}>
+                        {filteredChecklists.filter(c => isChecklistOverdue(c)).length}
                       </Typography>
                     </Box>
                   </Box>
@@ -530,13 +648,24 @@ export default function ChecklistPage() {
                 >
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        <AssignmentIcon />
+                      <Avatar sx={{ bgcolor: isChecklistOverdue(checklist) ? 'warning.main' : 'primary.main' }}>
+                        {isChecklistOverdue(checklist) ? <WarningIcon /> : <AssignmentIcon />}
                       </Avatar>
                       <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {checklist.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            {checklist.name}
+                          </Typography>
+                          {isChecklistOverdue(checklist) && (
+                            <Chip
+                              label="En retard"
+                              color="warning"
+                              size="small"
+                              icon={<WarningIcon />}
+                              sx={{ fontWeight: 600 }}
+                            />
+                          )}
+                        </Box>
                         <Typography variant="body2" color="text.secondary">
                           {getCategoryLabel(checklist.category)}
                         </Typography>
@@ -549,16 +678,54 @@ export default function ChecklistPage() {
                       </Typography>
                     )}
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Chip 
-                        label={getFrequencyLabel(checklist.frequency)}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {(checklistItems[checklist.id] || []).length} éléments
-                      </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Chip 
+                          label={getFrequencyLabel(checklist.frequency)}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {(checklistItems[checklist.id] || []).length} éléments
+                        </Typography>
+                      </Box>
+                      
+                      {/* Last execution info */}
+                      <Box sx={{ 
+                        p: 1.5, 
+                        bgcolor: isChecklistOverdue(checklist) ? 'warning.50' : 'grey.50', 
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: isChecklistOverdue(checklist) ? 'warning.200' : 'grey.200'
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          {isChecklistOverdue(checklist) ? (
+                            <AccessTimeIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                          ) : checklist.lastExecution ? (
+                            <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                          ) : (
+                            <AccessTimeIcon sx={{ fontSize: 16, color: 'grey.500' }} />
+                          )}
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            Dernière réalisation
+                          </Typography>
+                        </Box>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: isChecklistOverdue(checklist) ? 'warning.dark' : 'text.secondary',
+                            fontWeight: isChecklistOverdue(checklist) ? 600 : 400
+                          }}
+                        >
+                          {formatLastExecution(checklist.lastExecution)}
+                        </Typography>
+                        {isChecklistOverdue(checklist) && checklist.frequency !== 'on_demand' && (
+                          <Typography variant="caption" sx={{ color: 'warning.dark', fontWeight: 500 }}>
+                            ⚠️ Délai de {getFrequencyLabel(checklist.frequency).toLowerCase()} dépassé
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </CardContent>
                 </Card>
