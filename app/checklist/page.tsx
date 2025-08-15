@@ -25,6 +25,16 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   ChecklistRtl as ChecklistIcon,
@@ -33,12 +43,19 @@ import {
   Assignment as AssignmentIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  History as HistoryIcon,
+  Visibility as ViewIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
 type Checklist = Tables<'checklists'>;
 type ChecklistItem = Tables<'checklist_items'>;
 type ChecklistExecution = TablesInsert<'checklist_executions'>;
+type ChecklistExecutionHistory = Tables<'checklist_executions'> & {
+  checklists: { name: string; category: string } | null;
+  checklist_items: { name: string } | null;
+};
 
 export default function ChecklistPage() {
   const { employee } = useEmployee();
@@ -54,6 +71,13 @@ export default function ChecklistPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
+  
+  // History tab state
+  const [currentTab, setCurrentTab] = useState(0);
+  const [executionHistory, setExecutionHistory] = useState<ChecklistExecutionHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedExecution, setSelectedExecution] = useState<ChecklistExecutionHistory | null>(null);
 
   const categories = [
     { value: 'all', label: 'Toutes' },
@@ -173,6 +197,49 @@ export default function ChecklistPage() {
     }
   };
 
+  const fetchExecutionHistory = useCallback(async () => {
+    if (!employee) return;
+    
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('checklist_executions')
+        .select(`
+          *,
+          checklists!inner (
+            name,
+            category
+          ),
+          checklist_items!inner (
+            name
+          )
+        `)
+        .eq('employee_id', employee.id)
+        .order('execution_date', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setExecutionHistory(data as ChecklistExecutionHistory[] || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique:', error);
+      enqueueSnackbar('Erreur lors du chargement de l\'historique', { variant: 'error' });
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [employee, enqueueSnackbar]);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+    if (newValue === 1 && executionHistory.length === 0) {
+      fetchExecutionHistory();
+    }
+  };
+
+  const handleViewExecution = (execution: ChecklistExecutionHistory) => {
+    setSelectedExecution(execution);
+    setHistoryDialogOpen(true);
+  };
+
   const getCompletionRate = (checklistId: string) => {
     const items = checklistItems[checklistId] || [];
     if (items.length === 0) return 0;
@@ -273,8 +340,37 @@ export default function ChecklistPage() {
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         
-        {/* Category Filter */}
+        {/* Tabs */}
         <Box sx={{ mb: 4 }}>
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: 1.5,
+              },
+            }}
+          >
+            <Tab
+              icon={<ChecklistIcon />}
+              label="Exécuter"
+              iconPosition="start"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              icon={<HistoryIcon />}
+              label="Historique"
+              iconPosition="start"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+          </Tabs>
+        </Box>
+
+        {currentTab === 0 && (
+          <>
+            {/* Category Filter */}
+            <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {categories.map((category) => (
               <Chip
@@ -469,6 +565,128 @@ export default function ChecklistPage() {
             ))
           )}
         </Box>
+        </>
+        )}
+
+        {currentTab === 1 && (
+          <>
+            {/* History Content */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <HistoryIcon color="primary" />
+                Historique des contrôles
+              </Typography>
+              
+              {historyLoading ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {Array(5).fill(0).map((_, i) => (
+                    <Skeleton key={i} variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
+                  ))}
+                </Box>
+              ) : executionHistory.length === 0 ? (
+                <Card>
+                  <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                    <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500', mx: 'auto', mb: 2, width: 64, height: 64 }}>
+                      <HistoryIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      Aucun historique
+                    </Typography>
+                    <Typography variant="body2" color="text.disabled">
+                      Vous n&apos;avez pas encore exécuté de checklists
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card sx={{ borderRadius: 3 }}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: 'grey.50' }}>
+                          <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Checklist</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Point de contrôle</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Commentaires</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {executionHistory.map((execution) => (
+                          <TableRow key={execution.id} hover>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {new Date(execution.execution_date).toLocaleDateString('fr-FR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                })}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {new Date(execution.execution_date).toLocaleTimeString('fr-FR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {execution.checklists?.name}
+                                </Typography>
+                                <Chip
+                                  label={getCategoryLabel(execution.checklists?.category || '')}
+                                  size="small"
+                                  sx={{ alignSelf: 'flex-start', mt: 0.5 }}
+                                />
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {execution.checklist_items?.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={execution.is_completed ? 'Conforme' : 'Non conforme'}
+                                color={execution.is_completed ? 'success' : 'error'}
+                                size="small"
+                                icon={execution.is_completed ? <CheckIcon /> : undefined}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ maxWidth: 200 }}>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {execution.comments || '-'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Tooltip title="Voir les détails">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleViewExecution(execution)}
+                                  sx={{ color: 'primary.main' }}
+                                >
+                                  <ViewIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Card>
+              )}
+            </Box>
+          </>
+        )}
 
         {/* Execution Dialog */}
         <Dialog 
@@ -579,6 +797,122 @@ export default function ChecklistPage() {
               disabled={saving}
             >
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* History Detail Dialog */}
+        <Dialog
+          open={historyDialogOpen}
+          onClose={() => setHistoryDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 3 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <ViewIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6">Détails du contrôle</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedExecution && new Date(selectedExecution.execution_date).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          
+          <DialogContent>
+            {selectedExecution && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Checklist
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {selectedExecution.checklists?.name}
+                    </Typography>
+                    <Chip
+                      label={getCategoryLabel(selectedExecution.checklists?.category || '')}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  </Box>
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Point de contrôle
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    ✅ {selectedExecution.checklist_items?.name}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Résultat
+                  </Typography>
+                  <Chip
+                    label={selectedExecution.is_completed ? 'Conforme ✓' : 'Non conforme'}
+                    color={selectedExecution.is_completed ? 'success' : 'error'}
+                    sx={{ fontWeight: 600 }}
+                    icon={selectedExecution.is_completed ? <CheckIcon /> : undefined}
+                  />
+                </Box>
+
+                {selectedExecution.comments && (
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Commentaires
+                    </Typography>
+                    <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                      <Typography variant="body2">
+                        {selectedExecution.comments}
+                      </Typography>
+                    </Paper>
+                  </Box>
+                )}
+
+                <Box sx={{ p: 2, bgcolor: 'info.50', borderRadius: 2, border: '1px solid', borderColor: 'info.200' }}>
+                  <Typography variant="body2" color="info.main" sx={{ fontWeight: 500 }}>
+                    💡 Options de réponse disponibles :
+                  </Typography>
+                  <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 6, height: 6, bgcolor: 'success.main', borderRadius: '50%' }} />
+                      Oui - Conforme ✓
+                    </Typography>
+                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 6, height: 6, bgcolor: 'error.main', borderRadius: '50%' }} />
+                      Non
+                    </Typography>
+                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 6, height: 6, bgcolor: 'grey.400', borderRadius: '50%' }} />
+                      Non évalué
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3, pt: 0 }}>
+            <Button onClick={() => setHistoryDialogOpen(false)} variant="outlined">
+              Fermer
             </Button>
           </DialogActions>
         </Dialog>
