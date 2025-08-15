@@ -29,8 +29,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import {
   Add,
@@ -38,9 +38,7 @@ import {
   Delete,
   Kitchen,
   Save,
-  Close,
-  CheckCircle,
-  Warning
+  Close
 } from '@mui/icons-material';
 
 type Equipment = Tables<'equipments'>;
@@ -200,7 +198,7 @@ export default function EquipmentAdmin() {
   };
 
   // Gérer les changements de sélection
-  const handleSelectChange = (e: { target: { name: any; value: any } }) => {
+  const handleSelectChange = (e: { target: { name: string; value: string | boolean } }) => {
     const { name, value } = e.target;
     setFormState(prev => ({
       ...prev,
@@ -306,13 +304,13 @@ export default function EquipmentAdmin() {
         fullWidth
       >
         <DialogTitle>
-          {currentEquipment ? 'Modifier un équipement' : 'Ajouter un nouvel équipement'}
+          {currentEquipment ? &apos;Modifier un équipement&apos; : &apos;Ajouter un nouvel équipement&apos;}
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, pt: 2 }}>
             <TextField
               name="name"
-              label="Nom de l'équipement"
+              label="Nom de l&apos;équipement"
               value={formState.name}
               onChange={handleChange}
               fullWidth
@@ -320,11 +318,11 @@ export default function EquipmentAdmin() {
             />
             
             <FormControl fullWidth required>
-              <InputLabel>Type d'équipement</InputLabel>
+              <InputLabel>Type d&apos;équipement</InputLabel>
               <Select
                 name="equipment_type"
                 value={formState.equipment_type}
-                label="Type d'équipement"
+                label="Type d&apos;équipement"
                 onChange={handleSelectChange}
               >
                 <MenuItem value="fryer">Friteuse</MenuItem>
@@ -335,7 +333,7 @@ export default function EquipmentAdmin() {
             
             <TextField
               name="oil_type"
-              label="Type d'huile"
+              label="Type d&apos;huile"
               value={formState.oil_type || ''}
               onChange={handleChange}
               fullWidth
@@ -343,7 +341,7 @@ export default function EquipmentAdmin() {
             
             <TextField
               name="oil_capacity"
-              label="Capacité d'huile (L)"
+              label="Capacité d&apos;huile (L)"
               type="number"
               value={formState.oil_capacity || ''}
               onChange={handleChange}
