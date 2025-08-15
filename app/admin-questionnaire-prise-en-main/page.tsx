@@ -726,6 +726,12 @@ export default function HACCPSetupComponent() {
                     <MenuItem value="">
                       <em>{loadingActivitySectors ? 'Chargement...' : 'Sélectionnez un secteur'}</em>
                     </MenuItem>
+                    <MenuItem value="restaurant">Restaurant</MenuItem>
+                    <MenuItem value="boulangerie-patisserie">Boulangerie / pâtisserie</MenuItem>
+                    <MenuItem value="boucherie-charcuterie">Boucherie / charcuterie</MenuItem>
+                    <MenuItem value="restauration-collective">Restauration collective</MenuItem>
+                    <MenuItem value="creches">Crèches</MenuItem>
+                    <MenuItem value="franchises-reseaux">Franchises et réseaux</MenuItem>
                     {activitySectors.map((sector) => (
                       <MenuItem key={sector.id} value={sector.id}>
                         {sector.name}
