@@ -25,8 +25,6 @@ import {
   Chip,
   Switch,
   FormControlLabel,
-  RadioGroup,
-  Radio,
   LinearProgress,
   Avatar,
   List,
@@ -59,7 +57,8 @@ type ActivitySector = Tables<'activity_sectors'>;
 interface ColdEnclosure {
   id: string;
   name: string;
-  temperatureType: 'positive' | 'negative';
+  type: string;
+  location: string;
   maxTemp: number;
   minTemp: number;
 }
@@ -297,12 +296,22 @@ export default function HACCPSetupComponent() {
   }, [employees]);
 
   const saveSuppliers = useCallback(async (organizationId: string, userId: string) => {
-    if (suppliers.length === 0) return [];
+    // Only save suppliers with temporary IDs and valid names
+    const newSuppliers = suppliers.filter(supplier => 
+      supplier.id.startsWith('temp_') && 
+      supplier.name.trim()
+    );
+    if (newSuppliers.length === 0) return [];
 
-    const suppliersToInsert = suppliers.map(supplier => ({
+    const suppliersToInsert = newSuppliers.map(supplier => ({
       organization_id: organizationId,
-      name: supplier.name,
+      name: supplier.name.trim(),
+      address: supplier.address?.trim() || null,
+      phone: supplier.phone?.trim() || null,
+      email: supplier.email?.trim() || null,
+      contact_person: supplier.contact_person?.trim() || null,
       user_id: userId,
+      employee_id: null,
     }));
 
     const { data, error } = await supabase
@@ -315,16 +324,23 @@ export default function HACCPSetupComponent() {
   }, [suppliers]);
 
   const saveColdStorageUnits = useCallback(async (organizationId: string, userId: string) => {
-    if (coldEnclosures.length === 0) return [];
+    // Only save enclosures with temporary IDs and valid names
+    const newEnclosures = coldEnclosures.filter(enclosure => 
+      enclosure.id.startsWith('temp_') && 
+      enclosure.name.trim()
+    );
+    if (newEnclosures.length === 0) return [];
 
-    const unitsToInsert = coldEnclosures.map(enclosure => ({
+    const unitsToInsert = newEnclosures.map(enclosure => ({
       organization_id: organizationId,
-      name: enclosure.name,
-      type: enclosure.temperatureType === 'positive' ? 'Réfrigérateur' : 'Congélateur',
-      location: 'Cuisine',
+      name: enclosure.name.trim(),
+      type: enclosure.type,
+      location: enclosure.location.trim(),
       min_temperature: enclosure.minTemp,
       max_temperature: enclosure.maxTemp,
+      is_active: true,
       user_id: userId,
+      employee_id: null,
     }));
 
     const { data, error } = await supabase
@@ -504,7 +520,7 @@ export default function HACCPSetupComponent() {
 
   const addSupplier = () => {
     const newSupplier = {
-      id: Date.now().toString(),
+      id: `temp_${Date.now()}`,
       name: '',
       address: null,
       contact_person: null,
@@ -519,21 +535,52 @@ export default function HACCPSetupComponent() {
     setSuppliers([...suppliers, newSupplier]);
   };
 
+  const deleteSupplier = (id: string) => {
+    setSuppliers(prev => prev.filter(supplier => supplier.id !== id));
+  };
+
   const addColdEnclosure = () => {
     const newEnclosure: ColdEnclosure = {
-      id: Date.now().toString(),
+      id: `temp_${Date.now()}`,
       name: '',
-      temperatureType: 'positive',
-      maxTemp: 5,
+      type: 'réfrigérateur',
+      location: 'Cuisine',
+      maxTemp: 4,
       minTemp: 0
     };
     setColdEnclosures([...coldEnclosures, newEnclosure]);
   };
 
+  const deleteColdEnclosure = (id: string) => {
+    setColdEnclosures(prev => prev.filter(enclosure => enclosure.id !== id));
+  };
+
+  const storageTypes = [
+    { value: 'réfrigérateur', label: 'Réfrigérateur', minTemp: 0, maxTemp: 4 },
+    { value: 'congélateur', label: 'Congélateur', minTemp: -25, maxTemp: -18 },
+    { value: 'chambre froide positive', label: 'Chambre froide positive', minTemp: 0, maxTemp: 8 },
+    { value: 'chambre froide négative', label: 'Chambre froide négative', minTemp: -25, maxTemp: -15 },
+    { value: 'vitrine réfrigérée', label: 'Vitrine réfrigérée', minTemp: 2, maxTemp: 6 },
+  ];
+
   const updateEnclosure = (id: string, field: keyof ColdEnclosure, value: string | number) => {
-    setColdEnclosures(prev => prev.map(enc => 
-      enc.id === id ? { ...enc, [field]: value } : enc
-    ));
+    setColdEnclosures(prev => prev.map(enc => {
+      if (enc.id === id) {
+        const updated = { ...enc, [field]: value };
+        
+        // Auto-update temperatures when type changes
+        if (field === 'type' && typeof value === 'string') {
+          const selectedType = storageTypes.find(type => type.value === value);
+          if (selectedType) {
+            updated.minTemp = selectedType.minTemp;
+            updated.maxTemp = selectedType.maxTemp;
+          }
+        }
+        
+        return updated;
+      }
+      return enc;
+    }));
   };
 
   const getCurrentStepIndex = () => {
@@ -868,18 +915,80 @@ export default function HACCPSetupComponent() {
                 ) : (
                   <>
                     {suppliers.map((supplier, index) => (
-                      <TextField
-                        key={supplier.id}
-                        fullWidth
-                        value={supplier.name}
-                        onChange={(e) => {
-                          const newSuppliers = [...suppliers];
-                          newSuppliers[index] = { ...supplier, name: e.target.value };
-                          setSuppliers(newSuppliers);
-                        }}
-                        placeholder="Ex : Pomona, Transgourmet, Metro..."
-                        variant="outlined"
-                      />
+                      <Card key={supplier.id} variant="outlined" sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                            <TextField
+                              fullWidth
+                              label="Nom du fournisseur"
+                              value={supplier.name}
+                              onChange={(e) => {
+                                const newSuppliers = [...suppliers];
+                                newSuppliers[index] = { ...supplier, name: e.target.value };
+                                setSuppliers(newSuppliers);
+                              }}
+                              placeholder="Ex : Pomona, Transgourmet, Metro..."
+                              variant="outlined"
+                              size="small"
+                            />
+                            <IconButton
+                              color="error"
+                              onClick={() => deleteSupplier(supplier.id)}
+                            >
+                              <RemoveIcon />
+                            </IconButton>
+                          </Box>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                            <TextField
+                              label="Personne de contact"
+                              value={supplier.contact_person || ''}
+                              onChange={(e) => {
+                                const newSuppliers = [...suppliers];
+                                newSuppliers[index] = { ...supplier, contact_person: e.target.value || null };
+                                setSuppliers(newSuppliers);
+                              }}
+                              variant="outlined"
+                              size="small"
+                            />
+                            <TextField
+                              label="Téléphone"
+                              value={supplier.phone || ''}
+                              onChange={(e) => {
+                                const newSuppliers = [...suppliers];
+                                newSuppliers[index] = { ...supplier, phone: e.target.value || null };
+                                setSuppliers(newSuppliers);
+                              }}
+                              variant="outlined"
+                              size="small"
+                            />
+                          </Box>
+                          <TextField
+                            label="Email"
+                            type="email"
+                            value={supplier.email || ''}
+                            onChange={(e) => {
+                              const newSuppliers = [...suppliers];
+                              newSuppliers[index] = { ...supplier, email: e.target.value || null };
+                              setSuppliers(newSuppliers);
+                            }}
+                            variant="outlined"
+                            size="small"
+                          />
+                          <TextField
+                            label="Adresse"
+                            value={supplier.address || ''}
+                            onChange={(e) => {
+                              const newSuppliers = [...suppliers];
+                              newSuppliers[index] = { ...supplier, address: e.target.value || null };
+                              setSuppliers(newSuppliers);
+                            }}
+                            variant="outlined"
+                            size="small"
+                            multiline
+                            rows={2}
+                          />
+                        </Box>
+                      </Card>
                     ))}
                     <Button
                       fullWidth
@@ -946,55 +1055,46 @@ export default function HACCPSetupComponent() {
                       <Card key={enclosure.id} variant="outlined">
                         <CardContent>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <TextField
-                              fullWidth
-                              label="Nom de l&apos;enceinte"
-                              value={enclosure.name}
-                              onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
-                              placeholder="Ex : Enceinte, congélateur..."
-                            />
-                            <FormControl component="fieldset">
-                              <Typography variant="subtitle2" gutterBottom>
-                                Sélectionner la température de l&apos;enceinte
-                              </Typography>
-                              <RadioGroup
-                                row
-                                value={enclosure.temperatureType}
-                                onChange={(e) => updateEnclosure(enclosure.id, 'temperatureType', e.target.value)}
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                              <TextField
+                                fullWidth
+                                label="Nom de l&apos;enceinte"
+                                value={enclosure.name}
+                                onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
+                                placeholder="Ex : Frigo principal, Congélateur..."
+                                size="small"
+                              />
+                              <IconButton
+                                color="error"
+                                onClick={() => deleteColdEnclosure(enclosure.id)}
                               >
-                                <FormControlLabel
-                                  value="positive"
-                                  control={<Radio />}
-                                  label="Température positive"
-                                />
-                                <FormControlLabel
-                                  value="negative"
-                                  control={<Radio />}
-                                  label="Température négative"
-                                />
-                              </RadioGroup>
-                            </FormControl>
+                                <RemoveIcon />
+                              </IconButton>
+                            </Box>
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="caption" display="block" gutterBottom>
-                                  T° max
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
-                                  >
-                                    <RemoveIcon />
-                                  </IconButton>
-                                  <Chip label={`${enclosure.maxTemp} °C`} />
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
-                                  >
-                                    <AddIcon />
-                                  </IconButton>
-                                </Box>
-                              </Box>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Type d&apos;enceinte</InputLabel>
+                                <Select
+                                  value={enclosure.type}
+                                  onChange={(e) => updateEnclosure(enclosure.id, 'type', e.target.value)}
+                                  label="Type d'enceinte"
+                                >
+                                  {storageTypes.map((type) => (
+                                    <MenuItem key={type.value} value={type.value}>
+                                      {type.label}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                              <TextField
+                                label="Localisation"
+                                value={enclosure.location}
+                                onChange={(e) => updateEnclosure(enclosure.id, 'location', e.target.value)}
+                                placeholder="Ex : Cuisine, Réserve..."
+                                size="small"
+                              />
+                            </Box>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                               <Box sx={{ textAlign: 'center' }}>
                                 <Typography variant="caption" display="block" gutterBottom>
                                   T° min
@@ -1015,7 +1115,31 @@ export default function HACCPSetupComponent() {
                                   </IconButton>
                                 </Box>
                               </Box>
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="caption" display="block" gutterBottom>
+                                  T° max
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
+                                  >
+                                    <RemoveIcon />
+                                  </IconButton>
+                                  <Chip label={`${enclosure.maxTemp} °C`} />
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
+                                  >
+                                    <AddIcon />
+                                  </IconButton>
+                                </Box>
+                              </Box>
                             </Box>
+                            <Alert severity="info" sx={{ fontSize: '0.875rem' }}>
+                              Températures recommandées pour {storageTypes.find(t => t.value === enclosure.type)?.label || enclosure.type}: 
+                              <strong> {enclosure.minTemp}°C à {enclosure.maxTemp}°C</strong>
+                            </Alert>
                           </Box>
                         </CardContent>
                       </Card>
