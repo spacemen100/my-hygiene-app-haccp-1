@@ -1,6 +1,13 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.activity_sectors (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT activity_sectors_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.cleaning_equipment (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   organization_id uuid,
@@ -186,10 +193,10 @@ CREATE TABLE public.deliveries (
   updated_at timestamp with time zone DEFAULT now(),
   employee_id uuid,
   CONSTRAINT deliveries_pkey PRIMARY KEY (id),
+  CONSTRAINT deliveries_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT deliveries_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT deliveries_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.suppliers(id),
-  CONSTRAINT deliveries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT deliveries_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT deliveries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.employees (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -420,8 +427,8 @@ CREATE TABLE public.temperature_alerts (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT temperature_alerts_pkey PRIMARY KEY (id),
-  CONSTRAINT temperature_alerts_sensor_id_fkey FOREIGN KEY (sensor_id) REFERENCES public.temperature_sensors(id),
   CONSTRAINT temperature_alerts_temperature_reading_id_fkey FOREIGN KEY (temperature_reading_id) REFERENCES public.sensor_temperature_readings(id),
+  CONSTRAINT temperature_alerts_sensor_id_fkey FOREIGN KEY (sensor_id) REFERENCES public.temperature_sensors(id),
   CONSTRAINT temperature_alerts_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES public.users(id),
   CONSTRAINT temperature_alerts_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT temperature_alerts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)

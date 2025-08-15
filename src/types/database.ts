@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_sectors: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       cleaning_equipment: {
         Row: {
           created_at: string | null

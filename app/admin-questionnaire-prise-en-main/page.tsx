@@ -63,6 +63,13 @@ interface Supplier {
   name: string;
 }
 
+interface ActivitySector {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
 interface ColdEnclosure {
   id: string;
   name: string;
@@ -106,6 +113,8 @@ export default function HACCPSetupComponent() {
   
   // Company info
   const [activitySector, setActivitySector] = useState('');
+  const [activitySectors, setActivitySectors] = useState<ActivitySector[]>([]);
+  const [loadingActivitySectors, setLoadingActivitySectors] = useState(false);
   const [establishmentName, setEstablishmentName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -151,12 +160,36 @@ export default function HACCPSetupComponent() {
     }
   }, [user, currentStep]);
 
+  // Load activity sectors when component mounts
+  useEffect(() => {
+    loadActivitySectors();
+  }, []);
+
   const passwordRequirements = [
     { text: '1 majuscule', met: /[A-Z]/.test(password) },
     { text: '1 chiffre', met: /\d/.test(password) },
     { text: '1 caractère spécial', met: /[!@#$%^&*]/.test(password) },
     { text: '8 caractères minimum', met: password.length >= 8 }
   ];
+
+  // Load activity sectors from database
+  const loadActivitySectors = async () => {
+    setLoadingActivitySectors(true);
+    try {
+      const { data, error } = await supabase
+        .from('activity_sectors')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setActivitySectors(data || []);
+    } catch (error) {
+      console.error('Error loading activity sectors:', error);
+      setError('Erreur lors du chargement des secteurs d\'activité');
+    } finally {
+      setLoadingActivitySectors(false);
+    }
+  };
 
   // Employee management functions
   const loadEmployees = async () => {
@@ -300,6 +333,7 @@ export default function HACCPSetupComponent() {
       .from('organizations')
       .insert({
         name: establishmentName,
+        activity_sector_id: activitySector || null,
         user_id: userId,
       })
       .select()
@@ -690,13 +724,16 @@ export default function HACCPSetupComponent() {
                     value={activitySector}
                     onChange={(e) => setActivitySector(e.target.value)}
                     label="Secteur d'activité"
+                    disabled={loadingActivitySectors}
                   >
                     <MenuItem value="">
-                      <em>Sélectionnez un secteur</em>
+                      <em>{loadingActivitySectors ? 'Chargement...' : 'Sélectionnez un secteur'}</em>
                     </MenuItem>
-                    <MenuItem value="Restauration collective">Restauration collective</MenuItem>
-                    <MenuItem value="Restaurant">Restaurant</MenuItem>
-                    <MenuItem value="Boulangerie">Boulangerie</MenuItem>
+                    {activitySectors.map((sector) => (
+                      <MenuItem key={sector.id} value={sector.id}>
+                        {sector.name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 <TextField
