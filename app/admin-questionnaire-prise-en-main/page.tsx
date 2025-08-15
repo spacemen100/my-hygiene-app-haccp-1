@@ -131,25 +131,6 @@ export default function HACCPSetupComponent() {
 
   const zones = ['Cuisine', 'Plonge', 'Préparation froide', 'Économat', 'Légumerie', 'Toilettes', 'Vestiaires', 'Autres'];
 
-  // Check if user is already logged in and skip login step
-  useEffect(() => {
-    if (user && currentStep === 'login') {
-      setCurrentStep('info');
-    }
-  }, [user, currentStep]);
-
-  // Load activity sectors when component mounts
-  useEffect(() => {
-    loadActivitySectors();
-  }, [loadActivitySectors]);
-
-  const passwordRequirements = useMemo(() => [
-    { text: '1 majuscule', met: /[A-Z]/.test(password) },
-    { text: '1 chiffre', met: /\d/.test(password) },
-    { text: '1 caractère spécial', met: /[!@#$%^&*]/.test(password) },
-    { text: '8 caractères minimum', met: password.length >= 8 }
-  ], [password]);
-
   // Load activity sectors from database
   const loadActivitySectors = useCallback(async () => {
     setLoadingActivitySectors(true);
@@ -168,6 +149,25 @@ export default function HACCPSetupComponent() {
       setLoadingActivitySectors(false);
     }
   }, []);
+
+  // Check if user is already logged in and skip login step
+  useEffect(() => {
+    if (user && currentStep === 'login') {
+      setCurrentStep('info');
+    }
+  }, [user, currentStep]);
+
+  // Load activity sectors when component mounts
+  useEffect(() => {
+    loadActivitySectors();
+  }, [loadActivitySectors]);
+
+  const passwordRequirements = useMemo(() => [
+    { text: '1 majuscule', met: /[A-Z]/.test(password) },
+    { text: '1 chiffre', met: /\d/.test(password) },
+    { text: '1 caractère spécial', met: /[!@#$%^&*]/.test(password) },
+    { text: '8 caractères minimum', met: password.length >= 8 }
+  ], [password]);
 
   // Employee management functions
   const loadEmployees = useCallback(async () => {
@@ -228,7 +228,6 @@ export default function HACCPSetupComponent() {
       throw error;
     }
   }, [user]);
-
 
   const deleteEmployee = async (id: string) => {
     try {
