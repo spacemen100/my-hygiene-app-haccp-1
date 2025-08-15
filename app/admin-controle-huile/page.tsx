@@ -304,13 +304,13 @@ export default function EquipmentAdmin() {
         fullWidth
       >
         <DialogTitle>
-          {currentEquipment ? &apos;Modifier un équipement&apos; : &apos;Ajouter un nouvel équipement&apos;}
+          {currentEquipment ? "Modifier un équipement" : "Ajouter un nouvel équipement"}
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, pt: 2 }}>
             <TextField
               name="name"
-              label="Nom de l&apos;équipement"
+              label="Nom de l'équipement"
               value={formState.name}
               onChange={handleChange}
               fullWidth
@@ -318,11 +318,11 @@ export default function EquipmentAdmin() {
             />
             
             <FormControl fullWidth required>
-              <InputLabel>Type d&apos;équipement</InputLabel>
+              <InputLabel>Type d'équipement</InputLabel>
               <Select
                 name="equipment_type"
                 value={formState.equipment_type}
-                label="Type d&apos;équipement"
+                label="Type d'équipement"
                 onChange={handleSelectChange}
               >
                 <MenuItem value="fryer">Friteuse</MenuItem>
@@ -333,7 +333,7 @@ export default function EquipmentAdmin() {
             
             <TextField
               name="oil_type"
-              label="Type d&apos;huile"
+              label="Type d'huile"
               value={formState.oil_type || ''}
               onChange={handleChange}
               fullWidth
@@ -341,7 +341,7 @@ export default function EquipmentAdmin() {
             
             <TextField
               name="oil_capacity"
-              label="Capacité d&apos;huile (L)"
+              label="Capacité d'huile (L)"
               type="number"
               value={formState.oil_capacity || ''}
               onChange={handleChange}
