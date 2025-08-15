@@ -1845,6 +1845,143 @@ export type Database = {
           },
         ]
       }
+      checklists: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          category: string
+          frequency: string
+          is_active: boolean | null
+          created_at: string | null
+          updated_at: string | null
+          organization_id: string
+          employee_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          category: string
+          frequency?: string
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          organization_id: string
+          employee_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          category?: string
+          frequency?: string
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          organization_id?: string
+          employee_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      checklist_items: {
+        Row: {
+          id: string
+          checklist_id: string
+          name: string
+          description: string | null
+          order_index: number | null
+          is_active: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          checklist_id: string
+          name: string
+          description?: string | null
+          order_index?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          checklist_id?: string
+          name?: string
+          description?: string | null
+          order_index?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      checklist_executions: {
+        Row: {
+          id: string
+          checklist_id: string
+          checklist_item_id: string
+          is_completed: boolean
+          comments: string | null
+          execution_date: string
+          employee_id: string
+          user_id: string | null
+          organization_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          checklist_id: string
+          checklist_item_id: string
+          is_completed?: boolean
+          comments?: string | null
+          execution_date: string
+          employee_id: string
+          user_id?: string | null
+          organization_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          checklist_id?: string
+          checklist_item_id?: string
+          is_completed?: boolean
+          comments?: string | null
+          execution_date?: string
+          employee_id?: string
+          user_id?: string | null
+          organization_id?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_executions_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_executions_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

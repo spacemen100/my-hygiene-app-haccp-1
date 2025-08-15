@@ -70,6 +70,7 @@ export default function AdminChecklistPage() {
     category: 'hygiene',
     frequency: 'daily',
     is_active: true,
+    organization_id: employee?.organization_id || '',
   });
 
   const categories = [
@@ -94,6 +95,15 @@ export default function AdminChecklistPage() {
   useEffect(() => {
     loadChecklists();
   }, []);
+
+  useEffect(() => {
+    if (employee?.organization_id) {
+      setFormData(prev => ({
+        ...prev,
+        organization_id: employee.organization_id || ''
+      }));
+    }
+  }, [employee?.organization_id]);
 
   const loadChecklists = async () => {
     try {
@@ -124,6 +134,7 @@ export default function AdminChecklistPage() {
         category: checklist.category,
         frequency: checklist.frequency,
         is_active: checklist.is_active ?? true,
+        organization_id: checklist.organization_id,
       });
     } else {
       setEditingChecklist(null);
@@ -133,6 +144,7 @@ export default function AdminChecklistPage() {
         category: 'hygiene',
         frequency: 'daily',
         is_active: true,
+        organization_id: employee?.organization_id || '',
       });
     }
     setDialogOpen(true);
@@ -493,8 +505,10 @@ export default function AdminChecklistPage() {
         onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3 }
+        slotProps={{
+          paper: {
+            sx: { borderRadius: 3 }
+          }
         }}
       >
         <DialogTitle sx={{ pb: 1 }}>

@@ -18,7 +18,6 @@ import {
   Skeleton,
   Paper,
   Chip,
-  Grid,
   Alert,
   Dialog,
   DialogTitle,
@@ -361,15 +360,13 @@ export default function ChecklistPage() {
         </Box>
 
         {/* Checklists Grid */}
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
           {loading.checklists ? (
             Array(6).fill(0).map((_, i) => (
-              <Grid item xs={12} sm={6} md={4} key={i}>
-                <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
-              </Grid>
+              <Skeleton key={i} variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
             ))
           ) : filteredChecklists.length === 0 ? (
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 6 }}>
                   <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500', mx: 'auto', mb: 2 }}>
@@ -419,11 +416,11 @@ export default function ChecklistPage() {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ) : (
             filteredChecklists.map((checklist) => (
-              <Grid item xs={12} sm={6} md={4} key={checklist.id}>
                 <Card 
+                  key={checklist.id}
                   sx={{ 
                     height: '100%', 
                     transition: 'all 0.3s',
@@ -469,10 +466,9 @@ export default function ChecklistPage() {
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>
             ))
           )}
-        </Grid>
+        </Box>
 
         {/* Execution Dialog */}
         <Dialog 
@@ -480,8 +476,10 @@ export default function ChecklistPage() {
           onClose={handleCloseDialog}
           maxWidth="md"
           fullWidth
-          PaperProps={{
-            sx: { borderRadius: 3 }
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 3 }
+            }
           }}
         >
           <DialogTitle sx={{ pb: 1 }}>
