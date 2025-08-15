@@ -285,8 +285,8 @@ export default function HACCPSetupComponent() {
           throw new Error('Le mot de passe ne respecte pas tous les critères');
         }
 
-        const { error } = await signUp(email, password);
-        if (error) throw error;
+        const result = await signUp(email, password);
+        if (result.error) throw new Error(result.error.message || 'Erreur lors de la création du compte');
         
         setSuccess('Compte créé avec succès !');
       }

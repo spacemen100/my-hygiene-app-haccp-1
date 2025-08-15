@@ -3,6 +3,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/auth-helpers-nextjs';
+import { AuthError } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -12,7 +13,7 @@ type AuthContextType = {
   isLoading: boolean;
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
 };
 
 const AuthContext = createContext<AuthContextType>({
