@@ -50,25 +50,14 @@ import {
   ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 
-interface Employee {
-  id: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  is_active: boolean;
-}
+import { Tables } from '@/src/types/database';
 
-interface Supplier {
-  id: string;
-  name: string;
-}
-
-interface ActivitySector {
-  id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-}
+type Employee = Tables<'employees'>;
+type Supplier = Tables<'suppliers'>;
+type ActivitySector = Tables<'activity_sectors'>;
+type ColdStorageUnit = Tables<'cold_storage_units'>;
+type CleaningZone = Tables<'cleaning_zones'>;
+type CleaningTask = Tables<'cleaning_tasks'>;
 
 interface ColdEnclosure {
   id: string;
@@ -76,14 +65,6 @@ interface ColdEnclosure {
   temperatureType: 'positive' | 'negative';
   maxTemp: number;
   minTemp: number;
-}
-
-interface CleaningTask {
-  id: string;
-  name: string;
-  frequency: string;
-  zone: string;
-  enabled: boolean;
 }
 
 type Step = 'login' | 'info' | 'users' | 'suppliers' | 'enclosures' | 'cleaning' | 'complete';
@@ -121,11 +102,11 @@ export default function HACCPSetupComponent() {
   const [phoneNumber, setPhoneNumber] = useState('');
   
   // Employees
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<(Employee & { id: string })[]>([]);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   
   // Suppliers
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliers, setSuppliers] = useState<(Supplier & { id: string })[]>([]);
   
   // Cold enclosures
   const [showExample, setShowExample] = useState(false);
@@ -133,7 +114,7 @@ export default function HACCPSetupComponent() {
   
   // Cleaning tasks
   const [activeZone, setActiveZone] = useState('Cuisine');
-  const [cleaningTasks, setCleaningTasks] = useState<CleaningTask[]>([
+  const [cleaningTasks, setCleaningTasks] = useState<(CleaningTask & { enabled: boolean; zone: string })[]>([
     { id: '1', name: 'Sol, plinthes, grilles et siphons', frequency: 'Jour', zone: 'Cuisine', enabled: true },
     { id: '2', name: 'Sol, plinthes, grilles et siphons', frequency: 'Jour', zone: 'Cuisine', enabled: true },
     { id: '3', name: 'Murs et portes', frequency: 'Mois', zone: 'Cuisine', enabled: true },
@@ -329,17 +310,41 @@ export default function HACCPSetupComponent() {
 
   // Database save functions
   const saveOrganization = async (userId: string) => {
+    // Préparer les données d'insertion
+    const organizationData: any = {
+      name: establishmentName,
+      user_id: userId,
+    };
+    
+    // Ajouter activity_sector_id si la colonne existe et qu'un secteur est sélectionné
+    if (activitySector) {
+      organizationData.activity_sector_id = activitySector;
+    }
+    
     const { data, error } = await supabase
       .from('organizations')
-      .insert({
-        name: establishmentName,
-        activity_sector_id: activitySector || null,
-        user_id: userId,
-      })
+      .insert(organizationData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Si l'erreur est due à la colonne manquante, continuer sans elle
+      if (error.message.includes('activity_sector_id')) {
+        console.warn('Colonne activity_sector_id manquante, sauvegarde sans cette information');
+        const { data: retryData, error: retryError } = await supabase
+          .from('organizations')
+          .insert({
+            name: establishmentName,
+            user_id: userId,
+          })
+          .select()
+          .single();
+        
+        if (retryError) throw retryError;
+        return retryData;
+      }
+      throw error;
+    }
     return data;
   };
 
@@ -390,7 +395,7 @@ export default function HACCPSetupComponent() {
       organization_id: organizationId,
       name: enclosure.name,
       type: enclosure.temperatureType === 'positive' ? 'Réfrigérateur' : 'Congélateur',
-      location: 'Cuisine', // Default location
+      location: 'Cuisine',
       min_temperature: enclosure.minTemp,
       max_temperature: enclosure.maxTemp,
       user_id: userId,
@@ -556,20 +561,34 @@ export default function HACCPSetupComponent() {
   }, [currentStep]);
 
   const addLocalEmployee = () => {
-    const newEmployee: Employee = {
+    const newEmployee = {
       id: `temp_${Date.now()}`,
       first_name: '',
       last_name: '',
       role: 'employee',
-      is_active: true
+      is_active: true,
+      created_at: null,
+      organization_id: '',
+      password: '',
+      updated_at: null,
+      user_id: null
     };
     setEmployees([...employees, newEmployee]);
   };
 
   const addSupplier = () => {
-    const newSupplier: Supplier = {
+    const newSupplier = {
       id: Date.now().toString(),
-      name: ''
+      name: '',
+      address: null,
+      contact_person: null,
+      created_at: null,
+      email: null,
+      employee_id: null,
+      organization_id: null,
+      phone: null,
+      updated_at: null,
+      user_id: null
     };
     setSuppliers([...suppliers, newSupplier]);
   };
