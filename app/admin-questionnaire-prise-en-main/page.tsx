@@ -27,10 +27,6 @@ import {
   FormControlLabel,
   LinearProgress,
   Avatar,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import {
   Visibility,
@@ -110,22 +106,27 @@ export default function HACCPSetupComponent() {
   
   // Cleaning tasks
   const [activeZone, setActiveZone] = useState('Cuisine');
-  const [cleaningTasks, setCleaningTasks] = useState<{ id: string; name: string; frequency: string; zone: string; enabled: boolean }[]>([
-    { id: '1', name: 'Sol, plinthes, grilles et siphons', frequency: 'Jour', zone: 'Cuisine', enabled: true },
-    { id: '2', name: 'Sol, plinthes, grilles et siphons', frequency: 'Jour', zone: 'Cuisine', enabled: true },
-    { id: '3', name: 'Murs et portes', frequency: 'Mois', zone: 'Cuisine', enabled: true },
-    { id: '4', name: 'Plans de travail', frequency: 'Après usage', zone: 'Cuisine', enabled: true },
-    { id: '5', name: 'Chariots de transports plateaux', frequency: 'Jour', zone: 'Cuisine', enabled: true },
-    { id: '6', name: 'Lave-main', frequency: 'Jour', zone: 'Cuisine', enabled: true },
-    { id: '7', name: 'Poubelles et supports poubelles', frequency: 'Jour', zone: 'Cuisine', enabled: true },
-    { id: '8', name: 'Étagères', frequency: 'Mois', zone: 'Cuisine', enabled: true },
-    { id: '9', name: 'Feux vifs et fourneaux', frequency: 'Jour', zone: 'Cuisine', enabled: true },
-    { id: '10', name: 'Hottes et filtres de hottes', frequency: 'Mois', zone: 'Cuisine', enabled: true },
-    { id: '11', name: 'Sol, plinthes, grilles et siphons', frequency: 'Semaine', zone: 'Économat', enabled: true },
-    { id: '12', name: 'Murs et portes', frequency: 'Mois', zone: 'Économat', enabled: true },
-    { id: '13', name: 'Poignées de portes et interrupteurs', frequency: 'Semaine', zone: 'Économat', enabled: true },
-    { id: '14', name: 'Étagères et clayettes', frequency: 'Semaine', zone: 'Économat', enabled: true },
-    { id: '15', name: 'Groupe Froid', frequency: 'Mois', zone: 'Économat', enabled: true }
+  const [cleaningTasks, setCleaningTasks] = useState<{ 
+    id: string; 
+    name: string; 
+    frequency: 'daily' | 'weekly' | 'monthly' | 'after_use'; 
+    zone: string; 
+    action_to_perform: string;
+    enabled: boolean 
+  }[]>([
+    { id: '1', name: 'Nettoyage des sols', frequency: 'daily', zone: 'Cuisine', action_to_perform: 'Balayer et nettoyer les sols, plinthes, grilles et siphons', enabled: true },
+    { id: '2', name: 'Plans de travail', frequency: 'after_use', zone: 'Cuisine', action_to_perform: 'Nettoyer et désinfecter tous les plans de travail', enabled: true },
+    { id: '3', name: 'Lave-mains', frequency: 'daily', zone: 'Cuisine', action_to_perform: 'Nettoyer et désinfecter les lave-mains', enabled: true },
+    { id: '4', name: 'Équipements de cuisson', frequency: 'daily', zone: 'Cuisine', action_to_perform: 'Nettoyer feux vifs, fourneaux et équipements de cuisson', enabled: true },
+    { id: '5', name: 'Poubelles', frequency: 'daily', zone: 'Cuisine', action_to_perform: 'Vider et nettoyer les poubelles et supports', enabled: true },
+    { id: '6', name: 'Murs et portes', frequency: 'weekly', zone: 'Cuisine', action_to_perform: 'Nettoyer les murs, portes et surfaces verticales', enabled: true },
+    { id: '7', name: 'Étagères', frequency: 'weekly', zone: 'Cuisine', action_to_perform: 'Nettoyer et désinfecter toutes les étagères', enabled: true },
+    { id: '8', name: 'Hottes et filtres', frequency: 'monthly', zone: 'Cuisine', action_to_perform: 'Nettoyage complet des hottes et remplacement/nettoyage des filtres', enabled: true },
+    { id: '9', name: 'Sols économat', frequency: 'weekly', zone: 'Économat', action_to_perform: 'Nettoyer sols, plinthes et siphons de l\'économat', enabled: true },
+    { id: '10', name: 'Étagères économat', frequency: 'weekly', zone: 'Économat', action_to_perform: 'Nettoyer étagères et clayettes de stockage', enabled: true },
+    { id: '11', name: 'Groupe froid', frequency: 'monthly', zone: 'Économat', action_to_perform: 'Maintenance et nettoyage du groupe froid', enabled: true },
+    { id: '12', name: 'Vestiaires', frequency: 'daily', zone: 'Vestiaires', action_to_perform: 'Nettoyer et désinfecter les vestiaires', enabled: true },
+    { id: '13', name: 'Sanitaires', frequency: 'daily', zone: 'Sanitaires', action_to_perform: 'Nettoyage complet et désinfection des sanitaires', enabled: true }
   ]);
 
   const zones = ['Cuisine', 'Plonge', 'Préparation froide', 'Économat', 'Légumerie', 'Toilettes', 'Vestiaires', 'Autres'];
@@ -169,36 +170,13 @@ export default function HACCPSetupComponent() {
   ], [password]);
 
   // Employee management functions
-  const loadEmployees = useCallback(async () => {
-    if (!user) return;
-    
-    setLoadingEmployees(true);
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setEmployees(data || []);
-    } catch (error) {
-      console.error('Error loading employees:', error);
-      setError('Erreur lors du chargement des employés');
-    } finally {
-      setLoadingEmployees(false);
-    }
-  }, [user]);
-
-  const addEmployee = useCallback(async (firstName: string, lastName: string, role: string = 'employee') => {
-    // During the setup process, we just add employees locally
-    // They will be saved to the database in the complete step
-    const tempEmployee = {
+  // During setup, we manage employees in local state only
+  const addLocalEmployee = () => {
+    const newEmployee = {
       id: `temp_${Date.now()}`,
-      first_name: firstName,
-      last_name: lastName,
-      role: role,
+      first_name: '',
+      last_name: '',
+      role: 'employee',
       is_active: true,
       created_at: null,
       organization_id: '',
@@ -206,9 +184,8 @@ export default function HACCPSetupComponent() {
       updated_at: null,
       user_id: null
     };
-    setEmployees(prev => [...prev, tempEmployee]);
-    return tempEmployee;
-  }, []);
+    setEmployees(prev => [...prev, newEmployee]);
+  };
 
   const deleteEmployee = async (id: string) => {
     // During setup, just remove from local state
@@ -360,6 +337,7 @@ export default function HACCPSetupComponent() {
       organization_id: organizationId,
       name: zoneName,
       user_id: userId,
+      employee_id: null,
     }));
 
     const { data: zonesData, error: zonesError } = await supabase
@@ -375,15 +353,23 @@ export default function HACCPSetupComponent() {
       return acc;
     }, {} as Record<string, string>);
 
-    // Save cleaning tasks
+    // Save cleaning tasks with complete structure
     const enabledTasks = cleaningTasks.filter(task => task.enabled);
     const tasksToInsert = enabledTasks.map(task => ({
       organization_id: organizationId,
       cleaning_zone_id: zoneMap[task.zone],
       name: task.name,
       frequency: task.frequency,
-      action_to_perform: task.name,
+      frequency_days: null,
+      action_to_perform: task.action_to_perform,
+      cleaning_sub_zone_id: null,
+      cleaning_product_id: null,
+      cleaning_equipment_id: null,
+      cleaning_method_id: null,
+      responsible_role: null,
+      is_active: true,
       user_id: userId,
+      employee_id: null,
     }));
 
     const { data: tasksData, error: tasksError } = await supabase
@@ -502,21 +488,6 @@ export default function HACCPSetupComponent() {
     }
   }, [currentStep]);
 
-  const addLocalEmployee = () => {
-    const newEmployee = {
-      id: `temp_${Date.now()}`,
-      first_name: '',
-      last_name: '',
-      role: 'employee',
-      is_active: true,
-      created_at: null,
-      organization_id: '',
-      password: '',
-      updated_at: null,
-      user_id: null
-    };
-    setEmployees([...employees, newEmployee]);
-  };
 
   const addSupplier = () => {
     const newSupplier = {
@@ -543,7 +514,7 @@ export default function HACCPSetupComponent() {
     const newEnclosure: ColdEnclosure = {
       id: `temp_${Date.now()}`,
       name: '',
-      type: 'réfrigérateur',
+      type: 'Réfrigérateur',
       location: 'Cuisine',
       maxTemp: 4,
       minTemp: 0
@@ -556,11 +527,12 @@ export default function HACCPSetupComponent() {
   };
 
   const storageTypes = [
-    { value: 'réfrigérateur', label: 'Réfrigérateur', minTemp: 0, maxTemp: 4 },
-    { value: 'congélateur', label: 'Congélateur', minTemp: -25, maxTemp: -18 },
-    { value: 'chambre froide positive', label: 'Chambre froide positive', minTemp: 0, maxTemp: 8 },
-    { value: 'chambre froide négative', label: 'Chambre froide négative', minTemp: -25, maxTemp: -15 },
-    { value: 'vitrine réfrigérée', label: 'Vitrine réfrigérée', minTemp: 2, maxTemp: 6 },
+    { value: 'Réfrigérateur', label: 'Réfrigérateur', minTemp: 0, maxTemp: 4 },
+    { value: 'Congélateur', label: 'Congélateur', minTemp: -25, maxTemp: -18 },
+    { value: 'Chambre froide positive', label: 'Chambre froide positive', minTemp: 0, maxTemp: 8 },
+    { value: 'Chambre froide négative', label: 'Chambre froide négative', minTemp: -25, maxTemp: -15 },
+    { value: 'Vitrine réfrigérée', label: 'Vitrine réfrigérée', minTemp: 2, maxTemp: 6 },
+    { value: 'Cellule de refroidissement', label: 'Cellule de refroidissement', minTemp: -1, maxTemp: 3 },
   ];
 
   const updateEnclosure = (id: string, field: keyof ColdEnclosure, value: string | number) => {
@@ -639,12 +611,14 @@ export default function HACCPSetupComponent() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  InputProps={{
-                    endAdornment: email ? (
-                      <InputAdornment position="end">
-                        <CheckCircleIcon color="success" />
-                      </InputAdornment>
-                    ) : undefined,
+                  slotProps={{
+                    input: {
+                      endAdornment: email ? (
+                        <InputAdornment position="end">
+                          <CheckCircleIcon color="success" />
+                        </InputAdornment>
+                      ) : undefined,
+                    }
                   }}
                 />
                 <Box>
@@ -654,17 +628,19 @@ export default function HACCPSetupComponent() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                          {password && passwordRequirements.every(req => req.met) && (
-                            <CheckCircleIcon color="success" sx={{ ml: 1 }} />
-                          )}
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                            {password && passwordRequirements.every(req => req.met) && (
+                              <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                            )}
+                          </InputAdornment>
+                        ),
+                      }
                     }}
                   />
                   <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
@@ -1014,7 +990,7 @@ export default function HACCPSetupComponent() {
                 <Avatar sx={{ 
                   width: 64, 
                   height: 64, 
-                  bgcolor: 'primary.main', 
+                  bgcolor: '#00bcd4', 
                   mx: 'auto', 
                   mb: 2 
                 }}>
@@ -1023,19 +999,13 @@ export default function HACCPSetupComponent() {
                 <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
                   Enceintes froides
                 </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                  Configurez vos unités de stockage pour la surveillance des températures HACCP
+                </Typography>
                 <Alert severity="info" sx={{ mt: 2, mb: 3 }}>
-                  Nous vous recommandons de créer vos enceintes froides en respectant l&apos;ordre 
-                  dans lequel vous effectuez vos relevés de température.
+                  Créez vos enceintes dans l&apos;ordre de vos relevés quotidiens. 
+                  Vous pourrez ensuite surveiller les températures en temps réel.
                 </Alert>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showExample}
-                      onChange={(e) => setShowExample(e.target.checked)}
-                    />
-                  }
-                  label="💡 Affichez-moi un exemple"
-                />
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -1052,10 +1022,16 @@ export default function HACCPSetupComponent() {
                 ) : (
                   <>
                     {coldEnclosures.map((enclosure) => (
-                      <Card key={enclosure.id} variant="outlined">
-                        <CardContent>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <Card key={enclosure.id} variant="outlined" sx={{ 
+                        transition: 'all 0.3s',
+                        '&:hover': { boxShadow: 3 }
+                      }}>
+                        <CardContent sx={{ p: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                            <Avatar sx={{ bgcolor: '#00bcd420', color: '#00bcd4' }}>
+                              <SnowflakeIcon />
+                            </Avatar>
+                            <Box sx={{ flexGrow: 1 }}>
                               <TextField
                                 fullWidth
                                 label="Nom de l&apos;enceinte"
@@ -1063,84 +1039,66 @@ export default function HACCPSetupComponent() {
                                 onChange={(e) => updateEnclosure(enclosure.id, 'name', e.target.value)}
                                 placeholder="Ex : Frigo principal, Congélateur..."
                                 size="small"
-                              />
-                              <IconButton
-                                color="error"
-                                onClick={() => deleteColdEnclosure(enclosure.id)}
-                              >
-                                <RemoveIcon />
-                              </IconButton>
-                            </Box>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Type d&apos;enceinte</InputLabel>
-                                <Select
-                                  value={enclosure.type}
-                                  onChange={(e) => updateEnclosure(enclosure.id, 'type', e.target.value)}
-                                  label="Type d'enceinte"
-                                >
-                                  {storageTypes.map((type) => (
-                                    <MenuItem key={type.value} value={type.value}>
-                                      {type.label}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                              <TextField
-                                label="Localisation"
-                                value={enclosure.location}
-                                onChange={(e) => updateEnclosure(enclosure.id, 'location', e.target.value)}
-                                placeholder="Ex : Cuisine, Réserve..."
-                                size="small"
+                                variant="outlined"
                               />
                             </Box>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="caption" display="block" gutterBottom>
-                                  T° min
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp - 1)}
-                                  >
-                                    <RemoveIcon />
-                                  </IconButton>
-                                  <Chip label={`${enclosure.minTemp} °C`} />
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateEnclosure(enclosure.id, 'minTemp', enclosure.minTemp + 1)}
-                                  >
-                                    <AddIcon />
-                                  </IconButton>
-                                </Box>
-                              </Box>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="caption" display="block" gutterBottom>
-                                  T° max
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp - 1)}
-                                  >
-                                    <RemoveIcon />
-                                  </IconButton>
-                                  <Chip label={`${enclosure.maxTemp} °C`} />
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateEnclosure(enclosure.id, 'maxTemp', enclosure.maxTemp + 1)}
-                                  >
-                                    <AddIcon />
-                                  </IconButton>
-                                </Box>
-                              </Box>
-                            </Box>
-                            <Alert severity="info" sx={{ fontSize: '0.875rem' }}>
-                              Températures recommandées pour {storageTypes.find(t => t.value === enclosure.type)?.label || enclosure.type}: 
-                              <strong> {enclosure.minTemp}°C à {enclosure.maxTemp}°C</strong>
-                            </Alert>
+                            <IconButton
+                              color="error"
+                              onClick={() => deleteColdEnclosure(enclosure.id)}
+                              size="small"
+                            >
+                              <RemoveIcon />
+                            </IconButton>
                           </Box>
+                          
+                          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 3 }}>
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Type d&apos;enceinte</InputLabel>
+                              <Select
+                                value={enclosure.type}
+                                onChange={(e) => updateEnclosure(enclosure.id, 'type', e.target.value)}
+                                label="Type d'enceinte"
+                              >
+                                {storageTypes.map((type) => (
+                                  <MenuItem key={type.value} value={type.value}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <SnowflakeIcon sx={{ fontSize: 16, color: '#00bcd4' }} />
+                                      {type.label}
+                                    </Box>
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                            <TextField
+                              label="Localisation"
+                              value={enclosure.location}
+                              onChange={(e) => updateEnclosure(enclosure.id, 'location', e.target.value)}
+                              placeholder="Ex : Cuisine, Réserve..."
+                              size="small"
+                            />
+                          </Box>
+                          
+                          <Alert 
+                            severity="success" 
+                            sx={{ 
+                              mb: 2,
+                              bgcolor: '#00bcd408',
+                              borderColor: '#00bcd4',
+                              '& .MuiAlert-icon': { color: '#00bcd4' }
+                            }}
+                          >
+                            <Typography variant="body2">
+                              <strong>Températures configurées :</strong> {enclosure.minTemp}°C à {enclosure.maxTemp}°C
+                              <br />
+                              <Typography variant="caption" color="text.secondary">
+                                Conforme aux normes {storageTypes.find(t => t.value === enclosure.type)?.label}
+                              </Typography>
+                            </Typography>
+                          </Alert>
+                          
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+                            Vous pourrez ajuster les seuils de température précis après la configuration initiale
+                          </Typography>
                         </CardContent>
                       </Card>
                     ))}
@@ -1168,7 +1126,7 @@ export default function HACCPSetupComponent() {
                 <Avatar sx={{ 
                   width: 64, 
                   height: 64, 
-                  bgcolor: 'primary.main', 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
                   mx: 'auto', 
                   mb: 2 
                 }}>
@@ -1178,9 +1136,12 @@ export default function HACCPSetupComponent() {
                   Plan de nettoyage
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                  Nous vous proposons une liste de tâches avec leur fréquence. 
-                  Nous vous invitons à choisir les tâches dans chaque zone et à modifier la fréquence proposée si besoin.
+                  Configuration des tâches de nettoyage et d&apos;hygiène HACCP
                 </Typography>
+                <Alert severity="info" sx={{ mt: 2, mb: 3 }}>
+                  Sélectionnez les tâches appropriées à votre établissement. 
+                  Vous pourrez personnaliser chaque tâche après la configuration initiale.
+                </Alert>
               </Box>
 
               <Box sx={{ mb: 3 }}>
@@ -1208,30 +1169,73 @@ export default function HACCPSetupComponent() {
                 sx={{ mb: 2 }}
               />
 
-              <List>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {getFilteredTasks().map((task) => (
-                  <ListItem
-                    key={task.id}
-                    sx={{
-                      border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      mb: 1,
+                  <Card 
+                    key={task.id} 
+                    variant="outlined" 
+                    sx={{ 
+                      borderColor: task.enabled ? '#667eea' : 'divider',
+                      backgroundColor: task.enabled ? 'rgba(102, 126, 234, 0.05)' : 'background.paper',
+                      transition: 'all 0.3s',
+                      '&:hover': {
+                        boxShadow: task.enabled ? 3 : 1
+                      }
                     }}
                   >
-                    <ListItemIcon>
-                      <Switch
-                        checked={task.enabled}
-                        onChange={() => toggleTask(task.id)}
-                      />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={task.name}
-                      secondary={task.frequency}
-                    />
-                  </ListItem>
+                    <CardContent sx={{ p: 3 }}>
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                        <Avatar sx={{ 
+                          bgcolor: task.enabled ? '#667eea20' : 'grey.100',
+                          color: task.enabled ? '#667eea' : 'grey.500',
+                          width: 32,
+                          height: 32,
+                          mt: 0.5
+                        }}>
+                          <CleaningIcon sx={{ fontSize: 16 }} />
+                        </Avatar>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body1" fontWeight={600} sx={{ mb: 1 }}>
+                            {task.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            {task.action_to_perform}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip 
+                              label={`Fréquence: ${
+                                task.frequency === 'daily' ? 'Quotidienne' :
+                                task.frequency === 'weekly' ? 'Hebdomadaire' :
+                                task.frequency === 'monthly' ? 'Mensuelle' :
+                                task.frequency === 'after_use' ? 'Après usage' :
+                                task.frequency
+                              }`}
+                              size="small"
+                              color={task.enabled ? 'primary' : 'default'}
+                              variant={task.enabled ? 'filled' : 'outlined'}
+                            />
+                          </Box>
+                        </Box>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={task.enabled}
+                              onChange={() => toggleTask(task.id)}
+                              sx={{
+                                '& .MuiSwitch-track': {
+                                  backgroundColor: task.enabled ? '#667eea' : undefined
+                                }
+                              }}
+                            />
+                          }
+                          label=""
+                          sx={{ m: 0 }}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
                 ))}
-              </List>
+              </Box>
 
               <Button
                 fullWidth
