@@ -81,7 +81,7 @@ type Step = 'login' | 'info' | 'users' | 'suppliers' | 'enclosures' | 'cleaning'
 const steps = [
   { id: 'login', label: 'Connexion', icon: PersonIcon },
   { id: 'info', label: 'Informations', icon: BusinessIcon },
-  { id: 'users', label: 'Utilisateurs', icon: PeopleIcon },
+  { id: 'users', label: 'Employés', icon: PeopleIcon },
   { id: 'suppliers', label: 'Fournisseurs', icon: TruckIcon },
   { id: 'enclosures', label: 'Enceintes froides', icon: SnowflakeIcon },
   { id: 'cleaning', label: 'Plan de nettoyage', icon: CleaningIcon },
@@ -583,7 +583,7 @@ export default function HACCPSetupComponent() {
                   <PeopleIcon fontSize="large" />
                 </Avatar>
                 <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
-                  Utilisateurs
+                  Employés
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                   Veuillez indiquer le nom ou le poste des personnes qui effectueront des relevés HACCP, 
@@ -604,7 +604,7 @@ export default function HACCPSetupComponent() {
                     startIcon={<AddIcon />}
                     sx={{ py: 3, borderStyle: 'dashed' }}
                   >
-                    Ajouter votre premier utilisateur
+                    Ajouter votre premier employé
                   </Button>
                 ) : (
                   <>
@@ -618,7 +618,7 @@ export default function HACCPSetupComponent() {
                           newUsers[index] = { ...user, name: e.target.value };
                           setUsers(newUsers);
                         }}
-                        placeholder="Nom de l&apos;utilisateur"
+                        placeholder="Nom de l&apos;employé"
                         variant="outlined"
                       />
                     ))}
@@ -629,7 +629,7 @@ export default function HACCPSetupComponent() {
                       startIcon={<AddIcon />}
                       sx={{ py: 2, borderStyle: 'dashed' }}
                     >
-                      Ajouter un utilisateur
+                      Ajouter un employé
                     </Button>
                   </>
                 )}
@@ -965,7 +965,7 @@ export default function HACCPSetupComponent() {
                   Configuration à sauvegarder :
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1 }}>
-                  <Chip label={`${users.length} utilisateur(s)`} size="small" />
+                  <Chip label={`${users.length} employé(s)`} size="small" />
                   <Chip label={`${suppliers.length} fournisseur(s)`} size="small" />
                   <Chip label={`${coldEnclosures.length} enceinte(s) froide(s)`} size="small" />
                   <Chip label={`${cleaningTasks.filter(t => t.enabled).length} tâche(s) de nettoyage`} size="small" />
