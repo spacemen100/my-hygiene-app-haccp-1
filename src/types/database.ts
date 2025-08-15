@@ -1982,6 +1982,340 @@ export type Database = {
           }
         ]
       }
+      corrective_actions: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corrective_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      equipments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          equipment_state: boolean | null
+          equipment_type: string | null
+          id: string
+          location: string | null
+          max_polarity: number | null
+          max_temperature: number | null
+          min_polarity: number | null
+          min_temperature: number | null
+          name: string
+          oil_capacity: number | null
+          oil_type: string | null
+          organization_id: string | null
+          polarity_monitoring: boolean | null
+          temperature_monitoring: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          equipment_state?: boolean | null
+          equipment_type?: string | null
+          id?: string
+          location?: string | null
+          max_polarity?: number | null
+          max_temperature?: number | null
+          min_polarity?: number | null
+          min_temperature?: number | null
+          name: string
+          oil_capacity?: number | null
+          oil_type?: string | null
+          organization_id?: string | null
+          polarity_monitoring?: boolean | null
+          temperature_monitoring?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          equipment_state?: boolean | null
+          equipment_type?: string | null
+          id?: string
+          location?: string | null
+          max_polarity?: number | null
+          max_temperature?: number | null
+          min_polarity?: number | null
+          min_temperature?: number | null
+          name?: string
+          oil_capacity?: number | null
+          oil_type?: string | null
+          organization_id?: string | null
+          polarity_monitoring?: boolean | null
+          temperature_monitoring?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      oil_control_history: {
+        Row: {
+          action_type: string
+          equipment_id: string | null
+          id: string
+          new_values: Json | null
+          oil_control_id: string | null
+          old_values: Json | null
+          performed_at: string | null
+          performed_by: string | null
+          reason: string | null
+        }
+        Insert: {
+          action_type: string
+          equipment_id?: string | null
+          id?: string
+          new_values?: Json | null
+          oil_control_id?: string | null
+          old_values?: Json | null
+          performed_at?: string | null
+          performed_by?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action_type?: string
+          equipment_id?: string | null
+          id?: string
+          new_values?: Json | null
+          oil_control_id?: string | null
+          old_values?: Json | null
+          performed_at?: string | null
+          performed_by?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_control_history_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_control_history_oil_control_id_fkey"
+            columns: ["oil_control_id"]
+            isOneToOne: false
+            referencedRelation: "oil_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_control_history_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      oil_controls: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          reading_date: string
+          reading_time: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          reading_date?: string
+          reading_time?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          reading_date?: string
+          reading_time?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_controls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_controls_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      oil_equipment_readings: {
+        Row: {
+          comments: string | null
+          control_type: string
+          corrective_actions: string[] | null
+          created_at: string | null
+          critical_control_point: boolean | null
+          equipment_id: string | null
+          id: string
+          is_compliant: boolean | null
+          oil_control_id: string | null
+          oil_level: number | null
+          photo_url: string | null
+          polarity: number | null
+          temperature: number | null
+          updated_at: string | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          comments?: string | null
+          control_type: string
+          corrective_actions?: string[] | null
+          created_at?: string | null
+          critical_control_point?: boolean | null
+          equipment_id?: string | null
+          id?: string
+          is_compliant?: boolean | null
+          oil_control_id?: string | null
+          oil_level?: number | null
+          photo_url?: string | null
+          polarity?: number | null
+          temperature?: number | null
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          comments?: string | null
+          control_type?: string
+          corrective_actions?: string[] | null
+          created_at?: string | null
+          critical_control_point?: boolean | null
+          equipment_id?: string | null
+          id?: string
+          is_compliant?: boolean | null
+          oil_control_id?: string | null
+          oil_level?: number | null
+          photo_url?: string | null
+          polarity?: number | null
+          temperature?: number | null
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_equipment_readings_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_equipment_readings_oil_control_id_fkey"
+            columns: ["oil_control_id"]
+            isOneToOne: false
+            referencedRelation: "oil_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_equipment_readings_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      oil_reading_corrective_actions: {
+        Row: {
+          action_id: string
+          reading_id: string
+        }
+        Insert: {
+          action_id: string
+          reading_id: string
+        }
+        Update: {
+          action_id?: string
+          reading_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_reading_corrective_actions_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "corrective_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_reading_corrective_actions_reading_id_fkey"
+            columns: ["reading_id"]
+            isOneToOne: false
+            referencedRelation: "oil_equipment_readings"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -26,7 +26,15 @@ import {
   Paper,
   Chip,
   Avatar,
-  Skeleton
+  Skeleton,
+  Tabs,
+  Tab,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider
 } from '@mui/material';
 import {
   LocalDining,
@@ -35,151 +43,314 @@ import {
   Save,
   Warning,
   History,
-  Assessment
+  Assessment,
+  Add,
+  Kitchen,
+  WaterDrop,
+  FactCheck,
+  Visibility,
+  ThermostatAuto
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+
+type Equipment = Tables<'equipments'>;
+type OilControl = Tables<'oil_controls'>;
+type OilEquipmentReading = Tables<'oil_equipment_readings'>;
+type CorrectiveAction = Tables<'corrective_actions'>;
+
+type OilControlWithReadings = OilControl & {
+  oil_equipment_readings: (OilEquipmentReading & {
+    equipment: Equipment;
+  })[];
+};
+
+type EquipmentWithReadings = Equipment & {
+  latest_reading?: OilEquipmentReading;
+};
 
 export default function OilQualityControl() {
   const { employee } = useEmployee();
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   
-  // États
-  const [controls, setControls] = useState<Tables<'oil_quality_controls'>[]>([]);
-  const [loading, setLoading] = useState({ controls: true });
-  const [formData, setFormData] = useState<TablesInsert<'oil_quality_controls'>>({
-    control_date: new Date().toISOString(),
-    oil_type: '',
-    equipment_name: '',
+  // États principaux
+  const [currentTab, setCurrentTab] = useState(0);
+  const [equipments, setEquipments] = useState<EquipmentWithReadings[]>([]);
+  const [oilControls, setOilControls] = useState<OilControlWithReadings[]>([]);
+  const [correctiveActions, setCorrectiveActions] = useState<CorrectiveAction[]>([]);
+  const [loading, setLoading] = useState({ 
+    equipments: true, 
+    controls: true, 
+    actions: true 
+  });
+  
+  // États pour les dialogues
+  const [controlDialogOpen, setControlDialogOpen] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  const [currentControl, setCurrentControl] = useState<OilControl | null>(null);
+  
+  // États pour le formulaire de lecture
+  const [readingForm, setReadingForm] = useState<Partial<TablesInsert<'oil_equipment_readings'>>>({
     control_type: 'visual',
-    polar_compounds_percentage: null,
-    result: '',
-    action_taken: '',
-    next_control_date: null,
+    temperature: null,
+    polarity: null,
+    oil_level: null,
     comments: '',
-    photo_url: '',
-    organization_id: null,
-    employee_id: null,
-    user_id: null,
+    is_compliant: null
   });
 
-  // Types d'huile prédéfinis
-  const oilTypes = [
-    'Huile de tournesol',
-    'Huile de colza',
-    'Huile d&apos;olive',
-    'Huile de friture mélangée',
-    'Autre'
-  ];
-
-  // Types de contrôle
+  // Types de contrôle selon le nouveau schéma
   const controlTypes = [
-    { value: 'visual', label: 'Contrôle visuel' },
-    { value: 'polar_compounds', label: 'Mesure composés polaires' },
-    { value: 'temperature', label: 'Contrôle température' },
-    { value: 'smell', label: 'Contrôle olfactif' }
+    { value: 'change_cleaning', label: 'Changement/Nettoyage', icon: <WaterDrop />, description: 'Changement ou nettoyage d\'huile' },
+    { value: 'collection', label: 'Collecte', icon: <LocalDining />, description: 'Collecte d\'échantillon' },
+    { value: 'filtration', label: 'Filtration', icon: <Science />, description: 'Filtration de l\'huile' },
+    { value: 'strip', label: 'Bandelette test', icon: <FactCheck />, description: 'Test bandelette polarité' },
+    { value: 'visual', label: 'Visuel', icon: <Visibility />, description: 'Contrôle visuel' }
   ];
 
-  // Résultats possibles
-  const resultOptions = [
-    { value: 'conforme', label: 'Conforme', color: 'success' },
-    { value: 'non_conforme', label: 'Non conforme', color: 'error' },
-    { value: 'limite', label: 'À la limite', color: 'warning' },
-    { value: 'renouveler', label: 'À renouveler', color: 'error' }
-  ];
+  // Seuils de conformité
+  const complianceThresholds = {
+    temperature: { min: 160, max: 180 },
+    polarity: { max: 25 }
+  };
 
-  // Fetch des contrôles
-  const fetchControls = useCallback(async () => {
-    setLoading(prev => ({ ...prev, controls: true }));
-    const { data, error } = await supabase
-      .from('oil_quality_controls')
-      .select('*')
-      .order('control_date', { ascending: false })
-      .limit(50);
-
-    if (!error && data) {
-      setControls(data);
-    } else {
-      enqueueSnackbar('Erreur de chargement des contrôles', { variant: 'error' });
-    }
+  // Fetch des équipements
+  const fetchEquipments = useCallback(async () => {
+    if (!employee?.organization_id) return;
     
-    setLoading(prev => ({ ...prev, controls: false }));
-  }, [enqueueSnackbar]);
+    setLoading(prev => ({ ...prev, equipments: true }));
+    try {
+      const { data, error } = await supabase
+        .from('equipments')
+        .select(`
+          *,
+          oil_equipment_readings!equipment_id (
+            *
+          )
+        `)
+        .eq('organization_id', employee.organization_id)
+        .eq('equipment_state', true)
+        .order('name');
+
+      if (error) throw error;
+
+      // Ajouter la dernière lecture pour chaque équipement
+      const equipmentsWithLatest = (data || []).map(equipment => {
+        const readings = equipment.oil_equipment_readings || [];
+        const latestReading = readings.sort((a: any, b: any) => 
+          new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+        )[0] || null;
+        
+        return {
+          ...equipment,
+          latest_reading: latestReading
+        };
+      });
+
+      setEquipments(equipmentsWithLatest);
+    } catch (error) {
+      console.error('Erreur lors du chargement des équipements:', error);
+      enqueueSnackbar('Erreur lors du chargement des équipements', { variant: 'error' });
+    } finally {
+      setLoading(prev => ({ ...prev, equipments: false }));
+    }
+  }, [employee?.organization_id, enqueueSnackbar]);
+
+  // Fetch des contrôles d'huile
+  const fetchOilControls = useCallback(async () => {
+    if (!employee?.organization_id) return;
+    
+    setLoading(prev => ({ ...prev, controls: true }));
+    try {
+      const { data, error } = await supabase
+        .from('oil_controls')
+        .select(`
+          *,
+          oil_equipment_readings (
+            *,
+            equipment:equipments (*)
+          )
+        `)
+        .eq('organization_id', employee.organization_id)
+        .order('reading_date', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setOilControls(data as OilControlWithReadings[] || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des contrôles:', error);
+      enqueueSnackbar('Erreur lors du chargement des contrôles', { variant: 'error' });
+    } finally {
+      setLoading(prev => ({ ...prev, controls: false }));
+    }
+  }, [employee?.organization_id, enqueueSnackbar]);
+
+  // Fetch des actions correctives
+  const fetchCorrectiveActions = useCallback(async () => {
+    setLoading(prev => ({ ...prev, actions: true }));
+    try {
+      const { data, error } = await supabase
+        .from('corrective_actions')
+        .select('*')
+        .or(`organization_id.is.null,organization_id.eq.${employee?.organization_id}`)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setCorrectiveActions(data || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des actions correctives:', error);
+      enqueueSnackbar('Erreur lors du chargement des actions correctives', { variant: 'error' });
+    } finally {
+      setLoading(prev => ({ ...prev, actions: false }));
+    }
+  }, [employee?.organization_id, enqueueSnackbar]);
 
   // Chargement initial
   useEffect(() => {
-    fetchControls();
-  }, [fetchControls]);
+    if (employee?.organization_id) {
+      fetchEquipments();
+      fetchOilControls();
+      fetchCorrectiveActions();
+    }
+  }, [fetchEquipments, fetchOilControls, fetchCorrectiveActions, employee?.organization_id]);
 
-  // Validation du pourcentage de composés polaires
-  const validatePolarCompounds = useCallback((percentage: number | null) => {
-    if (percentage === null) return null;
-    if (percentage <= 24) return 'conforme';
-    if (percentage <= 27) return 'limite';
-    return 'non_conforme';
+  // Démarrer un nouveau contrôle
+  const startNewControl = useCallback(async () => {
+    if (!employee?.organization_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('oil_controls')
+        .insert({
+          organization_id: employee.organization_id,
+          reading_date: new Date().toISOString().split('T')[0],
+          reading_time: new Date().toTimeString().split(' ')[0],
+          created_by: user?.id || null,
+          status: 'in_progress'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setCurrentControl(data);
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la création du contrôle:', error);
+      enqueueSnackbar('Erreur lors de la création du contrôle', { variant: 'error' });
+      return null;
+    }
+  }, [employee?.organization_id, user?.id, enqueueSnackbar]);
+
+  // Ouvrir le dialogue de contrôle pour un équipement
+  const openControlDialog = useCallback(async (equipment: Equipment) => {
+    setSelectedEquipment(equipment);
+    
+    // Créer un nouveau contrôle ou utiliser un contrôle en cours
+    if (!currentControl) {
+      const newControl = await startNewControl();
+      if (!newControl) return;
+    }
+    
+    setControlDialogOpen(true);
+    setReadingForm({
+      control_type: 'visual',
+      temperature: null,
+      polarity: null,
+      oil_level: null,
+      comments: '',
+      is_compliant: null
+    });
+  }, [currentControl, startNewControl]);
+
+  // Valider la conformité automatiquement
+  const validateCompliance = useCallback((reading: Partial<TablesInsert<'oil_equipment_readings'>>, equipment: Equipment) => {
+    if (reading.control_type === 'strip' && reading.polarity !== null && reading.polarity !== undefined) {
+      return reading.polarity <= (equipment.max_polarity || complianceThresholds.polarity.max);
+    }
+    if (reading.temperature !== null && reading.temperature !== undefined) {
+      const minTemp = equipment.min_temperature || complianceThresholds.temperature.min;
+      const maxTemp = equipment.max_temperature || complianceThresholds.temperature.max;
+      return reading.temperature >= minTemp && reading.temperature <= maxTemp;
+    }
+    return null;
   }, []);
 
-  // Gestion du changement de pourcentage de composés polaires
-  const handlePolarCompoundsChange = useCallback((value: string) => {
-    const percentage = value ? Number(value) : null;
-    const suggestedResult = validatePolarCompounds(percentage);
+  // Sauvegarder une lecture d'équipement
+  const saveEquipmentReading = useCallback(async () => {
+    if (!currentControl || !selectedEquipment) return;
     
-    setFormData(prev => ({
-      ...prev, 
-      polar_compounds_percentage: percentage,
-      result: suggestedResult || prev.result
-    }));
-  }, [validatePolarCompounds]);
-
-  // Soumission du formulaire
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
     try {
-      const { error } = await supabase
-        .from('oil_quality_controls')
-        .insert([{
-          ...formData,
-          employee_id: employee?.id || null,
-          user_id: user?.id || null,
-        }]);
+      const compliance = validateCompliance(readingForm, selectedEquipment);
       
+      const { error } = await supabase
+        .from('oil_equipment_readings')
+        .insert({
+          oil_control_id: currentControl.id,
+          equipment_id: selectedEquipment.id,
+          control_type: readingForm.control_type || 'visual',
+          temperature: readingForm.temperature,
+          polarity: readingForm.polarity,
+          oil_level: readingForm.oil_level,
+          comments: readingForm.comments,
+          is_compliant: compliance !== null ? compliance : readingForm.is_compliant,
+          critical_control_point: readingForm.control_type === 'strip' || readingForm.control_type === 'change_cleaning'
+        });
+
       if (error) throw error;
       
-      enqueueSnackbar('Contrôle enregistré avec succès!', { variant: 'success' });
-      fetchControls();
-      setFormData({
-        control_date: new Date().toISOString(),
-        oil_type: '',
-        equipment_name: '',
-        control_type: 'visual',
-        polar_compounds_percentage: null,
-        result: '',
-        action_taken: '',
-        next_control_date: null,
-        comments: '',
-        photo_url: '',
-        organization_id: null,
-        employee_id: null,
-        user_id: null,
-      });
-    } catch {
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar('Lecture enregistrée avec succès!', { variant: 'success' });
+      setControlDialogOpen(false);
+      fetchEquipments();
+      fetchOilControls();
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      enqueueSnackbar('Erreur lors de la sauvegarde', { variant: 'error' });
     }
-  }, [formData, employee, user, enqueueSnackbar, fetchControls]);
+  }, [currentControl, selectedEquipment, readingForm, validateCompliance, enqueueSnackbar, fetchEquipments, fetchOilControls]);
+
+  // Finaliser un contrôle
+  const finishControl = useCallback(async () => {
+    if (!currentControl) return;
+    
+    try {
+      const { error } = await supabase
+        .from('oil_controls')
+        .update({ status: 'completed' })
+        .eq('id', currentControl.id);
+
+      if (error) throw error;
+      
+      setCurrentControl(null);
+      enqueueSnackbar('Contrôle finalisé avec succès!', { variant: 'success' });
+      fetchOilControls();
+    } catch (error) {
+      console.error('Erreur lors de la finalisation:', error);
+      enqueueSnackbar('Erreur lors de la finalisation', { variant: 'error' });
+    }
+  }, [currentControl, enqueueSnackbar, fetchOilControls]);
 
   // Statistiques calculées
   const stats = useMemo(() => {
-    const recentControls = controls.slice(0, 20);
-    const nonCompliantControls = recentControls.filter(c => c.result === 'non_conforme' || c.result === 'renouveler');
+    const allReadings = oilControls.flatMap(control => control.oil_equipment_readings || []);
+    const recentReadings = allReadings.slice(0, 50);
+    const nonCompliantReadings = recentReadings.filter(r => r.is_compliant === false);
+    const criticalReadings = recentReadings.filter(r => r.critical_control_point);
     
     return {
-      totalControls: recentControls.length,
-      nonCompliantControls: nonCompliantControls.length,
-      complianceRate: recentControls.length > 0 ? 
-        ((recentControls.length - nonCompliantControls.length) / recentControls.length) * 100 : 
+      totalEquipments: equipments.length,
+      totalReadings: recentReadings.length,
+      nonCompliantReadings: nonCompliantReadings.length,
+      criticalReadings: criticalReadings.length,
+      complianceRate: recentReadings.length > 0 ? 
+        ((recentReadings.length - nonCompliantReadings.length) / recentReadings.length) * 100 : 
         100
     };
-  }, [controls]);
+  }, [equipments, oilControls]);
+
+  // Gérer le changement d'onglet
+  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  }, []);
 
   return (
     <Box sx={{ 
@@ -213,7 +384,7 @@ export default function OilQualityControl() {
               height: { xs: 56, md: 80 },
             }}
           >
-            <LocalDining fontSize="large" />
+            <Kitchen fontSize="large" />
           </Avatar>
           <Box>
             <Typography 
@@ -226,7 +397,7 @@ export default function OilQualityControl() {
                 lineHeight: 1.2
               }}
             >
-              Contrôle Qualité de l&apos;Huile
+              Contrôle HACCP des Huiles
             </Typography>
             <Typography 
               variant="h6" 
@@ -237,7 +408,7 @@ export default function OilQualityControl() {
                 display: { xs: 'none', sm: 'block' }
               }}
             >
-              Surveillance des huiles de friture et composés polaires
+              Surveillance systématique des huiles de friture
             </Typography>
             <Typography 
               variant="body2" 
@@ -246,40 +417,117 @@ export default function OilQualityControl() {
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}
             >
-              Dernier contrôle : {controls.length > 0 ? 
-                new Date(controls[0].control_date).toLocaleDateString('fr-FR', { 
-                  weekday: 'short', 
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) : 'Aucun'
+              {currentControl ? 
+                `Contrôle en cours : ${new Date(currentControl.reading_date).toLocaleDateString('fr-FR')}` :
+                `Dernière session : ${oilControls.length > 0 ? 
+                  new Date(oilControls[0].reading_date).toLocaleDateString('fr-FR') : 'Aucune'
+                }`
               }
             </Typography>
           </Box>
+        </Box>
+        
+        {/* Actions rapides */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          mt: 3,
+          flexWrap: 'wrap'
+        }}>
+          {!currentControl ? (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={startNewControl}
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
+              }}
+            >
+              Nouveau contrôle
+            </Button>
+          ) : (
+            <>
+              <Chip
+                label={`Contrôle en cours - ${new Date(currentControl.reading_time || '').toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
+                color="secondary"
+                sx={{ bgcolor: 'rgba(255,255,255,0.9)', color: '#ff9800', fontWeight: 600 }}
+              />
+              <Button
+                variant="contained"
+                startIcon={<CheckCircle />}
+                onClick={finishControl}
+                sx={{
+                  bgcolor: 'rgba(76, 175, 80, 0.9)',
+                  '&:hover': { bgcolor: 'rgba(76, 175, 80, 1)' }
+                }}
+              >
+                Finaliser
+              </Button>
+            </>
+          )}
         </Box>
       </Paper>
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         
+        {/* Tabs Navigation */}
+        <Box sx={{ mb: 4 }}>
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: 1.5,
+              },
+            }}
+          >
+            <Tab
+              icon={<Kitchen />}
+              label="Équipements"
+              iconPosition="start"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              icon={<History />}
+              label="Historique"
+              iconPosition="start"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              icon={<Assessment />}
+              label="Analyses"
+              iconPosition="start"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+          </Tabs>
+        </Box>
+        
         {/* Statistiques rapides */}
         <Box sx={{ 
           display: 'grid', 
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, 
           gap: { xs: 2, sm: 3 }, 
           mb: { xs: 3, md: 4 }
         }}>
           <StatCard 
-            title="Contrôles récents" 
-            value={stats.totalControls} 
-            icon={<Assessment />} 
+            title="Équipements" 
+            value={stats.totalEquipments} 
+            icon={<Kitchen />} 
             color="#ff9800"
           />
           <StatCard 
+            title="Lectures récentes" 
+            value={stats.totalReadings} 
+            icon={<Assessment />} 
+            color="#2196f3"
+          />
+          <StatCard 
             title="Non-conformités" 
-            value={stats.nonCompliantControls} 
-            icon={stats.nonCompliantControls > 0 ? <Warning /> : <CheckCircle />} 
-            color={stats.nonCompliantControls > 0 ? '#f44336' : '#4caf50'}
+            value={stats.nonCompliantReadings} 
+            icon={stats.nonCompliantReadings > 0 ? <Warning /> : <CheckCircle />} 
+            color={stats.nonCompliantReadings > 0 ? '#f44336' : '#4caf50'}
           />
           <StatCard 
             title="Taux de conformité" 
@@ -289,301 +537,468 @@ export default function OilQualityControl() {
           />
         </Box>
 
-        {/* Formulaire de nouveau contrôle */}
-        <Card sx={{ 
-          mb: 4,
-          transition: 'all 0.3s', 
-          '&:hover': { boxShadow: 6 },
-          mx: { xs: -1, sm: 0 },
-          borderRadius: { xs: 0, sm: 1 }
-        }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Avatar sx={{ bgcolor: '#ff980020', color: '#ff9800' }}>
-                <Science />
+        {currentTab === 0 && (
+          <>
+            {/* Grille des équipements */}
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, 
+              gap: 3,
+              mb: 4
+            }}>
+              {loading.equipments ? (
+                Array(6).fill(0).map((_, i) => (
+                  <Skeleton key={i} variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+                ))
+              ) : equipments.length === 0 ? (
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                      <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500', mx: 'auto', mb: 2 }}>
+                        <Kitchen />
+                      </Avatar>
+                      <Typography variant="h6" color="text.secondary" gutterBottom>
+                        Aucun équipement configuré
+                      </Typography>
+                      <Typography variant="body2" color="text.disabled">
+                        Contactez votre administrateur pour configurer les équipements
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+              ) : (
+                equipments.map((equipment) => (
+                  <EquipmentCard
+                    key={equipment.id}
+                    equipment={equipment}
+                    onControl={() => openControlDialog(equipment)}
+                    controlInProgress={currentControl !== null}
+                  />
+                ))
+              )}
+            </Box>
+          </>
+        )}
+
+        {currentTab === 1 && (
+          <>
+            {/* Historique des contrôles */}
+            <HistorySection 
+              oilControls={oilControls} 
+              loading={loading.controls} 
+              controlTypes={controlTypes}
+            />
+          </>
+        )}
+
+        {currentTab === 2 && (
+          <>
+            {/* Analyses et rapports */}
+            <AnalysisSection 
+              equipments={equipments}
+              oilControls={oilControls}
+              stats={stats}
+            />
+          </>
+        )}
+        
+        {/* Dialogue de contrôle d'équipement */}
+        <Dialog
+          open={controlDialogOpen}
+          onClose={() => setControlDialogOpen(false)}
+          maxWidth="md"
+          fullWidth
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 3 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <Kitchen />
               </Avatar>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  Nouveau Contrôle Qualité
-                </Typography>
+                <Typography variant="h6">{selectedEquipment?.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Enregistrer un contrôle HACCP de l&apos;huile de friture
+                  {selectedEquipment?.equipment_type} • Capacité: {selectedEquipment?.oil_capacity}L
                 </Typography>
               </Box>
             </Box>
-            
-            <Box 
-              component="form" 
-              onSubmit={handleSubmit} 
-              sx={{ 
-                display: 'grid', 
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-                gap: 3 
-              }}
-            >
-              <FormControl fullWidth required>
-                <InputLabel>Type d&apos;huile</InputLabel>
-                <Select
-                  value={formData.oil_type}
-                  label="Type d'huile"
-                  onChange={(e) => setFormData({...formData, oil_type: e.target.value})}
-                >
-                  {oilTypes.map(type => (
-                    <MenuItem key={type} value={type}>{type}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              
-              <TextField
-                label="Équipement / Friteuse"
-                value={formData.equipment_name || ''}
-                onChange={(e) => setFormData({...formData, equipment_name: e.target.value})}
-                fullWidth
-                placeholder="Ex: Friteuse principale"
-              />
-              
-              <FormControl fullWidth required>
-                <InputLabel>Type de contrôle</InputLabel>
-                <Select
-                  value={formData.control_type}
-                  label="Type de contrôle"
-                  onChange={(e) => setFormData({...formData, control_type: e.target.value})}
-                >
-                  {controlTypes.map(type => (
-                    <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+          </DialogTitle>
+          
+          <DialogContent>
+            {selectedEquipment && (
+              <Box sx={{ mt: 2 }}>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Type d'huile: {selectedEquipment.oil_type} • 
+                  Localisation: {selectedEquipment.location}
+                </Alert>
 
-              {formData.control_type === 'polar_compounds' && (
-                <TextField
-                  label="Composés polaires (%)"
-                  type="number"
-                  inputProps={{ step: "0.1", min: "0", max: "100" }}
-                  value={formData.polar_compounds_percentage || ''}
-                  onChange={(e) => handlePolarCompoundsChange(e.target.value)}
-                  fullWidth
-                  helperText={
-                    formData.polar_compounds_percentage !== null && formData.polar_compounds_percentage !== undefined ? 
-                      formData.polar_compounds_percentage <= 24 ? "✅ Conforme (≤24%)" :
-                      formData.polar_compounds_percentage <= 27 ? "⚠️ À surveiller (24-27%)" :
-                      "❌ Non conforme (>27%)" : 
-                      "Seuils: ≤24% conforme, >27% non conforme"
-                  }
-                  error={formData.polar_compounds_percentage !== null && formData.polar_compounds_percentage !== undefined && formData.polar_compounds_percentage > 27}
-                />
-              )}
-              
-              <FormControl fullWidth required>
-                <InputLabel>Résultat</InputLabel>
-                <Select
-                  value={formData.result}
-                  label="Résultat"
-                  onChange={(e) => setFormData({...formData, result: e.target.value})}
-                >
-                  {resultOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      <Chip 
-                        label={option.label} 
-                        color={option.color as 'success' | 'error' | 'warning'} 
-                        size="small" 
-                        sx={{ mr: 1 }} 
-                      />
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              
-              <TextField
-                label="Action corrective"
-                value={formData.action_taken || ''}
-                onChange={(e) => setFormData({...formData, action_taken: e.target.value})}
-                fullWidth
-                placeholder="Action prise si nécessaire"
-              />
-              
-              <TextField
-                label="Commentaires"
-                value={formData.comments || ''}
-                onChange={(e) => setFormData({...formData, comments: e.target.value})}
-                fullWidth
-                placeholder="Observations..."
-                sx={{ gridColumn: { lg: '1 / -1' } }}
-              />
-              
-              <Box sx={{ gridColumn: { md: '1 / -1' }, display: 'flex', gap: 2, alignItems: 'center' }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<Save />}
-                  sx={{ 
-                    ml: 'auto',
-                    background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #f57c00 0%, #ef6c00 100%)',
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Type de contrôle</InputLabel>
+                    <Select
+                      value={readingForm.control_type || 'visual'}
+                      label="Type de contrôle"
+                      onChange={(e) => setReadingForm({...readingForm, control_type: e.target.value as any})}
+                    >
+                      {controlTypes.map(type => (
+                        <MenuItem key={type.value} value={type.value}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {type.icon}
+                            <Box>
+                              <Typography variant="body2">{type.label}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {type.description}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {(readingForm.control_type === 'strip' || readingForm.control_type === 'collection') && (
+                    <TextField
+                      label="Polarité (%)"
+                      type="number"
+                      inputProps={{ step: "0.1", min: "0", max: "100" }}
+                      value={readingForm.polarity || ''}
+                      onChange={(e) => setReadingForm({...readingForm, polarity: e.target.value ? Number(e.target.value) : null})}
+                      fullWidth
+                      helperText={
+                        readingForm.polarity ? 
+                          readingForm.polarity <= (selectedEquipment.max_polarity || 25) ? 
+                            "✅ Conforme" : "❌ Non conforme (>" + (selectedEquipment.max_polarity || 25) + "%)" :
+                          `Seuil: ≤${selectedEquipment.max_polarity || 25}%`
+                      }
+                      error={readingForm.polarity ? readingForm.polarity > (selectedEquipment.max_polarity || 25) : false}
+                    />
+                  )}
+
+                  <TextField
+                    label="Température (°C)"
+                    type="number"
+                    inputProps={{ step: "0.1", min: "0", max: "250" }}
+                    value={readingForm.temperature || ''}
+                    onChange={(e) => setReadingForm({...readingForm, temperature: e.target.value ? Number(e.target.value) : null})}
+                    fullWidth
+                    helperText={
+                      readingForm.temperature ? 
+                        readingForm.temperature >= (selectedEquipment.min_temperature || 160) && 
+                        readingForm.temperature <= (selectedEquipment.max_temperature || 180) ? 
+                          "✅ Conforme" : "❌ Hors plage" :
+                        `Plage: ${selectedEquipment.min_temperature || 160}-${selectedEquipment.max_temperature || 180}°C`
                     }
-                  }}
-                >
-                  Enregistrer le contrôle
-                </Button>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
+                  />
 
-        {/* Historique des contrôles */}
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              p: 3,
-              pb: 0
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: '#4caf5020', color: '#4caf50' }}>
-                  <History />
-                </Avatar>
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                    Historique des Contrôles
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {controls.length} contrôle{controls.length !== 1 ? 's' : ''}
-                  </Typography>
+                  <TextField
+                    label="Niveau d'huile (%)"
+                    type="number"
+                    inputProps={{ step: "1", min: "0", max: "100" }}
+                    value={readingForm.oil_level || ''}
+                    onChange={(e) => setReadingForm({...readingForm, oil_level: e.target.value ? Number(e.target.value) : null})}
+                    fullWidth
+                  />
+
+                  <TextField
+                    label="Commentaires"
+                    value={readingForm.comments || ''}
+                    onChange={(e) => setReadingForm({...readingForm, comments: e.target.value})}
+                    fullWidth
+                    multiline
+                    rows={2}
+                    placeholder="Observations, remarques..."
+                    sx={{ gridColumn: { md: '1 / -1' } }}
+                  />
                 </Box>
               </Box>
-            </Box>
-            
-            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 0, borderLeft: 0, borderRight: 0 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>Date & Heure</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Huile / Équipement</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Type de contrôle</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Composés polaires</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Résultat</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading.controls ? (
-                    Array(5).fill(0).map((_, i) => (
-                      <TableRow key={`skeleton-${i}`}>
-                        {Array(6).fill(0).map((_, j) => (
-                          <TableCell key={j}><Skeleton variant="text" /></TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : controls.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                          <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500' }}>
-                            <History />
-                          </Avatar>
-                          <Typography color="text.secondary">
-                            Aucun contrôle enregistré
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    controls.map(control => {
-                      const resultOption = resultOptions.find(option => option.value === control.result);
-                      const isRecent = new Date().getTime() - new Date(control.control_date).getTime() < 86400000; // 24h
-                      
-                      return (
-                        <TableRow 
-                          key={control.id}
-                          sx={{ 
-                            bgcolor: isRecent ? 'success.light' : 'inherit',
-                            opacity: isRecent ? 1 : 0.8
-                          }}
-                        >
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {new Date(control.control_date).toLocaleDateString('fr-FR')}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {new Date(control.control_date).toLocaleTimeString('fr-FR', {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {control.oil_type}
-                              </Typography>
-                              {control.equipment_name && (
-                                <Typography variant="caption" color="text.secondary">
-                                  {control.equipment_name}
-                                </Typography>
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {controlTypes.find(type => type.value === control.control_type)?.label || control.control_type}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            {control.polar_compounds_percentage !== null ? (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography 
-                                  variant="body1" 
-                                  fontWeight="bold"
-                                  color={
-                                    control.polar_compounds_percentage <= 24 ? 'success.main' :
-                                    control.polar_compounds_percentage <= 27 ? 'warning.main' :
-                                    'error.main'
-                                  }
-                                >
-                                  {control.polar_compounds_percentage}%
-                                </Typography>
-                              </Box>
-                            ) : (
-                              <Typography variant="body2" color="text.secondary">
-                                N/A
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {resultOption && (
-                              <Chip
-                                size="small"
-                                label={resultOption.label}
-                                color={resultOption.color as 'success' | 'error' | 'warning'}
-                                variant="outlined"
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" color="text.secondary">
-                              {control.action_taken || 'Aucune'}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CardContent>
-        </Card>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3, pt: 0 }}>
+            <Button onClick={() => setControlDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={saveEquipmentReading}
+              startIcon={<Save />}
+            >
+              Enregistrer
+            </Button>
+          </DialogActions>
+        </Dialog>
 
       </Container>
     </Box>
   );
 }
+
+// Composant pour une carte d'équipement
+const EquipmentCard = React.memo(({ equipment, onControl, controlInProgress }: {
+  equipment: EquipmentWithReadings;
+  onControl: () => void;
+  controlInProgress: boolean;
+}) => {
+  const getStatusColor = () => {
+    if (!equipment.latest_reading) return 'grey';
+    return equipment.latest_reading.is_compliant ? 'success' : 'error';
+  };
+
+  const getLastReadingTime = () => {
+    if (!equipment.latest_reading) return 'Jamais contrôlé';
+    const time = new Date(equipment.latest_reading.created_at || '').getTime();
+    const now = new Date().getTime();
+    const diffHours = (now - time) / (1000 * 60 * 60);
+    
+    if (diffHours < 1) return 'Moins d\'1h';
+    if (diffHours < 24) return `Il y a ${Math.floor(diffHours)}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+  };
+
+  return (
+    <Card sx={{ 
+      height: '100%', 
+      transition: 'all 0.3s',
+      '&:hover': { 
+        transform: 'translateY(-2px)',
+        boxShadow: 6
+      },
+      cursor: controlInProgress ? 'pointer' : 'default',
+      opacity: controlInProgress ? 1 : 0.8
+    }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Avatar sx={{ 
+            bgcolor: equipment.equipment_type === 'fryer' ? '#ff9800' : '#2196f3',
+            color: 'white'
+          }}>
+            <Kitchen />
+          </Avatar>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+              {equipment.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {equipment.equipment_type} • {equipment.oil_capacity}L
+            </Typography>
+          </Box>
+          <Chip
+            label={equipment.latest_reading?.is_compliant ? 'Conforme' : equipment.latest_reading ? 'Non conforme' : 'Non testé'}
+            color={getStatusColor() as any}
+            size="small"
+            variant="outlined"
+          />
+        </Box>
+        
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Type d'huile: {equipment.oil_type || 'Non spécifié'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Localisation: {equipment.location || 'Non spécifiée'}
+          </Typography>
+        </Box>
+
+        <Divider sx={{ my: 2 }} />
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            Dernier contrôle
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+            {getLastReadingTime()}
+          </Typography>
+        </Box>
+        
+        {equipment.latest_reading && (
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, mb: 2 }}>
+            {equipment.latest_reading.temperature && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">Température</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {equipment.latest_reading.temperature}°C
+                </Typography>
+              </Box>
+            )}
+            {equipment.latest_reading.polarity && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">Polarité</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {equipment.latest_reading.polarity}%
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+        
+        <Button
+          variant="contained"
+          fullWidth
+          startIcon={<Science />}
+          onClick={onControl}
+          disabled={!controlInProgress}
+          sx={{ mt: 'auto' }}
+        >
+          {controlInProgress ? 'Effectuer contrôle' : 'Démarrer session'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+});
+EquipmentCard.displayName = 'EquipmentCard';
+
+// Composant pour l'historique
+const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
+  oilControls: OilControlWithReadings[];
+  loading: boolean;
+  controlTypes: any[];
+}) => {
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {Array(5).fill(0).map((_, i) => (
+          <Skeleton key={i} variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
+        ))}
+      </Box>
+    );
+  }
+
+  if (oilControls.length === 0) {
+    return (
+      <Card>
+        <CardContent sx={{ textAlign: 'center', py: 6 }}>
+          <Avatar sx={{ bgcolor: 'grey.100', color: 'grey.500', mx: 'auto', mb: 2, width: 64, height: 64 }}>
+            <History sx={{ fontSize: 32 }} />
+          </Avatar>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Aucun historique
+          </Typography>
+          <Typography variant="body2" color="text.disabled">
+            Aucun contrôle d'huile n'a encore été effectué
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {oilControls.map((control) => (
+        <Card key={control.id}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Session du {new Date(control.reading_date).toLocaleDateString('fr-FR')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {new Date(control.reading_time || '').toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} • 
+                  {control.oil_equipment_readings?.length || 0} lecture{(control.oil_equipment_readings?.length || 0) > 1 ? 's' : ''}
+                </Typography>
+              </Box>
+              <Chip
+                label={control.status === 'completed' ? 'Terminée' : control.status === 'in_progress' ? 'En cours' : 'Annulée'}
+                color={control.status === 'completed' ? 'success' : control.status === 'in_progress' ? 'warning' : 'error'}
+                size="small"
+              />
+            </Box>
+            
+            {control.oil_equipment_readings && control.oil_equipment_readings.length > 0 && (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>Équipement</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Type de contrôle</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Température</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Polarité</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Conformité</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {control.oil_equipment_readings.map((reading) => (
+                      <TableRow key={reading.id}>
+                        <TableCell>{reading.equipment?.name}</TableCell>
+                        <TableCell>
+                          {controlTypes.find(t => t.value === reading.control_type)?.label || reading.control_type}
+                        </TableCell>
+                        <TableCell>
+                          {reading.temperature ? `${reading.temperature}°C` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {reading.polarity ? `${reading.polarity}%` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={reading.is_compliant ? 'Conforme' : reading.is_compliant === false ? 'Non conforme' : 'Non évalué'}
+                            color={reading.is_compliant ? 'success' : reading.is_compliant === false ? 'error' : 'default'}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </Box>
+  );
+});
+HistorySection.displayName = 'HistorySection';
+
+// Composant pour les analyses
+const AnalysisSection = React.memo(({ equipments, oilControls, stats }: {
+  equipments: EquipmentWithReadings[];
+  oilControls: OilControlWithReadings[];
+  stats: any;
+}) => {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+            Analyse de conformité
+          </Typography>
+          
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 4 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom>Résumé des équipements</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {equipments.map((equipment) => (
+                  <Box key={equipment.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2">{equipment.name}</Typography>
+                    <Chip
+                      label={equipment.latest_reading?.is_compliant ? 'OK' : equipment.latest_reading ? 'KO' : '?'}
+                      color={equipment.latest_reading?.is_compliant ? 'success' : equipment.latest_reading ? 'error' : 'default'}
+                      size="small"
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            
+            <Box>
+              <Typography variant="h6" gutterBottom>Tendances</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Fonctionnalité à venir : graphiques et tendances des contrôles
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+});
+AnalysisSection.displayName = 'AnalysisSection';
 
 // Composant mémoïsé pour les cartes de statistiques
 const StatCard = React.memo(({ title, value, icon, color }: { 
