@@ -35,6 +35,206 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_executions: {
+        Row: {
+          checklist_id: string
+          checklist_item_id: string
+          comments: string | null
+          created_at: string | null
+          employee_id: string
+          execution_date: string
+          id: string
+          is_completed: boolean
+          organization_id: string
+          user_id: string | null
+        }
+        Insert: {
+          checklist_id: string
+          checklist_item_id: string
+          comments?: string | null
+          created_at?: string | null
+          employee_id: string
+          execution_date: string
+          id?: string
+          is_completed?: boolean
+          organization_id: string
+          user_id?: string | null
+        }
+        Update: {
+          checklist_id?: string
+          checklist_item_id?: string
+          comments?: string | null
+          created_at?: string | null
+          employee_id?: string
+          execution_date?: string
+          id?: string
+          is_completed?: boolean
+          organization_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_executions_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_executions_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_executions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_executions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_executions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_items: {
+        Row: {
+          checklist_id: string
+          created_at: string | null
+          description: string | null
+          employee_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          checklist_id: string
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          checklist_id?: string
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklists: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          employee_id: string | null
+          frequency: string
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklists_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cleaning_equipment: {
         Row: {
           created_at: string | null
@@ -698,6 +898,47 @@ export type Database = {
           },
         ]
       }
+      corrective_actions: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corrective_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deliveries: {
         Row: {
           comments: string | null
@@ -822,6 +1063,81 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          equipment_state: boolean | null
+          equipment_type: string
+          id: string
+          location: string | null
+          max_polarity: number | null
+          max_temperature: number | null
+          min_polarity: number | null
+          min_temperature: number | null
+          name: string
+          oil_capacity: number | null
+          oil_type: string | null
+          organization_id: string | null
+          polarity_monitoring: boolean | null
+          temperature_monitoring: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          equipment_state?: boolean | null
+          equipment_type?: string
+          id?: string
+          location?: string | null
+          max_polarity?: number | null
+          max_temperature?: number | null
+          min_polarity?: number | null
+          min_temperature?: number | null
+          name: string
+          oil_capacity?: number | null
+          oil_type?: string | null
+          organization_id?: string | null
+          polarity_monitoring?: boolean | null
+          temperature_monitoring?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          equipment_state?: boolean | null
+          equipment_type?: string
+          id?: string
+          location?: string | null
+          max_polarity?: number | null
+          max_temperature?: number | null
+          min_polarity?: number | null
+          min_temperature?: number | null
+          name?: string
+          oil_capacity?: number | null
+          oil_type?: string | null
+          organization_id?: string | null
+          polarity_monitoring?: boolean | null
+          temperature_monitoring?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1039,6 +1355,194 @@ export type Database = {
           },
         ]
       }
+      oil_control_history: {
+        Row: {
+          action_type: string
+          equipment_id: string | null
+          id: string
+          new_values: Json | null
+          oil_control_id: string | null
+          old_values: Json | null
+          performed_at: string | null
+          performed_by: string | null
+          reason: string | null
+        }
+        Insert: {
+          action_type: string
+          equipment_id?: string | null
+          id?: string
+          new_values?: Json | null
+          oil_control_id?: string | null
+          old_values?: Json | null
+          performed_at?: string | null
+          performed_by?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action_type?: string
+          equipment_id?: string | null
+          id?: string
+          new_values?: Json | null
+          oil_control_id?: string | null
+          old_values?: Json | null
+          performed_at?: string | null
+          performed_by?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_control_history_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_control_history_oil_control_id_fkey"
+            columns: ["oil_control_id"]
+            isOneToOne: false
+            referencedRelation: "oil_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_control_history_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oil_controls: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          reading_date: string
+          reading_time: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          reading_date?: string
+          reading_time?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          reading_date?: string
+          reading_time?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_controls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_controls_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oil_equipment_readings: {
+        Row: {
+          comments: string | null
+          control_type: string
+          corrective_actions: string[] | null
+          created_at: string | null
+          critical_control_point: boolean | null
+          equipment_id: string | null
+          id: string
+          is_compliant: boolean | null
+          oil_control_id: string | null
+          oil_level: number | null
+          photo_url: string | null
+          polarity: number | null
+          temperature: number | null
+          updated_at: string | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          comments?: string | null
+          control_type: string
+          corrective_actions?: string[] | null
+          created_at?: string | null
+          critical_control_point?: boolean | null
+          equipment_id?: string | null
+          id?: string
+          is_compliant?: boolean | null
+          oil_control_id?: string | null
+          oil_level?: number | null
+          photo_url?: string | null
+          polarity?: number | null
+          temperature?: number | null
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          comments?: string | null
+          control_type?: string
+          corrective_actions?: string[] | null
+          created_at?: string | null
+          critical_control_point?: boolean | null
+          equipment_id?: string | null
+          id?: string
+          is_compliant?: boolean | null
+          oil_control_id?: string | null
+          oil_level?: number | null
+          photo_url?: string | null
+          polarity?: number | null
+          temperature?: number | null
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_equipment_readings_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_equipment_readings_oil_control_id_fkey"
+            columns: ["oil_control_id"]
+            isOneToOne: false
+            referencedRelation: "oil_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_equipment_readings_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oil_quality_controls: {
         Row: {
           action_taken: string | null
@@ -1115,8 +1619,39 @@ export type Database = {
           },
         ]
       }
+      oil_reading_corrective_actions: {
+        Row: {
+          action_id: string
+          reading_id: string
+        }
+        Insert: {
+          action_id: string
+          reading_id: string
+        }
+        Update: {
+          action_id?: string
+          reading_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_reading_corrective_actions_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "corrective_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oil_reading_corrective_actions_reading_id_fkey"
+            columns: ["reading_id"]
+            isOneToOne: false
+            referencedRelation: "oil_equipment_readings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
+          activity_sector_id: string | null
           address: string | null
           city: string | null
           country: string | null
@@ -1130,6 +1665,7 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
+          activity_sector_id?: string | null
           address?: string | null
           city?: string | null
           country?: string | null
@@ -1143,6 +1679,7 @@ export type Database = {
           zip_code?: string | null
         }
         Update: {
+          activity_sector_id?: string | null
           address?: string | null
           city?: string | null
           country?: string | null
@@ -1156,6 +1693,13 @@ export type Database = {
           zip_code?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "organizations_activity_sector_id_fkey"
+            columns: ["activity_sector_id"]
+            isOneToOne: false
+            referencedRelation: "activity_sectors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organizations_user_id_fkey"
             columns: ["user_id"]
@@ -1845,482 +2389,15 @@ export type Database = {
           },
         ]
       }
-      checklists: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          category: string
-          frequency: string
-          is_active: boolean | null
-          created_at: string | null
-          updated_at: string | null
-          organization_id: string
-          employee_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          category: string
-          frequency?: string
-          is_active?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-          organization_id: string
-          employee_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          category?: string
-          frequency?: string
-          is_active?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-          organization_id?: string
-          employee_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      checklist_items: {
-        Row: {
-          id: string
-          checklist_id: string
-          name: string
-          description: string | null
-          order_index: number | null
-          is_active: boolean | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          checklist_id: string
-          name: string
-          description?: string | null
-          order_index?: number | null
-          is_active?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          checklist_id?: string
-          name?: string
-          description?: string | null
-          order_index?: number | null
-          is_active?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checklist_items_checklist_id_fkey"
-            columns: ["checklist_id"]
-            isOneToOne: false
-            referencedRelation: "checklists"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      checklist_executions: {
-        Row: {
-          id: string
-          checklist_id: string
-          checklist_item_id: string
-          is_completed: boolean
-          comments: string | null
-          execution_date: string
-          employee_id: string
-          user_id: string | null
-          organization_id: string
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          checklist_id: string
-          checklist_item_id: string
-          is_completed?: boolean
-          comments?: string | null
-          execution_date: string
-          employee_id: string
-          user_id?: string | null
-          organization_id: string
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          checklist_id?: string
-          checklist_item_id?: string
-          is_completed?: boolean
-          comments?: string | null
-          execution_date?: string
-          employee_id?: string
-          user_id?: string | null
-          organization_id?: string
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checklist_executions_checklist_id_fkey"
-            columns: ["checklist_id"]
-            isOneToOne: false
-            referencedRelation: "checklists"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checklist_executions_checklist_item_id_fkey"
-            columns: ["checklist_item_id"]
-            isOneToOne: false
-            referencedRelation: "checklist_items"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      corrective_actions: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          organization_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          organization_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          organization_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "corrective_actions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      equipments: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          equipment_state: boolean | null
-          equipment_type: string | null
-          id: string
-          location: string | null
-          max_polarity: number | null
-          max_temperature: number | null
-          min_polarity: number | null
-          min_temperature: number | null
-          name: string
-          oil_capacity: number | null
-          oil_type: string | null
-          organization_id: string | null
-          polarity_monitoring: boolean | null
-          temperature_monitoring: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          equipment_state?: boolean | null
-          equipment_type?: string | null
-          id?: string
-          location?: string | null
-          max_polarity?: number | null
-          max_temperature?: number | null
-          min_polarity?: number | null
-          min_temperature?: number | null
-          name: string
-          oil_capacity?: number | null
-          oil_type?: string | null
-          organization_id?: string | null
-          polarity_monitoring?: boolean | null
-          temperature_monitoring?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          equipment_state?: boolean | null
-          equipment_type?: string | null
-          id?: string
-          location?: string | null
-          max_polarity?: number | null
-          max_temperature?: number | null
-          min_polarity?: number | null
-          min_temperature?: number | null
-          name?: string
-          oil_capacity?: number | null
-          oil_type?: string | null
-          organization_id?: string | null
-          polarity_monitoring?: boolean | null
-          temperature_monitoring?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equipments_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equipments_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      oil_control_history: {
-        Row: {
-          action_type: string
-          equipment_id: string | null
-          id: string
-          new_values: Json | null
-          oil_control_id: string | null
-          old_values: Json | null
-          performed_at: string | null
-          performed_by: string | null
-          reason: string | null
-        }
-        Insert: {
-          action_type: string
-          equipment_id?: string | null
-          id?: string
-          new_values?: Json | null
-          oil_control_id?: string | null
-          old_values?: Json | null
-          performed_at?: string | null
-          performed_by?: string | null
-          reason?: string | null
-        }
-        Update: {
-          action_type?: string
-          equipment_id?: string | null
-          id?: string
-          new_values?: Json | null
-          oil_control_id?: string | null
-          old_values?: Json | null
-          performed_at?: string | null
-          performed_by?: string | null
-          reason?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "oil_control_history_equipment_id_fkey"
-            columns: ["equipment_id"]
-            isOneToOne: false
-            referencedRelation: "equipments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oil_control_history_oil_control_id_fkey"
-            columns: ["oil_control_id"]
-            isOneToOne: false
-            referencedRelation: "oil_controls"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oil_control_history_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      oil_controls: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          id: string
-          notes: string | null
-          organization_id: string | null
-          reading_date: string
-          reading_time: string
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          notes?: string | null
-          organization_id?: string | null
-          reading_date?: string
-          reading_time?: string
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          notes?: string | null
-          organization_id?: string | null
-          reading_date?: string
-          reading_time?: string
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "oil_controls_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oil_controls_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      oil_equipment_readings: {
-        Row: {
-          comments: string | null
-          control_type: string
-          corrective_actions: string[] | null
-          created_at: string | null
-          critical_control_point: boolean | null
-          equipment_id: string | null
-          id: string
-          is_compliant: boolean | null
-          oil_control_id: string | null
-          oil_level: number | null
-          photo_url: string | null
-          polarity: number | null
-          temperature: number | null
-          updated_at: string | null
-          validated_at: string | null
-          validated_by: string | null
-        }
-        Insert: {
-          comments?: string | null
-          control_type: string
-          corrective_actions?: string[] | null
-          created_at?: string | null
-          critical_control_point?: boolean | null
-          equipment_id?: string | null
-          id?: string
-          is_compliant?: boolean | null
-          oil_control_id?: string | null
-          oil_level?: number | null
-          photo_url?: string | null
-          polarity?: number | null
-          temperature?: number | null
-          updated_at?: string | null
-          validated_at?: string | null
-          validated_by?: string | null
-        }
-        Update: {
-          comments?: string | null
-          control_type?: string
-          corrective_actions?: string[] | null
-          created_at?: string | null
-          critical_control_point?: boolean | null
-          equipment_id?: string | null
-          id?: string
-          is_compliant?: boolean | null
-          oil_control_id?: string | null
-          oil_level?: number | null
-          photo_url?: string | null
-          polarity?: number | null
-          temperature?: number | null
-          updated_at?: string | null
-          validated_at?: string | null
-          validated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "oil_equipment_readings_equipment_id_fkey"
-            columns: ["equipment_id"]
-            isOneToOne: false
-            referencedRelation: "equipments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oil_equipment_readings_oil_control_id_fkey"
-            columns: ["oil_control_id"]
-            isOneToOne: false
-            referencedRelation: "oil_controls"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oil_equipment_readings_validated_by_fkey"
-            columns: ["validated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      oil_reading_corrective_actions: {
-        Row: {
-          action_id: string
-          reading_id: string
-        }
-        Insert: {
-          action_id: string
-          reading_id: string
-        }
-        Update: {
-          action_id?: string
-          reading_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "oil_reading_corrective_actions_action_id_fkey"
-            columns: ["action_id"]
-            isOneToOne: false
-            referencedRelation: "corrective_actions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oil_reading_corrective_actions_reading_id_fkey"
-            columns: ["reading_id"]
-            isOneToOne: false
-            referencedRelation: "oil_equipment_readings"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      enable_rls_for_authenticated: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string
