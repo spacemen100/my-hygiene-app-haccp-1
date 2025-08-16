@@ -113,13 +113,13 @@ export default function RegisterPage() {
         
         {error && (
           <Typography 
-            color="error" 
+            color="error"
             sx={{ 
               mb: { xs: 2, md: 3 }, 
               textAlign: 'center', 
               p: { xs: 1.5, md: 2 }, 
-              bgcolor: 'error.light', 
               borderRadius: 1,
+              border: '1px solid #ef5350',
               fontSize: { xs: '0.875rem', md: '1rem' }
             }}
           >
@@ -129,13 +129,14 @@ export default function RegisterPage() {
 
         {success && (
           <Typography 
-            color="success.main" 
             sx={{ 
               mb: { xs: 2, md: 3 }, 
               textAlign: 'center', 
               p: { xs: 1.5, md: 2 }, 
-              bgcolor: 'success.light', 
+              color: '#2e7d32',
               borderRadius: 1,
+              border: '1px solid #4caf50',
+              backgroundColor: '#e8f5e8',
               fontSize: { xs: '0.875rem', md: '1rem' }
             }}
           >

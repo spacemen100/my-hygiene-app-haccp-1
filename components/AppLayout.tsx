@@ -16,7 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isLoading } = useAuth();
 
   // Pages qui ne doivent pas afficher le header et sidebar
-  const noLayoutPages = ['/login'];
+  const noLayoutPages = ['/login', '/register'];
   const shouldShowLayout = !noLayoutPages.includes(pathname);
 
   const handleDrawerToggle = () => {
