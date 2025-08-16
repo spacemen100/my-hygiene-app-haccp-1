@@ -131,7 +131,7 @@ export default function CoolingTracking() {
       // Test simple pour vérifier si la table existe
       const { data, error } = await supabase
         .from('food_products')
-        .select('id, name, category, food_type')
+        .select('*')
         .eq('organization_id', orgId)
         .limit(10);
 
@@ -473,11 +473,13 @@ export default function CoolingTracking() {
     const matchingFoodProduct = foodProducts.find(product => product.name === record.product_name);
     const matchingProductType = productTypes.find(type => type.name === record.product_type);
     const recordCategory = recordCategories[record.id] || '';
+    const matchingCategory = productCategories.find(cat => cat.name === recordCategory);
     
     setEditSelectedFoodProduct(matchingFoodProduct || null);
     setEditSelectedProductType(matchingProductType || null);
     setEditSelectedNonConformity(null); // Reset non-conformity selection
     setEditSelectedCategory(recordCategory);
+    setEditSelectedProductCategory(matchingCategory || null);
     
     setEditModalOpen(true);
   };
@@ -607,6 +609,7 @@ export default function CoolingTracking() {
     setEditSelectedProductType(null);
     setEditSelectedNonConformity(null);
     setEditSelectedCategory('');
+    setEditSelectedProductCategory(null);
   };
 
   const handleCreateFoodProduct = async (productData: TablesInsert<'food_products'>) => {
@@ -790,6 +793,15 @@ export default function CoolingTracking() {
     }
   };
 
+  const handleEditProductCategorySelect = (category: {id: string, name: string, description?: string, created_at: string, organization_id: string | null} | null) => {
+    setEditSelectedProductCategory(category);
+    if (category) {
+      setEditSelectedCategory(category.name);
+    } else {
+      setEditSelectedCategory('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -844,6 +856,7 @@ export default function CoolingTracking() {
       setSelectedProductType(null);
       setSelectedNonConformity(null);
       setSelectedCategory('');
+      setSelectedProductCategory(null);
     } catch (error) {
       console.error('Error saving cooling record:', error);
       enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
@@ -1084,26 +1097,52 @@ export default function CoolingTracking() {
                     />
                   )}
                   
-                  {/* Affichage de la catégorie sélectionnée */}
-                  {selectedCategory && (
-                    <TextField
-                      label="Catégorie du produit"
-                      value={selectedCategory}
-                      fullWidth
-                      size="small"
-                      sx={{ mt: 1 }}
-                      slotProps={{
-                        input: {
-                          readOnly: true,
-                          sx: { 
-                            bgcolor: 'success.light', 
-                            color: 'success.contrastText',
-                            '& .MuiInputBase-input': { color: 'success.main', fontWeight: 500 }
-                          }
-                        }
+                  {/* Sélection de la catégorie */}
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end', mt: 1 }}>
+                    <Autocomplete
+                      options={productCategories}
+                      getOptionLabel={(option) => option.name}
+                      value={selectedProductCategory}
+                      onChange={(_, newValue) => handleProductCategorySelect(newValue)}
+                      sx={{ flex: 1 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Catégorie du produit"
+                          placeholder="Sélectionner une catégorie..."
+                          size="small"
+                        />
+                      )}
+                      renderOption={(props, option) => {
+                        const { key, ...otherProps } = props;
+                        return (
+                          <Box component="li" key={key} {...otherProps}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Category fontSize="small" color="warning" />
+                              <Box>
+                                <Typography variant="body2">{option.name}</Typography>
+                                {option.description && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {option.description}
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
+                        );
                       }}
                     />
-                  )}
+                    <Tooltip title="Ajouter une nouvelle catégorie">
+                      <IconButton 
+                        onClick={() => setAddProductCategoryOpen(true)}
+                        color="warning"
+                        sx={{ mb: 0.5 }}
+                        size="small"
+                      >
+                        <Add />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
                 
                 {/* Sélection du type de produit */}
@@ -1736,7 +1775,11 @@ export default function CoolingTracking() {
                       onChange={(_, newValue) => {
                         setEditSelectedFoodProduct(newValue);
                         if (newValue) {
+                          // Trouver la catégorie correspondante
+                          const matchingCategory = productCategories.find(cat => cat.name === newValue.category);
+                          setEditSelectedProductCategory(matchingCategory || null);
                           setEditSelectedCategory(newValue.category);
+                          
                           setEditFormData(prev => ({
                             ...prev,
                             product_name: newValue.name,
@@ -1746,6 +1789,7 @@ export default function CoolingTracking() {
                           const matchingType = productTypes.find(type => type.name === newValue.food_type);
                           setEditSelectedProductType(matchingType || null);
                         } else {
+                          setEditSelectedProductCategory(null);
                           setEditSelectedCategory('');
                         }
                       }}
@@ -1797,26 +1841,52 @@ export default function CoolingTracking() {
                     />
                   )}
                   
-                  {/* Affichage de la catégorie sélectionnée */}
-                  {editSelectedCategory && (
-                    <TextField
-                      label="Catégorie du produit"
-                      value={editSelectedCategory}
-                      fullWidth
-                      size="small"
-                      sx={{ mt: 1 }}
-                      slotProps={{
-                        input: {
-                          readOnly: true,
-                          sx: { 
-                            bgcolor: 'success.light', 
-                            color: 'success.contrastText',
-                            '& .MuiInputBase-input': { color: 'success.main', fontWeight: 500 }
-                          }
-                        }
+                  {/* Sélection de la catégorie */}
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end', mt: 1 }}>
+                    <Autocomplete
+                      options={productCategories}
+                      getOptionLabel={(option) => option.name}
+                      value={editSelectedProductCategory}
+                      onChange={(_, newValue) => handleEditProductCategorySelect(newValue)}
+                      sx={{ flex: 1 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Catégorie du produit"
+                          placeholder="Sélectionner une catégorie..."
+                          size="small"
+                        />
+                      )}
+                      renderOption={(props, option) => {
+                        const { key, ...otherProps } = props;
+                        return (
+                          <Box component="li" key={key} {...otherProps}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Category fontSize="small" color="warning" />
+                              <Box>
+                                <Typography variant="body2">{option.name}</Typography>
+                                {option.description && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {option.description}
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
+                        );
                       }}
                     />
-                  )}
+                    <Tooltip title="Ajouter une nouvelle catégorie">
+                      <IconButton 
+                        onClick={() => setAddProductCategoryOpen(true)}
+                        color="warning"
+                        sx={{ mb: 0.5 }}
+                        size="small"
+                      >
+                        <Add />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
                 
                 {/* Sélection du type de produit */}
@@ -2130,6 +2200,12 @@ export default function CoolingTracking() {
           onClose={() => setAddNonConformityOpen(false)}
           onCreate={handleCreateNonConformity}
         />
+        {/* Modal d'ajout de catégorie de produit */}
+        <AddProductCategoryModal 
+          open={addProductCategoryOpen}
+          onClose={() => setAddProductCategoryOpen(false)}
+          onCreate={handleCreateProductCategory}
+        />
       </Container>
     </Box>
   );
@@ -2404,6 +2480,72 @@ function AddNonConformityModal({ open, onClose, onCreate }: AddNonConformityModa
             placeholder="Ex: Reduced product life, Prolonged operation..."
             helperText="Décrivez le type de non-conformité qui peut être détectée"
           />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Annuler</Button>
+        <Button onClick={handleSubmit} variant="contained" startIcon={<Save />}>
+          Ajouter
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Composant Modal pour ajouter une catégorie de produit
+interface AddProductCategoryModalProps {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (data: {name: string, description?: string}) => void;
+}
+
+function AddProductCategoryModal({ open, onClose, onCreate }: AddProductCategoryModalProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.name.trim()) {
+      onCreate({
+        name: formData.name.trim(),
+        description: formData.description.trim()
+      });
+      setFormData({ name: '', description: '' });
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Avatar sx={{ bgcolor: 'warning.main' }}>
+          <Category />
+        </Avatar>
+        Ajouter une nouvelle catégorie
+      </DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Nom de la catégorie *"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              required
+              fullWidth
+              placeholder="Ex: Viandes, Légumes, Produits laitiers..."
+              helperText="Nom de la catégorie de produit alimentaire"
+            />
+            <TextField
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="Description optionnelle de la catégorie..."
+            />
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions>
