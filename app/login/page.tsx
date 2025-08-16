@@ -8,23 +8,36 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
+  console.log('[LoginPage] Component rendering');
   const { session, isLoading, signInWithEmail } = useAuth();
   const router = useRouter();
+  console.log('[LoginPage] Router object:', router);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  console.log('[LoginPage] Current state:', { session, isLoading, email, error });
 
   useEffect(() => {
+    console.log('[LoginPage] useEffect triggered, session:', session);
     if (session) {
+      console.log('[LoginPage] Session exists, redirecting to home');
       router.push('/');
     }
   }, [session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('[LoginPage] Form submitted with:', { email, password });
     e.preventDefault();
     const error = await signInWithEmail(email, password);
+    console.log('[LoginPage] Sign in result, error:', error);
     if (error) setError(error);
+  };
+
+  const testNavigation = () => {
+    console.log('[LoginPage] Testing programmatic navigation to /register');
+    router.push('/register');
   };
 
   if (isLoading) {
@@ -168,6 +181,16 @@ export default function LoginPage() {
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
         </Button>
 
+        {/* Bouton de test pour la navigation */}
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={testNavigation}
+          sx={{ mt: 1, mb: 2 }}
+        >
+          TEST: Aller à Register (bouton)
+        </Button>
+
         {/* Lien vers l'inscription */}
         <Box sx={{ textAlign: 'center', mt: { xs: 2, md: 3 }, mb: { xs: 2, md: 3 } }}>
           <Typography 
@@ -183,12 +206,21 @@ export default function LoginPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              onClick={(e) => {
+                console.log('[LoginPage] Registration link clicked!');
+                console.log('[LoginPage] Event:', e);
+                console.log('[LoginPage] Target:', e.target);
+                console.log('[LoginPage] Current href:', e.currentTarget.href);
+                // Don't prevent default - let Next.js handle navigation
+              }}
               onMouseEnter={(e) => {
+                console.log('[LoginPage] Mouse enter registration link');
                 const target = e.target as HTMLElement;
                 target.style.textDecoration = 'underline';
                 target.style.color = '#1565c0';
               }}
               onMouseLeave={(e) => {
+                console.log('[LoginPage] Mouse leave registration link');
                 const target = e.target as HTMLElement;
                 target.style.textDecoration = 'none';
                 target.style.color = '#1976d2';
