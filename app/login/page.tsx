@@ -1,7 +1,8 @@
 // app/login/page.tsx
 'use client';
 import { useAuth } from '@/components/AuthProvider';
-import { Box, Button, TextField, Typography, CircularProgress, IconButton, InputAdornment, Link } from '@mui/material';
+import { Box, Button, TextField, Typography, CircularProgress, IconButton, InputAdornment } from '@mui/material';
+import Link from 'next/link';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -177,14 +178,18 @@ export default function LoginPage() {
             Vous n&apos;avez pas de compte ?{' '}
             <Link
               href="/register"
-              sx={{
-                color: 'primary.main',
+              style={{
+                color: '#1976d2',
                 textDecoration: 'none',
                 fontWeight: 600,
-                '&:hover': {
-                  textDecoration: 'underline',
-                  color: 'primary.dark'
-                }
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.textDecoration = 'underline';
+                e.target.style.color = '#1565c0';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.textDecoration = 'none';
+                e.target.style.color = '#1976d2';
               }}
             >
               Créez-en un ici
