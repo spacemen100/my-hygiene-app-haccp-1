@@ -44,7 +44,7 @@ const mobileDrawerWidth = 280;
 const tabletDrawerWidth = 260;
 const desktopDrawerWidth = 280;
 
-const menuItems = [
+const standardMenuItems = [
   { href: "/", icon: HomeIcon, label: "Accueil" },
   { href: "/controle-reception", icon: ClipboardCheck, label: "Contrôle à réception" },
   { href: "/etiquettes", icon: TagsIcon, label: "Enregistrement des étiquettes" },
@@ -54,23 +54,26 @@ const menuItems = [
   { href: "/suivi-refroidissement", icon: ThermometerIcon, label: "Suivi de refroidissement" },
   { href: "/plan-nettoyage", icon: SprayCanIcon, label: "Plan de nettoyage" },
   { href: "/checklist", icon: ChecklistIcon, label: "Checklists HACCP" },
-  { href: "/admin-organisation", icon: BusinessIcon, label: "Administrateur Organisation" },
-  { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
-  { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
-  { href: "/admin-checklist", icon: ChecklistIcon, label: "Administrateur des Checklists" },
-  { href: "/admin-non-conformite", icon: WarningIcon, label: "Administrateur des Non-conformités" },
-  { href: "/admin-produit-alimentaire", icon: ProductsIcon, label: "Administrateur des Produits Alimentaires" },
-  { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Administrateur Zones et Sous-zones de Nettoyage" },
-  { href: "/admin-produits-nettoyage", icon: ProductsIcon, label: "Administrateur des Produits de Nettoyage" },
-  { href: "/admin-equipements", icon: EquipmentIcon, label: "Administrateur des Équipements" },
-  { href: "/admin-controle-huile", icon: OilIcon, label: "Administrateur Contrôle Huile" },
-  { href: "/admin-methodes-nettoyage", icon: MethodsIcon, label: "Administrateur des Méthodes de Nettoyage" },
-  { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Administrateur des fournisseurs" },
-  { href: "/admin-unites-stockage", icon: StorageIcon, label: "Administrateur des Unités de Stockage" },
-  { href: "/admin-etiquettes", icon: LabelsIcon, label: "Administrateur Enregistrement des Étiquettes" },
-  { href: "/admin-imprimantes", icon: PrinterIcon, label: "Administrateur des Imprimantes" },
-  { href: "/admin-export-haccp", icon: ExportIcon, label: "Administrateur Export HACCP" },
-  { href: "/admin-questionnaire-prise-en-main", icon: AdminIcon, label: "Administrateur Questionnaire de prise en main de l'app" },
+];
+
+const adminMenuItems = [
+  { href: "/admin-organisation", icon: BusinessIcon, label: "Organisation" },
+  { href: "/admin-employes", icon: PeopleIcon, label: "Employés" },
+  { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Plan de nettoyage" },
+  { href: "/admin-checklist", icon: ChecklistIcon, label: "Checklists" },
+  { href: "/admin-non-conformite", icon: WarningIcon, label: "Non-conformités" },
+  { href: "/admin-produit-alimentaire", icon: ProductsIcon, label: "Produits Alimentaires" },
+  { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Zones de Nettoyage" },
+  { href: "/admin-produits-nettoyage", icon: ProductsIcon, label: "Produits de Nettoyage" },
+  { href: "/admin-equipements", icon: EquipmentIcon, label: "Équipements" },
+  { href: "/admin-controle-huile", icon: OilIcon, label: "Contrôle Huile" },
+  { href: "/admin-methodes-nettoyage", icon: MethodsIcon, label: "Méthodes de Nettoyage" },
+  { href: "/admin-fournisseurs", icon: SuppliersIcon, label: "Fournisseurs" },
+  { href: "/admin-unites-stockage", icon: StorageIcon, label: "Unités de Stockage" },
+  { href: "/admin-etiquettes", icon: LabelsIcon, label: "Étiquettes" },
+  { href: "/admin-imprimantes", icon: PrinterIcon, label: "Imprimantes" },
+  { href: "/admin-export-haccp", icon: ExportIcon, label: "Export HACCP" },
+  { href: "/admin-questionnaire-prise-en-main", icon: AdminIcon, label: "Questionnaire de prise en main" },
 ];
 
 interface AppProviderProps {
@@ -91,20 +94,25 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
     return currentEmployee?.role === 'Administrateur';
   };
 
-  // Filter menu items based on role
-  const getFilteredMenuItems = () => {
+  // Get standard menu items (always visible)
+  const getStandardMenuItems = () => {
+    return standardMenuItems;
+  };
+
+  // Get admin menu items (only visible to admins)
+  const getAdminMenuItems = () => {
     if (!currentEmployee) {
       // If no employee is selected, show all items (for initial setup)
-      return menuItems;
+      return adminMenuItems;
     }
     
     if (hasAdminAccess()) {
-      // Admin users see all menu items
-      return menuItems;
+      // Admin users see admin menu items
+      return adminMenuItems;
     }
     
     // Non-admin users don't see admin menu items
-    return menuItems.filter(item => !item.label.startsWith('Administrateur'));
+    return [];
   };
   
   // Dynamic drawer width based on screen size
@@ -112,6 +120,82 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
     if (isMobile) return mobileDrawerWidth;
     if (isTablet) return tabletDrawerWidth;
     return desktopDrawerWidth;
+  };
+
+  // Component to render a menu section
+  const renderMenuSection = (title: string, items: Array<{href: string, icon: any, label: string}>, showIcon: boolean = false) => {
+    if (items.length === 0) return null;
+
+    return (
+      <>
+        <Box sx={{ 
+          px: 2, 
+          py: 1.5, 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          bgcolor: 'grey.50'
+        }}>
+          {showIcon && <AdminIcon sx={{ fontSize: '1.2rem', color: 'primary.main' }} />}
+          <Typography 
+            variant="overline" 
+            sx={{ 
+              fontWeight: 600, 
+              fontSize: '0.75rem',
+              color: showIcon ? 'primary.main' : 'text.secondary',
+              letterSpacing: '0.08em'
+            }}
+          >
+            {title}
+          </Typography>
+        </Box>
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+          
+          return (
+            <ListItem key={item.href} disablePadding>
+              <ListItemButton
+                component={Link}
+                href={item.href}
+                selected={isActive}
+                onClick={() => isMobile && onDrawerToggle && onDrawerToggle()}
+                sx={{
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'primary.main',
+                    },
+                    '& .MuiListItemText-primary': {
+                      color: 'primary.main',
+                      fontWeight: 600,
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <Icon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  sx={{
+                    '& .MuiListItemText-primary': {
+                      fontSize: { xs: '0.875rem', sm: '0.9rem', md: '1rem' },
+                      fontWeight: isActive ? 600 : 400,
+                      lineHeight: { xs: 1.3, md: 1.5 },
+                    }
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </>
+    );
   };
 
   const drawer = (
@@ -229,50 +313,11 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
         },
       }}>
         <List sx={{ mt: { xs: 0, md: 1 }, pb: 2, pt: { xs: 1, md: 0 } }}>
-          {getFilteredMenuItems().map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            
-            return (
-              <ListItem key={item.href} disablePadding>
-                <ListItemButton
-                  component={Link}
-                  href={item.href}
-                  selected={isActive}
-                  onClick={() => isMobile && onDrawerToggle && onDrawerToggle()}
-                  sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                      },
-                      '& .MuiListItemIcon-root': {
-                        color: 'primary.main',
-                      },
-                      '& .MuiListItemText-primary': {
-                        color: 'primary.main',
-                        fontWeight: 600,
-                      },
-                    },
-                  }}
-                >
-                  <ListItemIcon>
-                    <Icon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    sx={{
-                      '& .MuiListItemText-primary': {
-                        fontSize: { xs: '0.875rem', sm: '0.9rem', md: '1rem' },
-                        fontWeight: isActive ? 600 : 400,
-                        lineHeight: { xs: 1.3, md: 1.5 },
-                      }
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
+          {/* Section principale */}
+          {renderMenuSection("Fonctionnalités", getStandardMenuItems())}
+          
+          {/* Section administration */}
+          {renderMenuSection("Administration", getAdminMenuItems(), true)}
         </List>
       </Box>
 
