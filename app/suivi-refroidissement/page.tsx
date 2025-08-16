@@ -30,7 +30,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip
+  Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Autocomplete
 } from '@mui/material';
 import {
   AcUnit,
@@ -46,7 +51,11 @@ import {
   TrendingUp,
   Edit,
   Delete,
-  History
+  History,
+  Add,
+  Restaurant,
+  Category,
+  Warning
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -83,10 +92,92 @@ export default function CoolingTracking() {
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<Tables<'cooling_records'> | null>(null);
+  
+  // Nouveaux états pour les produits et non-conformités
+  const [foodProducts, setFoodProducts] = useState<Tables<'food_products'>[]>([]);
+  const [productTypes, setProductTypes] = useState<Tables<'product_types'>[]>([]);
+  const [nonConformities, setNonConformities] = useState<Tables<'non_conformities'>[]>([]);
+  const [selectedFoodProduct, setSelectedFoodProduct] = useState<Tables<'food_products'> | null>(null);
+  const [selectedProductType, setSelectedProductType] = useState<Tables<'product_types'> | null>(null);
+  const [selectedNonConformity, setSelectedNonConformity] = useState<Tables<'non_conformities'> | null>(null);
+  
+  // États pour les modals d'ajout
+  const [addFoodProductOpen, setAddFoodProductOpen] = useState(false);
+  const [addProductTypeOpen, setAddProductTypeOpen] = useState(false);
+  const [addNonConformityOpen, setAddNonConformityOpen] = useState(false);
+  
   const { enqueueSnackbar } = useSnackbar();
 
   const formatDateTimeForInput = (isoString: string) => {
     return isoString.substring(0, 16);
+  };
+
+  const loadFoodProducts = async () => {
+    try {
+      const orgId = (user as any)?.organization_id || employee?.organization_id;
+      if (!orgId) return;
+
+      const { data, error } = await supabase
+        .from('food_products')
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setFoodProducts(data || []);
+    } catch (error) {
+      console.error('Error loading food products:', error);
+    }
+  };
+
+  const loadProductTypes = async () => {
+    try {
+      const orgId = (user as any)?.organization_id || employee?.organization_id;
+      const { data, error } = await supabase
+        .from('product_types')
+        .select('*')
+        .or(`organization_id.eq.${orgId},organization_id.is.null`)
+        .order('name');
+
+      if (error) throw error;
+      setProductTypes(data || []);
+    } catch (error) {
+      console.error('Error loading product types:', error);
+    }
+  };
+
+  const loadNonConformities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('non_conformities')
+        .select('non_conformity_type')
+        .order('non_conformity_type');
+
+      if (error) throw error;
+      
+      // Extraction des types uniques de non-conformités
+      const uniqueTypes = [...new Set(data?.map(item => item.non_conformity_type) || [])];
+      const formattedNonConformities = uniqueTypes.map(type => ({
+        id: type,
+        non_conformity_type: type,
+        product_name: '',
+        created_at: null,
+        employee_id: null,
+        user_id: null,
+        delivery_id: null,
+        product_reception_control_id: null,
+        quantity: null,
+        quantity_type: null,
+        photo_url: null,
+        description: null,
+        other_cause: null
+      }));
+      
+      setNonConformities(formattedNonConformities as Tables<'non_conformities'>[]);
+    } catch (error) {
+      console.error('Error loading non-conformities:', error);
+    }
   };
 
   const loadHistoryRecords = async () => {
@@ -261,6 +352,82 @@ export default function CoolingTracking() {
     });
   };
 
+  const handleCreateFoodProduct = async (productData: TablesInsert<'food_products'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('food_products')
+        .insert([{
+          ...productData,
+          organization_id: (user as any)?.organization_id || employee?.organization_id || '',
+          employee_id: employee?.id || null,
+          user_id: user?.id || null,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setFoodProducts(prev => [...prev, data]);
+      setSelectedFoodProduct(data);
+      setAddFoodProductOpen(false);
+      enqueueSnackbar('Produit alimentaire créé avec succès!', { variant: 'success' });
+    } catch (error) {
+      console.error('Error creating food product:', error);
+      enqueueSnackbar('Erreur lors de la création du produit', { variant: 'error' });
+    }
+  };
+
+  const handleCreateProductType = async (typeData: TablesInsert<'product_types'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('product_types')
+        .insert([{
+          ...typeData,
+          organization_id: (user as any)?.organization_id || employee?.organization_id || null,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProductTypes(prev => [...prev, data]);
+      setSelectedProductType(data);
+      setAddProductTypeOpen(false);
+      enqueueSnackbar('Type de produit créé avec succès!', { variant: 'success' });
+    } catch (error) {
+      console.error('Error creating product type:', error);
+      enqueueSnackbar('Erreur lors de la création du type de produit', { variant: 'error' });
+    }
+  };
+
+  const handleCreateNonConformity = async (nonConformityType: string) => {
+    try {
+      const newNonConformity = {
+        id: nonConformityType,
+        non_conformity_type: nonConformityType,
+        product_name: '',
+        created_at: null,
+        employee_id: null,
+        user_id: null,
+        delivery_id: null,
+        product_reception_control_id: null,
+        quantity: null,
+        quantity_type: null,
+        photo_url: null,
+        description: null,
+        other_cause: null
+      } as Tables<'non_conformities'>;
+
+      setNonConformities(prev => [...prev, newNonConformity]);
+      setSelectedNonConformity(newNonConformity);
+      setAddNonConformityOpen(false);
+      enqueueSnackbar('Type de non-conformité ajouté avec succès!', { variant: 'success' });
+    } catch (error) {
+      console.error('Error creating non-conformity:', error);
+      enqueueSnackbar('Erreur lors de la création de la non-conformité', { variant: 'error' });
+    }
+  };
+
   useEffect(() => {
     const orgId = (user as any)?.organization_id || employee?.organization_id;
     const userId = user?.id;
@@ -268,6 +435,9 @@ export default function CoolingTracking() {
     
     if (orgId || userId || employeeId) {
       loadHistoryRecords();
+      loadFoodProducts();
+      loadProductTypes();
+      loadNonConformities();
     }
   }, [(user as any)?.organization_id, employee?.organization_id, user?.id, employee?.id]);
 
@@ -300,6 +470,27 @@ export default function CoolingTracking() {
     return formData.end_core_temperature <= 10 ? 'warning' : 'non-compliant';
   };
 
+  const handleFoodProductSelect = (product: Tables<'food_products'> | null) => {
+    setSelectedFoodProduct(product);
+    if (product) {
+      setFormData(prev => ({
+        ...prev,
+        product_name: product.name,
+        product_type: product.category
+      }));
+    }
+  };
+
+  const handleProductTypeSelect = (productType: Tables<'product_types'> | null) => {
+    setSelectedProductType(productType);
+    if (productType) {
+      setFormData(prev => ({
+        ...prev,
+        product_type: productType.name
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -325,7 +516,7 @@ export default function CoolingTracking() {
       enqueueSnackbar('Enregistrement de refroidissement réussi!', { variant: 'success' });
       loadHistoryRecords();
       
-      // Reset form
+      // Reset form and selections
       setFormData({
         start_date: new Date().toISOString(),
         end_date: null,
@@ -338,6 +529,9 @@ export default function CoolingTracking() {
         organization_id: null,
         user_id: null,
       });
+      setSelectedFoodProduct(null);
+      setSelectedProductType(null);
+      setSelectedNonConformity(null);
     } catch (error) {
       console.error('Error saving cooling record:', error);
       enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
@@ -522,26 +716,114 @@ export default function CoolingTracking() {
 
             <Box component="form" onSubmit={handleSubmit}>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+                {/* Sélection du produit alimentaire */}
                 <Box>
-                  <TextField
-                    label="Nom du produit"
-                    value={formData.product_name}
-                    onChange={(e) => setFormData({...formData, product_name: e.target.value})}
-                    required
-                    fullWidth
-                    placeholder="Ex: Rôti de porc, Escalopes de volaille..."
-                  />
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                    <Autocomplete
+                      options={foodProducts}
+                      getOptionLabel={(option) => option.name}
+                      value={selectedFoodProduct}
+                      onChange={(_, newValue) => handleFoodProductSelect(newValue)}
+                      sx={{ flex: 1 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Nom du produit *"
+                          placeholder="Sélectionner un produit..."
+                          required={!formData.product_name}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <Box component="li" {...props}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Restaurant fontSize="small" color="primary" />
+                            <Box>
+                              <Typography variant="body2">{option.name}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {option.category} - {option.food_type}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+                    />
+                    <Tooltip title="Ajouter un nouveau produit">
+                      <IconButton 
+                        onClick={() => setAddFoodProductOpen(true)}
+                        color="primary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  {!selectedFoodProduct && (
+                    <TextField
+                      label="Ou saisir manuellement"
+                      value={formData.product_name}
+                      onChange={(e) => setFormData({...formData, product_name: e.target.value})}
+                      fullWidth
+                      size="small"
+                      sx={{ mt: 1 }}
+                      placeholder="Ex: Rôti de porc, Escalopes de volaille..."
+                    />
+                  )}
                 </Box>
                 
+                {/* Sélection du type de produit */}
                 <Box>
-                  <TextField
-                    label="Type de produit"
-                    value={formData.product_type}
-                    onChange={(e) => setFormData({...formData, product_type: e.target.value})}
-                    required
-                    fullWidth
-                    placeholder="Ex: Volaille, Porc, Bœuf..."
-                  />
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                    <Autocomplete
+                      options={productTypes}
+                      getOptionLabel={(option) => option.name}
+                      value={selectedProductType}
+                      onChange={(_, newValue) => handleProductTypeSelect(newValue)}
+                      sx={{ flex: 1 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Type de produit *"
+                          placeholder="Sélectionner un type..."
+                          required={!formData.product_type}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <Box component="li" {...props}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Category fontSize="small" color="secondary" />
+                            <Box>
+                              <Typography variant="body2">{option.name}</Typography>
+                              {option.description && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {option.description}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+                    />
+                    <Tooltip title="Ajouter un nouveau type de produit">
+                      <IconButton 
+                        onClick={() => setAddProductTypeOpen(true)}
+                        color="secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  {!selectedProductType && (
+                    <TextField
+                      label="Ou saisir manuellement"
+                      value={formData.product_type}
+                      onChange={(e) => setFormData({...formData, product_type: e.target.value})}
+                      fullWidth
+                      size="small"
+                      sx={{ mt: 1 }}
+                      placeholder="Ex: Volaille, Porc, Bœuf..."
+                    />
+                  )}
                 </Box>
                 
                 <Box>
@@ -599,6 +881,53 @@ export default function CoolingTracking() {
                     }}
                     helperText="Laisser vide si le refroidissement est en cours"
                   />
+                </Box>
+
+                {/* Sélection de non-conformité */}
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                    <Autocomplete
+                      options={nonConformities}
+                      getOptionLabel={(option) => option.non_conformity_type}
+                      value={selectedNonConformity}
+                      onChange={(_, newValue) => setSelectedNonConformity(newValue)}
+                      sx={{ flex: 1 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Non-conformité détectée (optionnel)"
+                          placeholder="Sélectionner une non-conformité..."
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <Box component="li" {...props}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Warning fontSize="small" color="warning" />
+                            <Typography variant="body2">{option.non_conformity_type}</Typography>
+                          </Box>
+                        </Box>
+                      )}
+                    />
+                    <Tooltip title="Ajouter un nouveau type de non-conformité">
+                      <IconButton 
+                        onClick={() => setAddNonConformityOpen(true)}
+                        color="warning"
+                        sx={{ mb: 0.5 }}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  {selectedNonConformity && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                      <Typography variant="body2">
+                        <strong>Non-conformité sélectionnée :</strong> {selectedNonConformity.non_conformity_type}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Cette information sera enregistrée avec le suivi de refroidissement pour traçabilité.
+                      </Typography>
+                    </Alert>
+                  )}
                 </Box>
 
                 {/* Section d analyse du refroidissement */}
@@ -1239,7 +1568,295 @@ export default function CoolingTracking() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Modal d'ajout de produit alimentaire */}
+        <AddFoodProductModal 
+          open={addFoodProductOpen}
+          onClose={() => setAddFoodProductOpen(false)}
+          onCreate={handleCreateFoodProduct}
+        />
+
+        {/* Modal d'ajout de type de produit */}
+        <AddProductTypeModal 
+          open={addProductTypeOpen}
+          onClose={() => setAddProductTypeOpen(false)}
+          onCreate={handleCreateProductType}
+        />
+
+        {/* Modal d'ajout de non-conformité */}
+        <AddNonConformityModal 
+          open={addNonConformityOpen}
+          onClose={() => setAddNonConformityOpen(false)}
+          onCreate={handleCreateNonConformity}
+        />
       </Container>
     </Box>
+  );
+}
+
+// Composant Modal pour ajouter un produit alimentaire
+interface AddFoodProductModalProps {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (data: TablesInsert<'food_products'>) => void;
+}
+
+function AddFoodProductModal({ open, onClose, onCreate }: AddFoodProductModalProps) {
+  const [formData, setFormData] = useState<Partial<TablesInsert<'food_products'>>>({
+    name: '',
+    description: '',
+    category: '',
+    sub_category: '',
+    food_type: '',
+    storage_condition: '',
+    min_storage_temperature: null,
+    max_storage_temperature: null,
+    target_cooling_rate: null,
+    haccp_cooling_standard: '',
+    shelf_life_days: null,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.name && formData.category && formData.food_type && formData.storage_condition) {
+      onCreate(formData as TablesInsert<'food_products'>);
+      setFormData({
+        name: '',
+        description: '',
+        category: '',
+        sub_category: '',
+        food_type: '',
+        storage_condition: '',
+        min_storage_temperature: null,
+        max_storage_temperature: null,
+        target_cooling_rate: null,
+        haccp_cooling_standard: '',
+        shelf_life_days: null,
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
+          <Restaurant />
+        </Avatar>
+        Ajouter un nouveau produit alimentaire
+      </DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+            <TextField
+              label="Nom du produit *"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Catégorie *"
+              value={formData.category}
+              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Sous-catégorie"
+              value={formData.sub_category}
+              onChange={(e) => setFormData({...formData, sub_category: e.target.value})}
+              fullWidth
+            />
+            <TextField
+              label="Type d'aliment *"
+              value={formData.food_type}
+              onChange={(e) => setFormData({...formData, food_type: e.target.value})}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Condition de stockage *"
+              value={formData.storage_condition}
+              onChange={(e) => setFormData({...formData, storage_condition: e.target.value})}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Température min (°C)"
+              type="number"
+              value={formData.min_storage_temperature || ''}
+              onChange={(e) => setFormData({...formData, min_storage_temperature: e.target.value ? Number(e.target.value) : null})}
+              fullWidth
+            />
+            <TextField
+              label="Température max (°C)"
+              type="number"
+              value={formData.max_storage_temperature || ''}
+              onChange={(e) => setFormData({...formData, max_storage_temperature: e.target.value ? Number(e.target.value) : null})}
+              fullWidth
+            />
+            <TextField
+              label="Vitesse de refroidissement cible (°C/h)"
+              type="number"
+              value={formData.target_cooling_rate || ''}
+              onChange={(e) => setFormData({...formData, target_cooling_rate: e.target.value ? Number(e.target.value) : null})}
+              fullWidth
+            />
+            <TextField
+              label="Standard HACCP"
+              value={formData.haccp_cooling_standard}
+              onChange={(e) => setFormData({...formData, haccp_cooling_standard: e.target.value})}
+              fullWidth
+            />
+            <TextField
+              label="Durée de vie (jours)"
+              type="number"
+              value={formData.shelf_life_days || ''}
+              onChange={(e) => setFormData({...formData, shelf_life_days: e.target.value ? Number(e.target.value) : null})}
+              fullWidth
+            />
+            <TextField
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              fullWidth
+              multiline
+              rows={2}
+              sx={{ gridColumn: '1 / -1' }}
+            />
+          </Box>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Annuler</Button>
+        <Button onClick={handleSubmit} variant="contained" startIcon={<Save />}>
+          Créer le produit
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Composant Modal pour ajouter un type de produit
+interface AddProductTypeModalProps {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (data: TablesInsert<'product_types'>) => void;
+}
+
+function AddProductTypeModal({ open, onClose, onCreate }: AddProductTypeModalProps) {
+  const [formData, setFormData] = useState<Partial<TablesInsert<'product_types'>>>({
+    name: '',
+    description: '',
+    haccp_guidelines: '',
+    cooling_requirements: null,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.name) {
+      onCreate(formData as TablesInsert<'product_types'>);
+      setFormData({
+        name: '',
+        description: '',
+        haccp_guidelines: '',
+        cooling_requirements: null,
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Avatar sx={{ bgcolor: 'secondary.main' }}>
+          <Category />
+        </Avatar>
+        Ajouter un nouveau type de produit
+      </DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Stack spacing={2}>
+            <TextField
+              label="Nom du type *"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              fullWidth
+              multiline
+              rows={2}
+            />
+            <TextField
+              label="Directives HACCP"
+              value={formData.haccp_guidelines}
+              onChange={(e) => setFormData({...formData, haccp_guidelines: e.target.value})}
+              fullWidth
+              multiline
+              rows={3}
+            />
+          </Stack>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Annuler</Button>
+        <Button onClick={handleSubmit} variant="contained" startIcon={<Save />}>
+          Créer le type
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Composant Modal pour ajouter une non-conformité
+interface AddNonConformityModalProps {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (type: string) => void;
+}
+
+function AddNonConformityModal({ open, onClose, onCreate }: AddNonConformityModalProps) {
+  const [nonConformityType, setNonConformityType] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (nonConformityType.trim()) {
+      onCreate(nonConformityType.trim());
+      setNonConformityType('');
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Avatar sx={{ bgcolor: 'warning.main' }}>
+          <Warning />
+        </Avatar>
+        Ajouter un nouveau type de non-conformité
+      </DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <TextField
+            label="Type de non-conformité *"
+            value={nonConformityType}
+            onChange={(e) => setNonConformityType(e.target.value)}
+            required
+            fullWidth
+            placeholder="Ex: Température de refroidissement inadéquate"
+            helperText="Décrivez le type de non-conformité qui peut être détectée"
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Annuler</Button>
+        <Button onClick={handleSubmit} variant="contained" startIcon={<Save />}>
+          Ajouter
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

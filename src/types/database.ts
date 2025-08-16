@@ -1142,6 +1142,132 @@ export type Database = {
           },
         ]
       }
+      food_products: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          description: string | null
+          category: string
+          sub_category: string | null
+          food_type: string
+          storage_condition: string
+          min_storage_temperature: number | null
+          max_storage_temperature: number | null
+          target_cooling_rate: number | null
+          haccp_cooling_standard: string | null
+          shelf_life_days: number | null
+          is_active: boolean | null
+          created_at: string | null
+          updated_at: string | null
+          employee_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          description?: string | null
+          category: string
+          sub_category?: string | null
+          food_type: string
+          storage_condition: string
+          min_storage_temperature?: number | null
+          max_storage_temperature?: number | null
+          target_cooling_rate?: number | null
+          haccp_cooling_standard?: string | null
+          shelf_life_days?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          employee_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          description?: string | null
+          category?: string
+          sub_category?: string | null
+          food_type?: string
+          storage_condition?: string
+          min_storage_temperature?: number | null
+          max_storage_temperature?: number | null
+          target_cooling_rate?: number | null
+          haccp_cooling_standard?: string | null
+          shelf_life_days?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          employee_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_products_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_products_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_types: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          cooling_requirements: Json | null
+          haccp_guidelines: string | null
+          organization_id: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          cooling_requirements?: Json | null
+          haccp_guidelines?: string | null
+          organization_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          cooling_requirements?: Json | null
+          haccp_guidelines?: string | null
+          organization_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       label_printings: {
         Row: {
           created_at: string | null
