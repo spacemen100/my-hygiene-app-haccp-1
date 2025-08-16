@@ -93,12 +93,11 @@ export default function LoginPage() {
         
         {error && (
           <Typography 
+            color="error"
             sx={{ 
               mb: { xs: 2, md: 3 }, 
               textAlign: 'center', 
               p: { xs: 1.5, md: 2 }, 
-              bgcolor: '#ffebee', 
-              color: '#c62828',
               borderRadius: 1,
               border: '1px solid #ef5350',
               fontSize: { xs: '0.875rem', md: '1rem' }
