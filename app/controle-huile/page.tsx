@@ -121,7 +121,7 @@ export default function OilQualityControl() {
   const controlTypes = [
     { value: 'change_cleaning', label: 'Changement/Nettoyage', icon: <WaterDrop />, description: 'Changement ou nettoyage d\'huile' },
     { value: 'collection', label: 'Collecte', icon: <LocalDining />, description: 'Collecte d\'échantillon' },
-    { value: 'filtration', label: 'Filtration', icon: <Science />, description: 'Filtration de l\'huile' },
+    { value: 'filtration', label: 'Filtration', icon: <Science />, description: 'Filtration de l&apos;huile' },
     { value: 'strip', label: 'Bandelette test', icon: <FactCheck />, description: 'Test bandelette polarité' },
     { value: 'visual', label: 'Visuel', icon: <Visibility />, description: 'Contrôle visuel' }
   ];
@@ -134,9 +134,9 @@ export default function OilQualityControl() {
 
   // Actions correctives prédéfinies
   const correctiveActionOptions = [
-    { id: 'filter', label: 'Filtration de l\'huile', icon: <FilterAlt />, description: 'Filtrer l\'huile pour éliminer les impuretés' },
-    { id: 'change', label: 'Changement complet de l\'huile', icon: <SwapHoriz />, description: 'Remplacer entièrement l\'huile' },
-    { id: 'maintenance', label: 'Maintenance de l\'équipement', icon: <Build />, description: 'Vérifier et nettoyer l\'équipement' },
+    { id: 'filter', label: 'Filtration de l&apos;huile', icon: <FilterAlt />, description: 'Filtrer l&apos;huile pour éliminer les impuretés' },
+    { id: 'change', label: 'Changement complet de l&apos;huile', icon: <SwapHoriz />, description: 'Remplacer entièrement l&apos;huile' },
+    { id: 'maintenance', label: 'Maintenance de l&apos;équipement', icon: <Build />, description: 'Vérifier et nettoyer l&apos;équipement' },
     { id: 'other', label: 'Autre action', icon: <Build />, description: 'Action corrective personnalisée' }
   ];
 
@@ -273,8 +273,8 @@ export default function OilQualityControl() {
 
       return data.publicUrl;
     } catch (error) {
-      console.error('Erreur lors de l\'upload de la photo:', error);
-      enqueueSnackbar('Erreur lors de l\'upload de la photo', { variant: 'error' });
+      console.error('Erreur lors de l&apos;upload de la photo:', error);
+      enqueueSnackbar('Erreur lors de l&apos;upload de la photo', { variant: 'error' });
       return null;
     } finally {
       setUploadingPhoto(false);
@@ -427,7 +427,7 @@ export default function OilQualityControl() {
       console.error('Erreur lors de la sauvegarde:', error);
       enqueueSnackbar('Erreur lors de la sauvegarde', { variant: 'error' });
     }
-  }, [currentControl, selectedEquipment, readingForm, validateCompliance, enqueueSnackbar, fetchEquipments, fetchOilControls, photoFile, handlePhotoUpload, selectedCorrectiveActions]);
+  }, [currentControl, selectedEquipment, readingForm, validateCompliance, enqueueSnackbar, fetchEquipments, fetchOilControls, photoFile, handlePhotoUpload, selectedCorrectiveActions, oilTypes, selectedOilType]);
 
   // Finaliser un contrôle
   const finishControl = useCallback(async () => {
@@ -780,10 +780,10 @@ export default function OilQualityControl() {
                   </FormControl>
 
                   <FormControl fullWidth>
-                    <InputLabel>Type d'huile utilisée</InputLabel>
+                    <InputLabel>Type d&apos;huile utilisée</InputLabel>
                     <Select
                       value={selectedOilType}
-                      label="Type d'huile utilisée"
+                      label="Type d&apos;huile utilisée"
                       onChange={(e) => setSelectedOilType(e.target.value)}
                     >
                       {oilTypes.map(oil => (
@@ -1151,7 +1151,7 @@ const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell sx={{ fontWeight: 600 }}>Équipement</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Type de contrôle</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Type d'huile</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Type d&apos;huile</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Température</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Polarité</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Actions correctives</TableCell>
@@ -1183,7 +1183,13 @@ const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
                           {reading.corrective_actions && (reading.corrective_actions as string[]).length > 0 ? (
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                               {(reading.corrective_actions as string[]).map((actionId, index) => {
-                                const action = correctiveActionOptions.find(a => a.id === actionId);
+                                const actionOptions = [
+                                  { id: 'filter', label: 'Filtration de l&apos;huile' },
+                                  { id: 'change', label: 'Changement complet de l&apos;huile' },
+                                  { id: 'maintenance', label: 'Maintenance de l&apos;équipement' },
+                                  { id: 'other', label: 'Autre action' }
+                                ];
+                                const action = actionOptions.find(a => a.id === actionId);
                                 return action ? (
                                   <Chip 
                                     key={index}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Tables, TablesInsert } from '@/src/types/database';
+import { Tables } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -41,18 +41,16 @@ import {
   Edit,
   Delete,
   Save,
-  Cancel,
-  AdminPanelSettings
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
 export default function AdminProduitAlimentaire() {
-  const { employee } = useEmployee();
+  const { } = useEmployee();
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
 
   const [foodProducts, setFoodProducts] = useState<Tables<'food_products'>[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -115,7 +113,21 @@ export default function AdminProduitAlimentaire() {
               food_type: 'Frais',
               description: 'Blanc de poulet frais',
               created_at: new Date().toISOString(),
-              organization_id: null
+              organization_id: null,
+              employee_id: null,
+              user_id: null,
+              is_active: true,
+              max_storage_temperature: null,
+              min_storage_temperature: null,
+              storage_conditions: null,
+              allergens: null,
+              haccp_cooling_standard: null,
+              shelf_life_days: null,
+              supplier_info: null,
+              storage_condition: null,
+              sub_category: null,
+              target_cooling_rate: null,
+              updated_at: null
             },
             {
               id: '2',
@@ -124,7 +136,21 @@ export default function AdminProduitAlimentaire() {
               food_type: 'Surgelé',
               description: 'Filet de saumon surgelé',
               created_at: new Date().toISOString(),
-              organization_id: null
+              organization_id: null,
+              employee_id: null,
+              user_id: null,
+              is_active: true,
+              max_storage_temperature: null,
+              min_storage_temperature: null,
+              storage_conditions: null,
+              allergens: null,
+              haccp_cooling_standard: null,
+              shelf_life_days: null,
+              supplier_info: null,
+              storage_condition: null,
+              sub_category: null,
+              target_cooling_rate: null,
+              updated_at: null
             },
             {
               id: '3',
@@ -133,10 +159,24 @@ export default function AdminProduitAlimentaire() {
               food_type: 'Frais',
               description: 'Tomates fraîches de saison',
               created_at: new Date().toISOString(),
-              organization_id: null
+              organization_id: null,
+              employee_id: null,
+              user_id: null,
+              is_active: true,
+              max_storage_temperature: null,
+              min_storage_temperature: null,
+              storage_conditions: null,
+              allergens: null,
+              haccp_cooling_standard: null,
+              shelf_life_days: null,
+              supplier_info: null,
+              storage_condition: null,
+              sub_category: null,
+              target_cooling_rate: null,
+              updated_at: null
             }
           ];
-          setFoodProducts(defaultData as Tables<'food_products'>[]);
+          setFoodProducts(defaultData as unknown as Tables<'food_products'>[]);
           return;
         }
         throw error;
@@ -180,7 +220,7 @@ export default function AdminProduitAlimentaire() {
         food_type: finalFoodType,
         description: formData.description.trim(),
         created_at: new Date().toISOString(),
-        organization_id: (user as any)?.organization_id || null
+        organization_id: user?.user_metadata?.organization_id || null
       } as Tables<'food_products'>;
 
       setFoodProducts(prev => [newProduct, ...prev]);
@@ -277,6 +317,7 @@ export default function AdminProduitAlimentaire() {
 
   useEffect(() => {
     loadFoodProducts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

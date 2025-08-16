@@ -55,6 +55,13 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
+// Helper function for getting user organization ID
+
+const getUserOrgId = (user: unknown): string | null => {
+  const userObj = user as { organization_id?: string; user_metadata?: { organization_id?: string } };
+  return userObj?.organization_id || userObj?.user_metadata?.organization_id || null;
+};
+
 export default function CoolingTracking() {
   const { employee } = useEmployee();
   const { user } = useAuth();
@@ -122,7 +129,7 @@ export default function CoolingTracking() {
 
   const loadFoodProducts = async () => {
     try {
-      const orgId = (user as any)?.organization_id || employee?.organization_id;
+      const orgId = getUserOrgId(user) || employee?.organization_id;
       if (!orgId) {
         console.log('No organization ID available for food products');
         return;
@@ -198,7 +205,7 @@ export default function CoolingTracking() {
 
   const loadProductTypes = async () => {
     try {
-      const orgId = (user as any)?.organization_id || employee?.organization_id;
+      const orgId = getUserOrgId(user) || employee?.organization_id;
       
       if (!orgId) {
         console.log('No organization ID available for product types');
@@ -380,7 +387,7 @@ export default function CoolingTracking() {
 
   const loadHistoryRecords = async () => {
     try {
-      const orgId = (user as any)?.organization_id || employee?.organization_id;
+      const orgId = getUserOrgId(user) || employee?.organization_id;
       const userId = user?.id;
       const employeeId = employee?.id;
       
@@ -416,7 +423,7 @@ export default function CoolingTracking() {
       setHistoryRecords(data || []);
     } catch (error) {
       console.error('Error loading history:', error);
-      enqueueSnackbar('Erreur lors du chargement de l\'historique', { variant: 'error' });
+      enqueueSnackbar('Erreur lors du chargement de l&apos;historique', { variant: 'error' });
     }
   };
 
@@ -444,7 +451,7 @@ export default function CoolingTracking() {
         name: category,
         description: `Catégorie ${category}`,
         created_at: new Date().toISOString(),
-        organization_id: (user as any)?.organization_id || null
+        organization_id: getUserOrgId(user) || null
       }));
 
       setProductCategories(formattedCategories);
@@ -618,7 +625,7 @@ export default function CoolingTracking() {
         .from('food_products')
         .insert([{
           ...productData,
-          organization_id: (user as any)?.organization_id || employee?.organization_id || '',
+          organization_id: getUserOrgId(user) || employee?.organization_id || '',
           employee_id: employee?.id || null,
           user_id: user?.id || null,
         }])
@@ -643,7 +650,7 @@ export default function CoolingTracking() {
         .from('product_types')
         .insert([{
           ...typeData,
-          organization_id: (user as any)?.organization_id || employee?.organization_id || null,
+          organization_id: getUserOrgId(user) || employee?.organization_id || null,
         }])
         .select()
         .single();
@@ -695,7 +702,7 @@ export default function CoolingTracking() {
         name: categoryData.name,
         description: categoryData.description || '',
         created_at: new Date().toISOString(),
-        organization_id: (user as any)?.organization_id || null
+        organization_id: getUserOrgId(user) || null
       };
 
       setProductCategories(prev => [...prev, newCategory]);
@@ -710,7 +717,7 @@ export default function CoolingTracking() {
   };
 
   useEffect(() => {
-    const orgId = (user as any)?.organization_id || employee?.organization_id;
+    const orgId = getUserOrgId(user) || employee?.organization_id;
     const userId = user?.id;
     const employeeId = employee?.id;
     
@@ -721,7 +728,8 @@ export default function CoolingTracking() {
       loadNonConformities();
       loadProductCategories();
     }
-  }, [(user as any)?.organization_id, employee?.organization_id, user?.id, employee?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getUserOrgId(user), employee?.organization_id, user?.id, employee?.id]);
 
   const calculateCoolingRate = () => {
     if (formData.end_core_temperature === null || formData.end_core_temperature === undefined || !formData.end_date) return null;
@@ -815,7 +823,7 @@ export default function CoolingTracking() {
       
       const newRecord = {
         ...updatedFormData,
-        organization_id: (user as any)?.organization_id || employee?.organization_id || null,
+        organization_id: getUserOrgId(user) || employee?.organization_id || null,
         employee_id: employee?.id || null,
         user_id: user?.id || null,
       };
@@ -859,7 +867,7 @@ export default function CoolingTracking() {
       setSelectedProductCategory(null);
     } catch (error) {
       console.error('Error saving cooling record:', error);
-      enqueueSnackbar('Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar('Erreur lors de l&apos;enregistrement', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -1713,7 +1721,7 @@ export default function CoolingTracking() {
               </Box>
             )}
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Cette action est irréversible. L'enregistrement sera définitivement supprimé de votre historique HACCP.
+              Cette action est irréversible. L&apos;enregistrement sera définitivement supprimé de votre historique HACCP.
             </Alert>
           </DialogContent>
           <DialogActions sx={{ p: 3 }}>
@@ -1755,7 +1763,7 @@ export default function CoolingTracking() {
             </Avatar>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Modification de l'Enregistrement
+                Modification de l&apos;Enregistrement
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
                 Traçabilité du processus de refroidissement HACCP
@@ -2175,7 +2183,7 @@ export default function CoolingTracking() {
                 }
               }}
             >
-              {loading ? 'Modification...' : 'Modifier l\'enregistrement'}
+              {loading ? 'Modification...' : 'Modifier l&apos;enregistrement'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -2466,7 +2474,7 @@ function AddNonConformityModal({ open, onClose, onCreate }: AddNonConformityModa
             • <strong>Discarded product</strong> (Produit jeté)
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Vous pouvez bien entendu en créer d'autres selon vos besoins.
+            Vous pouvez bien entendu en créer d&apos;autres selon vos besoins.
           </Typography>
         </Alert>
         

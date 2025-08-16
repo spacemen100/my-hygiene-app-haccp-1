@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Tables, TablesInsert } from '@/src/types/database';
+import { Tables } from '@/src/types/database';
 import { useEmployee } from '@/contexts/EmployeeContext';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -26,11 +26,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Chip,
   Avatar,
   Stack,
   Tooltip,
-  Fab
 } from '@mui/material';
 import {
   Warning,
@@ -38,8 +36,6 @@ import {
   Edit,
   Delete,
   Save,
-  Cancel,
-  AdminPanelSettings
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -49,7 +45,7 @@ export default function AdminNonConformite() {
   const { enqueueSnackbar } = useSnackbar();
 
   const [nonConformities, setNonConformities] = useState<Tables<'non_conformities'>[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -232,6 +228,7 @@ export default function AdminNonConformite() {
 
   useEffect(() => {
     loadNonConformities();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -271,7 +268,7 @@ export default function AdminNonConformite() {
             • <strong>Produit jeté</strong>
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Vous pouvez créer d'autres types selon vos besoins spécifiques.
+            Vous pouvez créer d&apos;autres types selon vos besoins spécifiques.
           </Typography>
         </Alert>
 
