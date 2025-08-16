@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function RegisterPage() {
-  console.log('[RegisterPage] Component rendering');
   const { session, isLoading, signUp } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -17,13 +16,9 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  console.log('[RegisterPage] Current state:', { session, isLoading, email, error, success });
 
   useEffect(() => {
-    console.log('[RegisterPage] useEffect triggered, session:', session);
     if (session) {
-      console.log('[RegisterPage] Session exists, redirecting to home');
       router.push('/');
     }
   }, [session, router]);

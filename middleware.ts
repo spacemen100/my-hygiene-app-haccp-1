@@ -11,7 +11,7 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession()
 
   // Pages publiques qui ne nécessitent pas d'authentification
-  const publicPaths = ['/login']
+  const publicPaths = ['/login', '/register']
   const isPublicPath = publicPaths.some(path => req.nextUrl.pathname.startsWith(path))
 
   // Si l'utilisateur n'est pas connecté et tente d'accéder à une page protégée
