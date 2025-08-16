@@ -184,12 +184,14 @@ export default function LoginPage() {
                 fontWeight: 600,
               }}
               onMouseEnter={(e) => {
-                e.target.style.textDecoration = 'underline';
-                e.target.style.color = '#1565c0';
+                const target = e.target as HTMLElement;
+                target.style.textDecoration = 'underline';
+                target.style.color = '#1565c0';
               }}
               onMouseLeave={(e) => {
-                e.target.style.textDecoration = 'none';
-                e.target.style.color = '#1976d2';
+                const target = e.target as HTMLElement;
+                target.style.textDecoration = 'none';
+                target.style.color = '#1976d2';
               }}
             >
               Créez-en un ici
