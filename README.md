@@ -39,3 +39,5 @@ npx supabase gen types typescript \
   --project-id wtxsyzdksnbftlckojuz \
   --schema public \
   > src/types/database.ts
+
+  export SUPABASE_ACCESS_TOKEN="

@@ -33,6 +33,7 @@ import {
   LocalDining as OilIcon,
   GetApp as ExportIcon,
   ChecklistRtl as ChecklistIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -57,6 +58,8 @@ const menuItems = [
   { href: "/admin-employes", icon: PeopleIcon, label: "Administrateur des employés" },
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Administrateur Plan de nettoyage" },
   { href: "/admin-checklist", icon: ChecklistIcon, label: "Administrateur des Checklists" },
+  { href: "/admin-non-conformite", icon: WarningIcon, label: "Administrateur des Non-conformités" },
+  { href: "/admin-produit-alimentaire", icon: ProductsIcon, label: "Administrateur des Produits Alimentaires" },
   { href: "/admin-zones-nettoyage", icon: ZoneIcon, label: "Administrateur Zones et Sous-zones de Nettoyage" },
   { href: "/admin-produits-nettoyage", icon: ProductsIcon, label: "Administrateur des Produits de Nettoyage" },
   { href: "/admin-equipements", icon: EquipmentIcon, label: "Administrateur des Équipements" },

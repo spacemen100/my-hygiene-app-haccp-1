@@ -832,6 +832,7 @@ export type Database = {
           employee_id: string | null
           end_core_temperature: number | null
           end_date: string | null
+          food_product_id: string | null
           id: string
           is_compliant: boolean | null
           organization_id: string | null
@@ -848,6 +849,7 @@ export type Database = {
           employee_id?: string | null
           end_core_temperature?: number | null
           end_date?: string | null
+          food_product_id?: string | null
           id?: string
           is_compliant?: boolean | null
           organization_id?: string | null
@@ -864,6 +866,7 @@ export type Database = {
           employee_id?: string | null
           end_core_temperature?: number | null
           end_date?: string | null
+          food_product_id?: string | null
           id?: string
           is_compliant?: boolean | null
           organization_id?: string | null
@@ -880,6 +883,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cooling_records_food_product_id_fkey"
+            columns: ["food_product_id"]
+            isOneToOne: false
+            referencedRelation: "food_products"
             referencedColumns: ["id"]
           },
           {
@@ -1144,73 +1154,66 @@ export type Database = {
       }
       food_products: {
         Row: {
-          id: string
-          organization_id: string
-          name: string
-          description: string | null
           category: string
-          sub_category: string | null
-          food_type: string
-          storage_condition: string
-          min_storage_temperature: number | null
-          max_storage_temperature: number | null
-          target_cooling_rate: number | null
-          haccp_cooling_standard: string | null
-          shelf_life_days: number | null
-          is_active: boolean | null
           created_at: string | null
-          updated_at: string | null
+          description: string | null
           employee_id: string | null
+          food_type: string
+          haccp_cooling_standard: string | null
+          id: string
+          is_active: boolean | null
+          max_storage_temperature: number | null
+          min_storage_temperature: number | null
+          name: string
+          organization_id: string
+          shelf_life_days: number | null
+          storage_condition: string
+          sub_category: string | null
+          target_cooling_rate: number | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          id?: string
-          organization_id: string
-          name: string
-          description?: string | null
           category: string
-          sub_category?: string | null
-          food_type: string
-          storage_condition: string
-          min_storage_temperature?: number | null
-          max_storage_temperature?: number | null
-          target_cooling_rate?: number | null
-          haccp_cooling_standard?: string | null
-          shelf_life_days?: number | null
-          is_active?: boolean | null
           created_at?: string | null
-          updated_at?: string | null
+          description?: string | null
           employee_id?: string | null
+          food_type: string
+          haccp_cooling_standard?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_storage_temperature?: number | null
+          min_storage_temperature?: number | null
+          name: string
+          organization_id: string
+          shelf_life_days?: number | null
+          storage_condition: string
+          sub_category?: string | null
+          target_cooling_rate?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          id?: string
-          organization_id?: string
-          name?: string
-          description?: string | null
           category?: string
-          sub_category?: string | null
-          food_type?: string
-          storage_condition?: string
-          min_storage_temperature?: number | null
-          max_storage_temperature?: number | null
-          target_cooling_rate?: number | null
-          haccp_cooling_standard?: string | null
-          shelf_life_days?: number | null
-          is_active?: boolean | null
           created_at?: string | null
-          updated_at?: string | null
+          description?: string | null
           employee_id?: string | null
+          food_type?: string
+          haccp_cooling_standard?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_storage_temperature?: number | null
+          min_storage_temperature?: number | null
+          name?: string
+          organization_id?: string
+          shelf_life_days?: number | null
+          storage_condition?: string
+          sub_category?: string | null
+          target_cooling_rate?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "food_products_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "food_products_employee_id_fkey"
             columns: ["employee_id"]
@@ -1219,51 +1222,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "food_products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "food_products_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      product_types: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          cooling_requirements: Json | null
-          haccp_guidelines: string | null
-          organization_id: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          cooling_requirements?: Json | null
-          haccp_guidelines?: string | null
-          organization_id?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          cooling_requirements?: Json | null
-          haccp_guidelines?: string | null
-          organization_id?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_types_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2036,6 +2005,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_types: {
+        Row: {
+          cooling_requirements: Json | null
+          created_at: string | null
+          description: string | null
+          haccp_guidelines: string | null
+          id: string
+          name: string
+          organization_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cooling_requirements?: Json | null
+          created_at?: string | null
+          description?: string | null
+          haccp_guidelines?: string | null
+          id?: string
+          name: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cooling_requirements?: Json | null
+          created_at?: string | null
+          description?: string | null
+          haccp_guidelines?: string | null
+          id?: string
+          name?: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
