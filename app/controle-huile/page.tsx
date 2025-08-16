@@ -34,7 +34,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider
+  Divider,
+  FormControlLabel,
+  Checkbox,
+  CircularProgress,
+  IconButton
 } from '@mui/material';
 import {
   LocalDining,
@@ -49,6 +53,10 @@ import {
   WaterDrop,
   FactCheck,
   Visibility,
+  PhotoCamera,
+  Build,
+  FilterAlt,
+  SwapHoriz,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -95,8 +103,19 @@ export default function OilQualityControl() {
     polarity: null,
     oil_level: null,
     comments: '',
-    is_compliant: null
+    is_compliant: null,
+    photo_url: null,
+    corrective_actions: []
   });
+
+  // État pour le type d'huile sélectionné
+  const [selectedOilType, setSelectedOilType] = useState<string>('');
+
+  // États pour les actions correctives et photo
+  const [selectedCorrectiveActions, setSelectedCorrectiveActions] = useState<string[]>([]);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Types de contrôle selon le nouveau schéma
   const controlTypes = [
@@ -112,6 +131,28 @@ export default function OilQualityControl() {
     temperature: { min: 160, max: 180 },
     polarity: { max: 25 }
   };
+
+  // Actions correctives prédéfinies
+  const correctiveActionOptions = [
+    { id: 'filter', label: 'Filtration de l\'huile', icon: <FilterAlt />, description: 'Filtrer l\'huile pour éliminer les impuretés' },
+    { id: 'change', label: 'Changement complet de l\'huile', icon: <SwapHoriz />, description: 'Remplacer entièrement l\'huile' },
+    { id: 'maintenance', label: 'Maintenance de l\'équipement', icon: <Build />, description: 'Vérifier et nettoyer l\'équipement' },
+    { id: 'other', label: 'Autre action', icon: <Build />, description: 'Action corrective personnalisée' }
+  ];
+
+  // Types d'huile disponibles
+  const oilTypes = [
+    { value: 'tournesol', label: 'Huile de tournesol', description: 'Huile végétale polyvalente' },
+    { value: 'olive', label: 'Huile d\'olive', description: 'Huile d\'olive extra vierge ou raffinée' },
+    { value: 'colza', label: 'Huile de colza', description: 'Huile de colza/canola' },
+    { value: 'arachide', label: 'Huile d\'arachide', description: 'Huile d\'arachide raffinée' },
+    { value: 'mais', label: 'Huile de maïs', description: 'Huile de maïs raffinée' },
+    { value: 'soja', label: 'Huile de soja', description: 'Huile de soja raffinée' },
+    { value: 'palme', label: 'Huile de palme', description: 'Huile de palme raffinée' },
+    { value: 'coco', label: 'Huile de coco', description: 'Huile de coco raffinée' },
+    { value: 'melange', label: 'Mélange d\'huiles', description: 'Mélange de plusieurs huiles végétales' },
+    { value: 'autre', label: 'Autre type d\'huile', description: 'Autre type d\'huile non listé' }
+  ];
 
   // Fetch des équipements
   const fetchEquipments = useCallback(async () => {
@@ -210,6 +251,49 @@ export default function OilQualityControl() {
     }
   }, [employee?.organization_id, enqueueSnackbar]);
 
+  // Gérer l'upload de photo
+  const handlePhotoUpload = useCallback(async (file: File): Promise<string | null> => {
+    if (!currentControl || !employee?.organization_id) return null;
+    
+    setUploadingPhoto(true);
+    try {
+      const timestamp = new Date().getTime();
+      const fileName = `oil-control-${currentControl.id}-${timestamp}.jpg`;
+      const filePath = `${employee.organization_id}/oil-controls/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('photos')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de la photo:', error);
+      enqueueSnackbar('Erreur lors de l\'upload de la photo', { variant: 'error' });
+      return null;
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }, [currentControl, employee?.organization_id, enqueueSnackbar]);
+
+  // Gérer la sélection de photo
+  const handlePhotoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPhotoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
   // Chargement initial
   useEffect(() => {
     if (employee?.organization_id) {
@@ -274,8 +358,14 @@ export default function OilQualityControl() {
       polarity: null,
       oil_level: null,
       comments: '',
-      is_compliant: null
+      is_compliant: null,
+      photo_url: null,
+      corrective_actions: []
     });
+    setSelectedCorrectiveActions([]);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setSelectedOilType(equipment.oil_type || '');
   }, [currentControl, startNewControl]);
 
   // Valider la conformité automatiquement
@@ -298,6 +388,19 @@ export default function OilQualityControl() {
     try {
       const compliance = validateCompliance(readingForm, selectedEquipment);
       
+      // Upload de la photo si sélectionnée
+      let photoUrl = null;
+      if (photoFile) {
+        photoUrl = await handlePhotoUpload(photoFile);
+      }
+
+      // Préparer les commentaires avec le type d'huile
+      const oilTypeLabel = oilTypes.find(oil => oil.value === selectedOilType)?.label || selectedOilType;
+      const commentsWithOilType = [
+        selectedOilType ? `Type d'huile: ${oilTypeLabel}` : '',
+        readingForm.comments || ''
+      ].filter(Boolean).join(' • ');
+      
       const { error } = await supabase
         .from('oil_equipment_readings')
         .insert({
@@ -307,9 +410,11 @@ export default function OilQualityControl() {
           temperature: readingForm.temperature,
           polarity: readingForm.polarity,
           oil_level: readingForm.oil_level,
-          comments: readingForm.comments,
+          comments: commentsWithOilType,
           is_compliant: compliance !== null ? compliance : readingForm.is_compliant,
-          critical_control_point: readingForm.control_type === 'strip' || readingForm.control_type === 'change_cleaning'
+          critical_control_point: readingForm.control_type === 'strip' || readingForm.control_type === 'change_cleaning',
+          photo_url: photoUrl,
+          corrective_actions: selectedCorrectiveActions.length > 0 ? selectedCorrectiveActions : null
         });
 
       if (error) throw error;
@@ -322,7 +427,7 @@ export default function OilQualityControl() {
       console.error('Erreur lors de la sauvegarde:', error);
       enqueueSnackbar('Erreur lors de la sauvegarde', { variant: 'error' });
     }
-  }, [currentControl, selectedEquipment, readingForm, validateCompliance, enqueueSnackbar, fetchEquipments, fetchOilControls]);
+  }, [currentControl, selectedEquipment, readingForm, validateCompliance, enqueueSnackbar, fetchEquipments, fetchOilControls, photoFile, handlePhotoUpload, selectedCorrectiveActions]);
 
   // Finaliser un contrôle
   const finishControl = useCallback(async () => {
@@ -646,7 +751,7 @@ export default function OilQualityControl() {
             {selectedEquipment && (
               <Box sx={{ mt: 2 }}>
                 <Alert severity="info" sx={{ mb: 3 }}>
-                  Type d&apos;huile: {selectedEquipment.oil_type} • 
+                  Type d&apos;huile configuré: {selectedEquipment.oil_type || 'Non spécifié'} • 
                   Localisation: {selectedEquipment.location}
                 </Alert>
 
@@ -668,6 +773,26 @@ export default function OilQualityControl() {
                                 {type.description}
                               </Typography>
                             </Box>
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth>
+                    <InputLabel>Type d'huile utilisée</InputLabel>
+                    <Select
+                      value={selectedOilType}
+                      label="Type d'huile utilisée"
+                      onChange={(e) => setSelectedOilType(e.target.value)}
+                    >
+                      {oilTypes.map(oil => (
+                        <MenuItem key={oil.value} value={oil.value}>
+                          <Box>
+                            <Typography variant="body2">{oil.label}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {oil.description}
+                            </Typography>
                           </Box>
                         </MenuItem>
                       ))}
@@ -727,6 +852,103 @@ export default function OilQualityControl() {
                     placeholder="Observations, remarques..."
                     sx={{ gridColumn: { md: '1 / -1' } }}
                   />
+                </Box>
+
+                {/* Section Actions correctives */}
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Build color="primary" />
+                    Actions correctives
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Sélectionnez les actions correctives effectuées (optionnel)
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 1 }}>
+                    {correctiveActionOptions.map((action) => (
+                      <FormControlLabel
+                        key={action.id}
+                        control={
+                          <Checkbox
+                            checked={selectedCorrectiveActions.includes(action.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCorrectiveActions([...selectedCorrectiveActions, action.id]);
+                              } else {
+                                setSelectedCorrectiveActions(selectedCorrectiveActions.filter(id => id !== action.id));
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {action.icon}
+                              <Typography variant="body2">{action.label}</Typography>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary">
+                              {action.description}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Section Photo */}
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PhotoCamera color="primary" />
+                    Photo du contrôle
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Ajoutez une photo pour documenter le contrôle (optionnel)
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<PhotoCamera />}
+                      disabled={uploadingPhoto}
+                    >
+                      {photoFile ? 'Changer la photo' : 'Ajouter une photo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={handlePhotoChange}
+                      />
+                    </Button>
+                    
+                    {uploadingPhoto && <CircularProgress size={24} />}
+                    
+                    {photoFile && (
+                      <Chip
+                        label={photoFile.name}
+                        onDelete={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                        }}
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
+                  
+                  {photoPreview && (
+                    <Box sx={{ mt: 2 }}>
+                      <img
+                        src={photoPreview}
+                        alt="Aperçu"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: 200,
+                          borderRadius: 8,
+                          border: '1px solid #ddd'
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Box>
             )}
@@ -929,8 +1151,11 @@ const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell sx={{ fontWeight: 600 }}>Équipement</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Type de contrôle</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Type d'huile</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Température</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Polarité</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Actions correctives</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Photo</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Conformité</TableCell>
                     </TableRow>
                   </TableHead>
@@ -942,10 +1167,46 @@ const HistorySection = React.memo(({ oilControls, loading, controlTypes }: {
                           {controlTypes.find(t => t.value === reading.control_type)?.label || reading.control_type}
                         </TableCell>
                         <TableCell>
+                          {(() => {
+                            const comments = reading.comments || '';
+                            const oilTypeMatch = comments.match(/Type d'huile: ([^•]+)/);
+                            return oilTypeMatch ? oilTypeMatch[1].trim() : '-';
+                          })()}
+                        </TableCell>
+                        <TableCell>
                           {reading.temperature ? `${reading.temperature}°C` : '-'}
                         </TableCell>
                         <TableCell>
                           {reading.polarity ? `${reading.polarity}%` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {reading.corrective_actions && (reading.corrective_actions as string[]).length > 0 ? (
+                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                              {(reading.corrective_actions as string[]).map((actionId, index) => {
+                                const action = correctiveActionOptions.find(a => a.id === actionId);
+                                return action ? (
+                                  <Chip 
+                                    key={index}
+                                    label={action.label} 
+                                    size="small" 
+                                    variant="outlined"
+                                    color="warning"
+                                  />
+                                ) : null;
+                              })}
+                            </Box>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {reading.photo_url ? (
+                            <IconButton
+                              size="small"
+                              onClick={() => window.open(reading.photo_url as string, '_blank')}
+                              color="primary"
+                            >
+                              <PhotoCamera />
+                            </IconButton>
+                          ) : '-'}
                         </TableCell>
                         <TableCell>
                           <Chip
