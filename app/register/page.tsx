@@ -1,4 +1,4 @@
-// app/login/page.tsx
+// app/register/page.tsx
 'use client';
 import { useAuth } from '@/components/AuthProvider';
 import { Box, Button, TextField, Typography, CircularProgress, IconButton, InputAdornment, Link } from '@mui/material';
@@ -6,13 +6,16 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export default function LoginPage() {
-  const { session, isLoading, signInWithEmail } = useAuth();
+export default function RegisterPage() {
+  const { session, isLoading, signUp } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -22,8 +25,25 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const error = await signInWithEmail(email, password);
-    if (error) setError(error);
+    setError('');
+    setSuccess('');
+
+    if (password !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    const { error } = await signUp(email, password);
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccess('Compte créé avec succès ! Vérifiez votre email pour confirmer votre inscription.');
+    }
   };
 
   if (isLoading) {
@@ -87,24 +107,39 @@ export default function LoginPage() {
               fontSize: { xs: '1.1rem', md: '1.25rem' }
             }}
           >
-            Connexion à votre espace
+            Créer votre compte
           </Typography>
         </Box>
         
         {error && (
           <Typography 
+            color="error" 
             sx={{ 
               mb: { xs: 2, md: 3 }, 
               textAlign: 'center', 
               p: { xs: 1.5, md: 2 }, 
-              bgcolor: '#ffebee', 
-              color: '#c62828',
+              bgcolor: 'error.light', 
               borderRadius: 1,
-              border: '1px solid #ef5350',
               fontSize: { xs: '0.875rem', md: '1rem' }
             }}
           >
             {error}
+          </Typography>
+        )}
+
+        {success && (
+          <Typography 
+            color="success.main" 
+            sx={{ 
+              mb: { xs: 2, md: 3 }, 
+              textAlign: 'center', 
+              p: { xs: 1.5, md: 2 }, 
+              bgcolor: 'success.light', 
+              borderRadius: 1,
+              fontSize: { xs: '0.875rem', md: '1rem' }
+            }}
+          >
+            {success}
           </Typography>
         )}
 
@@ -127,7 +162,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           margin="normal"
           required
-          sx={{ mb: { xs: 2, md: 3 } }}
+          sx={{ mb: { xs: 1.5, md: 2 } }}
           slotProps={{
             input: {
               endAdornment: (
@@ -139,6 +174,33 @@ export default function LoginPage() {
                     aria-label="toggle password visibility"
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+          }}
+        />
+
+        <TextField
+          fullWidth
+          label="Confirmer le mot de passe"
+          type={showConfirmPassword ? 'text' : 'password'}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          margin="normal"
+          required
+          sx={{ mb: { xs: 2, md: 3 } }}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                    aria-label="toggle confirm password visibility"
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               )
@@ -165,19 +227,18 @@ export default function LoginPage() {
           }}
           disabled={isLoading}
         >
-          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
+          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Créer le compte'}
         </Button>
 
-        {/* Lien vers l'inscription */}
         <Box sx={{ textAlign: 'center', mt: { xs: 2, md: 3 }, mb: { xs: 2, md: 3 } }}>
           <Typography 
             variant="body2" 
             color="text.secondary"
             sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
           >
-            Vous n&apos;avez pas de compte ?{' '}
+            Vous avez déjà un compte ?{' '}
             <Link
-              href="/register"
+              href="/login"
               sx={{
                 color: 'primary.main',
                 textDecoration: 'none',
@@ -188,7 +249,7 @@ export default function LoginPage() {
                 }
               }}
             >
-              Créez-en un ici
+              Connectez-vous ici
             </Link>
           </Typography>
         </Box>
