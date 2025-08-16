@@ -123,7 +123,7 @@ export function AppProvider({ children, mobileOpen = false, onDrawerToggle }: Ap
   };
 
   // Component to render a menu section
-  const renderMenuSection = (title: string, items: Array<{href: string, icon: any, label: string}>, showIcon: boolean = false) => {
+  const renderMenuSection = (title: string, items: Array<{href: string, icon: React.ComponentType, label: string}>, showIcon: boolean = false) => {
     if (items.length === 0) return null;
 
     return (
