@@ -56,11 +56,49 @@ import {
 import { useSnackbar } from 'notistack';
 
 // Helper function for getting user organization ID
-
 const getUserOrgId = (user: unknown): string | null => {
   const userObj = user as { organization_id?: string; user_metadata?: { organization_id?: string } };
   return userObj?.organization_id || userObj?.user_metadata?.organization_id || null;
 };
+
+// Types d'opérations disponibles
+const operationTypes = [
+  { 
+    value: 'cold_preparation', 
+    label: 'Préparation à froid', 
+    description: 'Préparation de produits sans cuisson',
+    icon: '❄️',
+    tempRange: { min: 0, max: 4 }
+  },
+  { 
+    value: 'cooling', 
+    label: 'Refroidissement', 
+    description: 'Refroidissement après cuisson',
+    icon: '🧊',
+    tempRange: { min: 3, max: 65 }
+  },
+  { 
+    value: 'hot_preparation', 
+    label: 'Préparation à chaud', 
+    description: 'Préparation avec cuisson',
+    icon: '🔥',
+    tempRange: { min: 75, max: 100 }
+  },
+  { 
+    value: 'hot_serving', 
+    label: 'Température de service chaud', 
+    description: 'Maintien en température pour service',
+    icon: '🍽️',
+    tempRange: { min: 63, max: 85 }
+  },
+  { 
+    value: 'reheating', 
+    label: 'Réchauffage', 
+    description: 'Réchauffage de produits préparés',
+    icon: '♨️',
+    tempRange: { min: 75, max: 100 }
+  }
+];
 
 export default function CoolingTracking() {
   const { employee } = useEmployee();
@@ -70,6 +108,7 @@ export default function CoolingTracking() {
     end_date: null,
     product_name: '',
     product_type: '',
+    operation_type: 'cooling', // Par défaut refroidissement
     start_core_temperature: 0,
     end_core_temperature: null,
     is_compliant: null,
@@ -87,6 +126,7 @@ export default function CoolingTracking() {
     end_date: null,
     product_name: '',
     product_type: '',
+    operation_type: 'cooling',
     start_core_temperature: 0,
     end_core_temperature: null,
     is_compliant: null,
@@ -468,6 +508,7 @@ export default function CoolingTracking() {
       end_date: record.end_date,
       product_name: record.product_name,
       product_type: record.product_type,
+      operation_type: record.operation_type || 'cooling',
       start_core_temperature: record.start_core_temperature,
       end_core_temperature: record.end_core_temperature,
       is_compliant: record.is_compliant,
@@ -559,6 +600,7 @@ export default function CoolingTracking() {
         end_date: null,
         product_name: '',
         product_type: '',
+        operation_type: 'cooling',
         start_core_temperature: 0,
         end_core_temperature: null,
         is_compliant: null,
@@ -603,6 +645,7 @@ export default function CoolingTracking() {
       end_date: null,
       product_name: '',
       product_type: '',
+      operation_type: 'cooling',
       start_core_temperature: 0,
       end_core_temperature: null,
       is_compliant: null,
@@ -744,20 +787,44 @@ export default function CoolingTracking() {
     return tempDiff / timeDiffHours; // °C/h
   };
 
-  const getCoolingStatus = () => {
-    const rate = calculateCoolingRate();
-    if (!rate || !formData.end_core_temperature) return 'pending';
+  const getOperationStatus = () => {
+    if (!formData.end_core_temperature) return 'pending';
     
-    // Règle générale : refroidissement de 65°C à 10°C en 6h max (HACCP)
-    if (formData.start_core_temperature >= 65 && formData.end_core_temperature <= 10) {
-      const startTime = new Date(formData.start_date).getTime();
-      const endTime = formData.end_date ? new Date(formData.end_date).getTime() : Date.now();
-      const timeDiffHours = (endTime - startTime) / (1000 * 60 * 60);
-      
-      if (timeDiffHours <= 6) return 'compliant';
+    const operationType = operationTypes.find(op => op.value === formData.operation_type);
+    if (!operationType) return 'pending';
+    
+    const tempRange = operationType.tempRange;
+    const startTemp = formData.start_core_temperature;
+    const endTemp = formData.end_core_temperature;
+    
+    switch (formData.operation_type) {
+      case 'cold_preparation':
+        // Préparation à froid : doit rester entre 0°C et 4°C
+        return (startTemp >= tempRange.min && startTemp <= tempRange.max && 
+                endTemp >= tempRange.min && endTemp <= tempRange.max) ? 'compliant' : 'non-compliant';
+                
+      case 'cooling':
+        // Refroidissement : de ≥65°C à ≤10°C en 6h max (règle HACCP)
+        if (startTemp >= 65 && endTemp <= 10) {
+          const startTime = new Date(formData.start_date).getTime();
+          const endTime = formData.end_date ? new Date(formData.end_date).getTime() : Date.now();
+          const timeDiffHours = (endTime - startTime) / (1000 * 60 * 60);
+          return timeDiffHours <= 6 ? 'compliant' : 'warning';
+        }
+        return endTemp <= 10 ? 'warning' : 'non-compliant';
+        
+      case 'hot_preparation':
+      case 'reheating':
+        // Préparation/réchauffage : doit atteindre ≥75°C
+        return endTemp >= tempRange.min ? 'compliant' : 'non-compliant';
+        
+      case 'hot_serving':
+        // Service chaud : maintenir entre 63°C et 85°C
+        return (endTemp >= tempRange.min && endTemp <= tempRange.max) ? 'compliant' : 'non-compliant';
+        
+      default:
+        return 'pending';
     }
-    
-    return formData.end_core_temperature <= 10 ? 'warning' : 'non-compliant';
   };
 
   const handleFoodProductSelect = (product: Tables<'food_products'> | null) => {
@@ -815,7 +882,7 @@ export default function CoolingTracking() {
     setLoading(true);
     
     try {
-      const status = getCoolingStatus();
+      const status = getOperationStatus();
       const updatedFormData = {
         ...formData,
         is_compliant: status === 'compliant' || status === 'warning'
@@ -853,6 +920,7 @@ export default function CoolingTracking() {
         end_date: null,
         product_name: '',
         product_type: '',
+        operation_type: 'cooling',
         start_core_temperature: 0,
         end_core_temperature: null,
         is_compliant: null,
@@ -874,7 +942,7 @@ export default function CoolingTracking() {
   };
 
   const coolingRate = calculateCoolingRate();
-  const coolingStatus = getCoolingStatus();
+  const operationStatus = getOperationStatus();
 
   // Calculer les statistiques
   const stats = {
@@ -1002,25 +1070,25 @@ export default function CoolingTracking() {
                     </Typography>
                     <Chip
                       label={
-                        coolingStatus === 'compliant' ? 'Conforme' :
-                        coolingStatus === 'warning' ? 'Acceptable' :
-                        coolingStatus === 'non-compliant' ? 'Non conforme' : 'En cours'
+                        operationStatus === 'compliant' ? 'Conforme' :
+                        operationStatus === 'warning' ? 'Acceptable' :
+                        operationStatus === 'non-compliant' ? 'Non conforme' : 'En cours'
                       }
                       color={
-                        coolingStatus === 'compliant' ? 'success' :
-                        coolingStatus === 'warning' ? 'warning' :
-                        coolingStatus === 'non-compliant' ? 'error' : 'default'
+                        operationStatus === 'compliant' ? 'success' :
+                        operationStatus === 'warning' ? 'warning' :
+                        operationStatus === 'non-compliant' ? 'error' : 'default'
                       }
                       sx={{ fontWeight: 600 }}
                     />
                   </Box>
                   <Avatar sx={{ 
-                    bgcolor: coolingStatus === 'compliant' ? '#4caf5020' : 
-                            coolingStatus === 'warning' ? '#ff980020' : 
-                            coolingStatus === 'non-compliant' ? '#f4433620' : '#grey20',
-                    color: coolingStatus === 'compliant' ? '#4caf50' : 
-                           coolingStatus === 'warning' ? '#ff9800' : 
-                           coolingStatus === 'non-compliant' ? '#f44336' : '#grey'
+                    bgcolor: operationStatus === 'compliant' ? '#4caf5020' : 
+                            operationStatus === 'warning' ? '#ff980020' : 
+                            operationStatus === 'non-compliant' ? '#f4433620' : '#grey20',
+                    color: operationStatus === 'compliant' ? '#4caf50' : 
+                           operationStatus === 'warning' ? '#ff9800' : 
+                           operationStatus === 'non-compliant' ? '#f44336' : '#grey'
                   }}>
                     <AccessTime />
                   </Avatar>
@@ -1039,15 +1107,57 @@ export default function CoolingTracking() {
               </Avatar>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  Enregistrement de Refroidissement
+                  {operationTypes.find(op => op.value === formData.operation_type)?.icon} {operationTypes.find(op => op.value === formData.operation_type)?.label || 'Enregistrement de Refroidissement'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Traçabilité du processus de refroidissement HACCP
+                  {operationTypes.find(op => op.value === formData.operation_type)?.description || 'Traçabilité du processus de refroidissement HACCP'}
                 </Typography>
               </Box>
             </Box>
 
             <Box component="form" onSubmit={handleSubmit}>
+              {/* Sélection du type d'opération */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Type d&apos;opération *
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                  {operationTypes.map((operation) => (
+                    <Card
+                      key={operation.value}
+                      sx={{
+                        cursor: 'pointer',
+                        border: formData.operation_type === operation.value ? '2px solid #2196f3' : '1px solid #e0e0e0',
+                        backgroundColor: formData.operation_type === operation.value ? '#2196f308' : 'transparent',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          boxShadow: 2,
+                          borderColor: '#2196f3'
+                        }
+                      }}
+                      onClick={() => setFormData({...formData, operation_type: operation.value})}
+                    >
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant="h5">{operation.icon}</Typography>
+                          <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {operation.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {operation.description}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              Temp: {operation.tempRange.min}°C - {operation.tempRange.max}°C
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              </Box>
+
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
                 {/* Sélection du produit alimentaire */}
                 <Box>
@@ -1378,20 +1488,20 @@ export default function CoolingTracking() {
                         
                         <Box>
                           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 1 }}>
-                            {coolingStatus === 'compliant' ? <CheckCircle color="success" sx={{ mb: 1 }} /> : <Cancel color="error" sx={{ mb: 1 }} />}
+                            {operationStatus === 'compliant' ? <CheckCircle color="success" sx={{ mb: 1 }} /> : <Cancel color="error" sx={{ mb: 1 }} />}
                             <Typography variant="caption" color="text.secondary" display="block">
                               Conformité HACCP
                             </Typography>
                             <Chip
                               label={
-                                coolingStatus === 'compliant' ? 'Conforme' :
-                                coolingStatus === 'warning' ? 'Acceptable' :
-                                coolingStatus === 'non-compliant' ? 'Non conforme' : 'En cours'
+                                operationStatus === 'compliant' ? 'Conforme' :
+                                operationStatus === 'warning' ? 'Acceptable' :
+                                operationStatus === 'non-compliant' ? 'Non conforme' : 'En cours'
                               }
                               color={
-                                coolingStatus === 'compliant' ? 'success' :
-                                coolingStatus === 'warning' ? 'warning' :
-                                coolingStatus === 'non-compliant' ? 'error' : 'default'
+                                operationStatus === 'compliant' ? 'success' :
+                                operationStatus === 'warning' ? 'warning' :
+                                operationStatus === 'non-compliant' ? 'error' : 'default'
                               }
                               size="small"
                               sx={{ fontWeight: 600 }}
@@ -1408,7 +1518,7 @@ export default function CoolingTracking() {
                         <LinearProgress
                           variant="determinate"
                           value={getProgressValue()}
-                          color={coolingStatus === 'compliant' ? 'success' : coolingStatus === 'warning' ? 'warning' : 'error'}
+                          color={operationStatus === 'compliant' ? 'success' : operationStatus === 'warning' ? 'warning' : 'error'}
                           sx={{ height: 8, borderRadius: 4 }}
                         />
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
@@ -1418,18 +1528,18 @@ export default function CoolingTracking() {
 
                       <Alert 
                         severity={
-                          coolingStatus === 'compliant' ? 'success' :
-                          coolingStatus === 'warning' ? 'warning' :
-                          coolingStatus === 'non-compliant' ? 'error' : 'info'
+                          operationStatus === 'compliant' ? 'success' :
+                          operationStatus === 'warning' ? 'warning' :
+                          operationStatus === 'non-compliant' ? 'error' : 'info'
                         }
                       >
-                        {coolingStatus === 'compliant' && 
+                        {operationStatus === 'compliant' && 
                           'Refroidissement conforme aux règles HACCP (65°C → 10°C en moins de 6h)'}
-                        {coolingStatus === 'warning' && 
+                        {operationStatus === 'warning' && 
                           'Température finale atteinte mais délai HACCP dépassé'}
-                        {coolingStatus === 'non-compliant' && 
+                        {operationStatus === 'non-compliant' && 
                           'Refroidissement non conforme - température finale trop élevée'}
-                        {coolingStatus === 'pending' && 
+                        {operationStatus === 'pending' && 
                           'Refroidissement en cours - données incomplètes'}
                       </Alert>
                     </Card>
@@ -1539,10 +1649,10 @@ export default function CoolingTracking() {
               </Avatar>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Historique des Refroidissements
+                  Historique des Opérations
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Derniers enregistrements de suivi de refroidissement HACCP
+                  Derniers enregistrements de suivi des opérations HACCP
                 </Typography>
               </Box>
             </Box>
@@ -1553,6 +1663,7 @@ export default function CoolingTracking() {
                 <Table>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>Opération</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Produit</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Catégorie</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
@@ -1574,6 +1685,16 @@ export default function CoolingTracking() {
 
                       return (
                         <TableRow key={record.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body1">
+                                {operationTypes.find(op => op.value === (record.operation_type || 'cooling'))?.icon || '🧊'}
+                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {operationTypes.find(op => op.value === (record.operation_type || 'cooling'))?.label || 'Refroidissement'}
+                              </Typography>
+                            </Box>
+                          </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {record.product_name}
@@ -1763,15 +1884,57 @@ export default function CoolingTracking() {
             </Avatar>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Modification de l&apos;Enregistrement
+                {operationTypes.find(op => op.value === editFormData.operation_type)?.icon} Modification - {operationTypes.find(op => op.value === editFormData.operation_type)?.label}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Traçabilité du processus de refroidissement HACCP
+                {operationTypes.find(op => op.value === editFormData.operation_type)?.description}
               </Typography>
             </Box>
           </DialogTitle>
           <DialogContent sx={{ p: 4 }}>
             <Box component="form" onSubmit={handleUpdate} sx={{ mt: 2 }}>
+              {/* Sélection du type d'opération */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Type d&apos;opération *
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                  {operationTypes.map((operation) => (
+                    <Card
+                      key={operation.value}
+                      sx={{
+                        cursor: 'pointer',
+                        border: editFormData.operation_type === operation.value ? '2px solid #2196f3' : '1px solid #e0e0e0',
+                        backgroundColor: editFormData.operation_type === operation.value ? '#2196f308' : 'transparent',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          boxShadow: 2,
+                          borderColor: '#2196f3'
+                        }
+                      }}
+                      onClick={() => setEditFormData({...editFormData, operation_type: operation.value})}
+                    >
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant="h5">{operation.icon}</Typography>
+                          <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {operation.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {operation.description}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              Temp: {operation.tempRange.min}°C - {operation.tempRange.max}°C
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              </Box>
+
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
                 {/* Sélection du produit alimentaire */}
                 <Box>

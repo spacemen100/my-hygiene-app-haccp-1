@@ -835,6 +835,7 @@ export type Database = {
           food_product_id: string | null
           id: string
           is_compliant: boolean | null
+          operation_type: string
           organization_id: string | null
           product_name: string
           product_type: string
@@ -852,6 +853,7 @@ export type Database = {
           food_product_id?: string | null
           id?: string
           is_compliant?: boolean | null
+          operation_type: string
           organization_id?: string | null
           product_name: string
           product_type: string
@@ -869,6 +871,7 @@ export type Database = {
           food_product_id?: string | null
           id?: string
           is_compliant?: boolean | null
+          operation_type?: string
           organization_id?: string | null
           product_name?: string
           product_type?: string
