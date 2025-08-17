@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import {
   Box,
   Card,
@@ -42,8 +43,8 @@ import {
 // Import existing components
 import AdminEmployesPage from '@/app/admin-employes/page';
 import AdminFournisseursPage from '@/app/admin-fournisseurs/page';
-import ColdStoragePage from '@/app/enceintes-froides/page';
-import AdminPlanNettoyagePage from '@/app/admin-plan-nettoyage/page';
+import AdminUnitesStockagePage from '@/app/admin-unites-stockage/page';
+import PlanNettoyagePage from '@/app/plan-nettoyage/page';
 
 type Step = 'login' | 'info' | 'users' | 'suppliers' | 'enclosures' | 'cleaning' | 'complete';
 
@@ -58,11 +59,12 @@ const steps = [
 ];
 
 export default function HACCPSetupComponent() {
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const supabase = createClientComponentClient();
   
   // Login form state
   const [email, setEmail] = useState('');
@@ -83,6 +85,80 @@ export default function HACCPSetupComponent() {
     { text: '8 caractères minimum', met: password.length >= 8 }
   ], [password]);
 
+  // Load user data if already logged in
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user?.id) {
+        try {
+          setEmail(user.email || '');
+          
+          // Get user profile data
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('first_name, last_name, organization_id')
+            .eq('id', user.id)
+            .single();
+
+          if (userError) {
+            console.error('Error loading user data:', userError);
+            return;
+          }
+
+          if (userData) {
+            setFirstName(userData.first_name || '');
+            setLastName(userData.last_name || '');
+            
+            // Get organization data
+            if (userData.organization_id) {
+              const { data: orgData, error: orgError } = await supabase
+                .from('organizations')
+                .select('name, activity_sector_id')
+                .eq('id', userData.organization_id)
+                .single();
+
+              if (orgData) {
+                setEstablishmentName(orgData.name || '');
+                
+                // Get activity sector
+                if (orgData.activity_sector_id) {
+                  const { data: sectorData, error: sectorError } = await supabase
+                    .from('activity_sectors')
+                    .select('name')
+                    .eq('id', orgData.activity_sector_id)
+                    .single();
+                    
+                  if (sectorData) {
+                    // Map sector names to select values
+                    const sectorMapping: { [key: string]: string } = {
+                      'Restaurant': 'restaurant',
+                      'Boulangerie / pâtisserie': 'boulangerie-patisserie',
+                      'Boucherie / charcuterie': 'boucherie-charcuterie',
+                      'Restauration collective': 'restauration-collective',
+                      'Crèches': 'creches',
+                      'Franchises et réseaux': 'franchises-reseaux'
+                    };
+                    
+                    const mappedValue = sectorMapping[sectorData.name] || sectorData.name.toLowerCase().replace(/\s+/g, '-');
+                    setActivitySector(mappedValue);
+                  }
+                }
+              }
+            }
+            
+            // If user already has data, skip to info step
+            if (userData.first_name && userData.last_name) {
+              setCurrentStep('info');
+            }
+          }
+        } catch (error) {
+          console.error('Error loading user data:', error);
+        }
+      }
+    };
+
+    loadUserData();
+  }, [user, supabase]);
+
 
   const handleNext = useCallback(async () => {
     setLoading(true);
@@ -90,6 +166,12 @@ export default function HACCPSetupComponent() {
 
     try {
       if (currentStep === 'login') {
+        // If user is already logged in, just go to next step
+        if (user?.id) {
+          setCurrentStep('info');
+          return;
+        }
+        
         if (!email || !password) {
           setError('Veuillez remplir tous les champs');
           return;
@@ -99,13 +181,117 @@ export default function HACCPSetupComponent() {
           return;
         }
         
-        await signUp(email, password);
+        const { error: signUpError } = await signUp(email, password);
+        if (signUpError) {
+          setError(signUpError.message);
+          return;
+        }
         setCurrentStep('info');
       } else if (currentStep === 'info') {
         if (!firstName || !lastName || !establishmentName || !activitySector) {
           setError('Veuillez remplir tous les champs');
           return;
         }
+        
+        // Save user information to database
+        if (user?.id) {
+          try {
+            // First, update user profile
+            const { error: userUpdateError } = await supabase
+              .from('users')
+              .update({ 
+                first_name: firstName, 
+                last_name: lastName 
+              })
+              .eq('id', user.id);
+              
+            if (userUpdateError) {
+              setError('Erreur lors de la sauvegarde des informations utilisateur');
+              return;
+            }
+
+            // Handle activity sector
+            let activitySectorId = null;
+            if (activitySector) {
+              // Map select values to full names
+              const sectorNameMapping: { [key: string]: string } = {
+                'restaurant': 'Restaurant',
+                'boulangerie-patisserie': 'Boulangerie / pâtisserie',
+                'boucherie-charcuterie': 'Boucherie / charcuterie',
+                'restauration-collective': 'Restauration collective',
+                'creches': 'Crèches',
+                'franchises-reseaux': 'Franchises et réseaux'
+              };
+              
+              const fullSectorName = sectorNameMapping[activitySector] || activitySector;
+              
+              // First check if the activity sector already exists
+              const { data: existingSector } = await supabase
+                .from('activity_sectors')
+                .select('id')
+                .eq('name', fullSectorName)
+                .single();
+
+              if (existingSector) {
+                activitySectorId = existingSector.id;
+              } else {
+                // Create new activity sector
+                const { data: newSector, error: sectorError } = await supabase
+                  .from('activity_sectors')
+                  .insert({ name: fullSectorName })
+                  .select('id')
+                  .single();
+                  
+                if (sectorError) {
+                  setError('Erreur lors de la création du secteur d\'activité');
+                  return;
+                }
+                activitySectorId = newSector.id;
+              }
+            }
+
+            // Then create or update organization
+            const { data: existingOrg } = await supabase
+              .from('organizations')
+              .select('id')
+              .eq('user_id', user.id)
+              .single();
+
+            if (existingOrg) {
+              // Update existing organization
+              const { error: orgUpdateError } = await supabase
+                .from('organizations')
+                .update({ 
+                  name: establishmentName,
+                  activity_sector_id: activitySectorId
+                })
+                .eq('id', existingOrg.id);
+                
+              if (orgUpdateError) {
+                setError('Erreur lors de la mise à jour de l\'établissement');
+                return;
+              }
+            } else {
+              // Create new organization
+              const { error: orgCreateError } = await supabase
+                .from('organizations')
+                .insert({
+                  name: establishmentName,
+                  user_id: user.id,
+                  activity_sector_id: activitySectorId
+                });
+                
+              if (orgCreateError) {
+                setError('Erreur lors de la création de l\'établissement');
+                return;
+              }
+            }
+          } catch (error) {
+            setError('Erreur lors de la sauvegarde des données');
+            return;
+          }
+        }
+        
         setCurrentStep('users');
       } else {
         // For other steps, just navigate
@@ -151,72 +337,83 @@ export default function HACCPSetupComponent() {
                   <PersonIcon fontSize="large" />
                 </Avatar>
                 <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
-                  Créer votre compte
+                  {user?.id ? 'Utilisateur connecté' : 'Créer votre compte'}
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  Commencez votre mise en conformité HACCP
+                  {user?.id ? 'Continuez votre configuration HACCP' : 'Commencez votre mise en conformité HACCP'}
                 </Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  slotProps={{
-                    input: {
-                      endAdornment: email ? (
-                        <InputAdornment position="end">
-                          <CheckCircleIconGreen color="success" />
-                        </InputAdornment>
-                      ) : undefined,
-                    }
-                  }}
-                />
-                <Box>
+              {user?.id ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Connecté en tant que: {user.email}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Cliquez sur "Suivant" pour continuer la configuration
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <TextField
                     fullWidth
-                    label="Mot de passe"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     slotProps={{
                       input: {
-                        endAdornment: (
+                        endAdornment: email ? (
                           <InputAdornment position="end">
-                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                              {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                            {password && passwordRequirements.every(req => req.met) && (
-                              <CheckCircleIconGreen color="success" sx={{ ml: 1 }} />
-                            )}
+                            <CheckCircleIconGreen color="success" />
                           </InputAdornment>
-                        ),
+                        ) : undefined,
                       }
                     }}
                   />
-                  <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-                    {passwordRequirements.map((req, index) => (
-                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CheckCircleIconGreen 
-                          sx={{ 
-                            fontSize: 16, 
-                            color: req.met ? 'success.main' : 'grey.300' 
-                          }} 
-                        />
-                        <Typography 
-                          variant="caption" 
-                          color={req.met ? 'success.main' : 'text.secondary'}
-                        >
-                          {req.text}
-                        </Typography>
-                      </Box>
-                    ))}
+                  <Box>
+                    <TextField
+                      fullWidth
+                      label="Mot de passe"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                              {password && passwordRequirements.every(req => req.met) && (
+                                <CheckCircleIconGreen color="success" sx={{ ml: 1 }} />
+                              )}
+                            </InputAdornment>
+                          ),
+                        }
+                      }}
+                    />
+                    <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                      {passwordRequirements.map((req, index) => (
+                        <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CheckCircleIconGreen 
+                            sx={{ 
+                              fontSize: 16, 
+                              color: req.met ? 'success.main' : 'grey.300' 
+                            }} 
+                          />
+                          <Typography 
+                            variant="caption" 
+                            color={req.met ? 'success.main' : 'text.secondary'}
+                          >
+                            {req.text}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
+              )}
             </CardContent>
           </Card>
         );
@@ -376,7 +573,7 @@ export default function HACCPSetupComponent() {
                   Configurez la surveillance des températures
                 </Typography>
               </Box>
-              <ColdStoragePage />
+              <AdminUnitesStockagePage />
             </CardContent>
           </Card>
         );
@@ -408,7 +605,7 @@ export default function HACCPSetupComponent() {
                   Configurez votre plan de nettoyage HACCP
                 </Typography>
               </Box>
-              <AdminPlanNettoyagePage />
+              <PlanNettoyagePage />
             </CardContent>
           </Card>
         );
