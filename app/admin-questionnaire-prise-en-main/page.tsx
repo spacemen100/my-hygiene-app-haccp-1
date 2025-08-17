@@ -45,6 +45,7 @@ import AdminEmployesPage from '@/app/admin-employes/page';
 import AdminFournisseursPage from '@/app/admin-fournisseurs/page';
 import AdminUnitesStockagePage from '@/app/admin-unites-stockage/page';
 import PlanNettoyagePage from '@/app/plan-nettoyage/page';
+import AdminOrganisationPage from '@/app/admin-organisation/page';
 
 type Step = 'login' | 'info' | 'users' | 'suppliers' | 'enclosures' | 'cleaning' | 'complete';
 
@@ -71,11 +72,9 @@ export default function HACCPSetupComponent() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  // Info form state
+  // Info form state (simplified since AdminOrganisationPage handles organization data)
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [establishmentName, setEstablishmentName] = useState('');
-  const [activitySector, setActivitySector] = useState('');
 
   // Password validation
   const passwordRequirements = React.useMemo(() => [
@@ -95,7 +94,7 @@ export default function HACCPSetupComponent() {
           // Get user profile data
           const { data: userData, error: userError } = await supabase
             .from('users')
-            .select('first_name, last_name, organization_id')
+            .select('first_name, last_name')
             .eq('id', user.id)
             .single();
 
@@ -107,43 +106,6 @@ export default function HACCPSetupComponent() {
           if (userData) {
             setFirstName(userData.first_name || '');
             setLastName(userData.last_name || '');
-            
-            // Get organization data
-            if (userData.organization_id) {
-              const { data: orgData } = await supabase
-                .from('organizations')
-                .select('name, activity_sector_id')
-                .eq('id', userData.organization_id)
-                .single();
-
-              if (orgData) {
-                setEstablishmentName(orgData.name || '');
-                
-                // Get activity sector
-                if (orgData.activity_sector_id) {
-                  const { data: sectorData } = await supabase
-                    .from('activity_sectors')
-                    .select('name')
-                    .eq('id', orgData.activity_sector_id)
-                    .single();
-                    
-                  if (sectorData) {
-                    // Map sector names to select values
-                    const sectorMapping: { [key: string]: string } = {
-                      'Restaurant': 'restaurant',
-                      'Boulangerie / pâtisserie': 'boulangerie-patisserie',
-                      'Boucherie / charcuterie': 'boucherie-charcuterie',
-                      'Restauration collective': 'restauration-collective',
-                      'Crèches': 'creches',
-                      'Franchises et réseaux': 'franchises-reseaux'
-                    };
-                    
-                    const mappedValue = sectorMapping[sectorData.name] || sectorData.name.toLowerCase().replace(/\s+/g, '-');
-                    setActivitySector(mappedValue);
-                  }
-                }
-              }
-            }
             
             // If user already has data, skip to info step
             if (userData.first_name && userData.last_name) {
@@ -188,141 +150,7 @@ export default function HACCPSetupComponent() {
         }
         setCurrentStep('info');
       } else if (currentStep === 'info') {
-        if (!firstName || !lastName || !establishmentName || !activitySector) {
-          setError('Veuillez remplir tous les champs');
-          return;
-        }
-        
-        // Save user information to database
-        if (user?.id) {
-          try {
-            // First, update user profile
-            const { error: userUpdateError } = await supabase
-              .from('users')
-              .update({ 
-                first_name: firstName, 
-                last_name: lastName 
-              })
-              .eq('id', user.id);
-              
-            if (userUpdateError) {
-              setError('Erreur lors de la sauvegarde des informations utilisateur');
-              return;
-            }
-
-            // Handle activity sector
-            let activitySectorId = null;
-            if (activitySector) {
-              console.log('Processing activity sector:', activitySector);
-              
-              // Map select values to full names
-              const sectorNameMapping: { [key: string]: string } = {
-                'restaurant': 'Restaurant',
-                'boulangerie-patisserie': 'Boulangerie / pâtisserie',
-                'boucherie-charcuterie': 'Boucherie / charcuterie',
-                'restauration-collective': 'Restauration collective',
-                'creches': 'Crèches',
-                'franchises-reseaux': 'Franchises et réseaux'
-              };
-              
-              const fullSectorName = sectorNameMapping[activitySector] || activitySector;
-              console.log('Full sector name:', fullSectorName);
-              
-              // First check if the activity sector already exists
-              const { data: existingSector, error: sectorLookupError } = await supabase
-                .from('activity_sectors')
-                .select('id')
-                .eq('name', fullSectorName)
-                .single();
-
-              if (sectorLookupError && sectorLookupError.code !== 'PGRST116') {
-                console.error('Error looking up sector:', sectorLookupError);
-                setError('Erreur lors de la recherche du secteur d\'activité');
-                return;
-              }
-
-              if (existingSector) {
-                console.log('Using existing sector:', existingSector.id);
-                activitySectorId = existingSector.id;
-              } else {
-                console.log('Creating new sector:', fullSectorName);
-                // Create new activity sector
-                const { data: newSector, error: sectorError } = await supabase
-                  .from('activity_sectors')
-                  .insert({ name: fullSectorName })
-                  .select('id')
-                  .single();
-                  
-                if (sectorError) {
-                  console.error('Error creating sector:', sectorError);
-                  setError(`Erreur lors de la création du secteur d'activité: ${sectorError.message}`);
-                  return;
-                }
-                console.log('Created new sector:', newSector);
-                activitySectorId = newSector.id;
-              }
-            }
-            
-            console.log('Final activitySectorId:', activitySectorId);
-
-            // Then create or update organization
-            console.log('Looking for existing organization for user:', user.id);
-            const { data: existingOrg, error: orgLookupError } = await supabase
-              .from('organizations')
-              .select('id')
-              .eq('user_id', user.id)
-              .single();
-
-            if (orgLookupError && orgLookupError.code !== 'PGRST116') {
-              console.error('Error looking up organization:', orgLookupError);
-              setError('Erreur lors de la recherche de l\'organisation');
-              return;
-            }
-
-            if (existingOrg) {
-              console.log('Updating existing organization:', existingOrg.id);
-              // Update existing organization
-              const { error: orgUpdateError } = await supabase
-                .from('organizations')
-                .update({ 
-                  name: establishmentName,
-                  activity_sector_id: activitySectorId
-                })
-                .eq('id', existingOrg.id);
-                
-              if (orgUpdateError) {
-                console.error('Error updating organization:', orgUpdateError);
-                setError(`Erreur lors de la mise à jour de l'établissement: ${orgUpdateError.message}`);
-                return;
-              }
-              console.log('Organization updated successfully');
-            } else {
-              console.log('Creating new organization for user:', user.id);
-              // Create new organization
-              const { data: newOrg, error: orgCreateError } = await supabase
-                .from('organizations')
-                .insert({
-                  name: establishmentName,
-                  user_id: user.id,
-                  activity_sector_id: activitySectorId
-                })
-                .select('id')
-                .single();
-                
-              if (orgCreateError) {
-                console.error('Error creating organization:', orgCreateError);
-                setError(`Erreur lors de la création de l'établissement: ${orgCreateError.message}`);
-                return;
-              }
-              console.log('Organization created successfully:', newOrg);
-            }
-          } catch (err) {
-            console.error('Error saving data:', err);
-            setError('Erreur lors de la sauvegarde des données');
-            return;
-          }
-        }
-        
+        // L'étape info utilise maintenant AdminOrganisationPage qui gère sa propre sauvegarde
         setCurrentStep('users');
       } else {
         // For other steps, just navigate
@@ -337,7 +165,7 @@ export default function HACCPSetupComponent() {
     } finally {
       setLoading(false);
     }
-  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, establishmentName, activitySector, user, supabase]);
+  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, user, supabase]);
 
   const handlePrevious = useCallback(() => {
     const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
@@ -452,63 +280,31 @@ export default function HACCPSetupComponent() {
       case 'info':
         return (
           <Card>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ 
+                textAlign: 'center', 
+                mb: 3,
+                p: 3,
+                bgcolor: 'secondary.50',
+                borderRadius: 2
+              }}>
                 <Avatar sx={{ 
-                  width: 64, 
-                  height: 64, 
+                  width: 48, 
+                  height: 48, 
                   bgcolor: 'secondary.main', 
                   mx: 'auto', 
                   mb: 2 
                 }}>
-                  <BusinessIcon fontSize="large" />
+                  <BusinessIcon />
                 </Avatar>
-                <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
-                  Informations sur l&apos;établissement
+                <Typography variant="h5" fontWeight={600} gutterBottom>
+                  Configuration de l&apos;organisation
                 </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Configurez les informations de votre établissement
+                <Typography variant="body2" color="text.secondary">
+                  Gérez les informations de votre organisation
                 </Typography>
               </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                  <TextField
-                    label="Prénom"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                  <TextField
-                    label="Nom"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </Box>
-                <TextField
-                  fullWidth
-                  label="Nom de l&apos;établissement"
-                  value={establishmentName}
-                  onChange={(e) => setEstablishmentName(e.target.value)}
-                />
-                <FormControl fullWidth>
-                  <InputLabel>Secteur d&apos;activité</InputLabel>
-                  <Select
-                    value={activitySector}
-                    onChange={(e) => setActivitySector(e.target.value)}
-                    label="Secteur d&apos;activité"
-                  >
-                    <MenuItem value="">
-                      <em>Sélectionnez un secteur</em>
-                    </MenuItem>
-                    <MenuItem value="restaurant">Restaurant</MenuItem>
-                    <MenuItem value="boulangerie-patisserie">Boulangerie / pâtisserie</MenuItem>
-                    <MenuItem value="boucherie-charcuterie">Boucherie / charcuterie</MenuItem>
-                    <MenuItem value="restauration-collective">Restauration collective</MenuItem>
-                    <MenuItem value="creches">Crèches</MenuItem>
-                    <MenuItem value="franchises-reseaux">Franchises et réseaux</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+              <AdminOrganisationPage />
             </CardContent>
           </Card>
         );
