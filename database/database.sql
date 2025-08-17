@@ -226,6 +226,7 @@ CREATE TABLE public.cooling_records (
   updated_at timestamp with time zone DEFAULT now(),
   employee_id uuid,
   food_product_id uuid,
+  operation_type character varying NOT NULL DEFAULT 'cooling'::character varying CHECK (operation_type::text = ANY (ARRAY['cold_preparation'::character varying, 'cooling'::character varying, 'hot_preparation'::character varying, 'hot_serving'::character varying, 'reheating'::character varying]::text[])),
   CONSTRAINT cooling_records_pkey PRIMARY KEY (id),
   CONSTRAINT cooling_records_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT cooling_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),

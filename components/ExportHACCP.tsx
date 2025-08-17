@@ -48,6 +48,12 @@ import {
   CheckCircle as CheckIcon,
   Download as DownloadIcon,
   Email as EmailIcon,
+  Assignment as ChecklistIcon,
+  Sensors as SensorIcon,
+  Kitchen as OilIcon,
+  Build as EquipmentIcon,
+  Warning as ActionIcon,
+  AcUnit as ColdStorageIcon,
 } from '@mui/icons-material';
 
 interface ModuleSelection {
@@ -57,6 +63,12 @@ interface ModuleSelection {
   enceintesFroides: boolean;
   suiviRefroidissement: boolean;
   planNettoyage: boolean;
+  checklists: boolean;
+  controleHuile: boolean;
+  capteursTemperature: boolean;
+  stockageFroide: boolean;
+  equipements: boolean;
+  actionsCorrectives: boolean;
 }
 
 interface HACCPReportData {
@@ -75,6 +87,12 @@ interface HACCPReportData {
   temperatureControls?: TruckTemperatureControl[];
   coolingTracking?: CoolingRecord[];
   cleaningPlan?: (CleaningTask | CleaningRecord)[];
+  checklists?: any[];
+  oilControls?: any[];
+  temperatureSensors?: any[];
+  coldStorageUnits?: any[];
+  equipments?: any[];
+  correctiveActions?: any[];
 }
 
 export default function ExportHACCP() {
@@ -90,6 +108,12 @@ export default function ExportHACCP() {
     enceintesFroides: true,
     suiviRefroidissement: true,
     planNettoyage: true,
+    checklists: true,
+    controleHuile: true,
+    capteursTemperature: true,
+    stockageFroide: true,
+    equipements: true,
+    actionsCorrectives: true,
   });
   const [emailRecipients, setEmailRecipients] = useState('');
   const [customMessage, setCustomMessage] = useState(
@@ -128,6 +152,36 @@ export default function ExportHACCP() {
       key: 'planNettoyage' as keyof ModuleSelection,
       label: 'PLAN DE NETTOYAGE',
       icon: <SprayCanIcon />,
+    },
+    {
+      key: 'checklists' as keyof ModuleSelection,
+      label: 'CHECKLISTS ET EXÉCUTIONS',
+      icon: <ChecklistIcon />,
+    },
+    {
+      key: 'controleHuile' as keyof ModuleSelection,
+      label: 'CONTRÔLE QUALITÉ HUILE',
+      icon: <OilIcon />,
+    },
+    {
+      key: 'capteursTemperature' as keyof ModuleSelection,
+      label: 'CAPTEURS DE TEMPÉRATURE',
+      icon: <SensorIcon />,
+    },
+    {
+      key: 'stockageFroide' as keyof ModuleSelection,
+      label: 'STOCKAGE RÉFRIGÉRÉ',
+      icon: <ColdStorageIcon />,
+    },
+    {
+      key: 'equipements' as keyof ModuleSelection,
+      label: 'ÉQUIPEMENTS',
+      icon: <EquipmentIcon />,
+    },
+    {
+      key: 'actionsCorrectives' as keyof ModuleSelection,
+      label: 'ACTIONS CORRECTIVES',
+      icon: <ActionIcon />,
     },
   ];
 
@@ -259,6 +313,137 @@ export default function ExportHACCP() {
     }
   }, [employee?.organization_id]);
 
+  const fetchChecklists = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const { data, error } = await supabase
+        .from('checklist_executions')
+        .select(`
+          *,
+          checklist:checklists(*),
+          checklist_item:checklist_items(*)
+        `)
+        .gte('execution_date', startDate.toISOString())
+        .lte('execution_date', endDate.toISOString())
+        .eq('organization_id', employee?.organization_id);
+
+      if (error) {
+        console.warn('Erreur lors de la récupération des checklists:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('Erreur lors de la récupération des checklists:', err);
+      return [];
+    }
+  }, [employee?.organization_id]);
+
+  const fetchOilControls = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const { data, error } = await supabase
+        .from('oil_controls')
+        .select(`
+          *,
+          readings:oil_equipment_readings(*)
+        `)
+        .gte('reading_date', startDate.toISOString())
+        .lte('reading_date', endDate.toISOString())
+        .eq('organization_id', employee?.organization_id);
+
+      if (error) {
+        console.warn('Erreur lors de la récupération des contrôles huile:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('Erreur lors de la récupération des contrôles huile:', err);
+      return [];
+    }
+  }, [employee?.organization_id]);
+
+  const fetchTemperatureSensors = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const { data, error } = await supabase
+        .from('sensor_temperature_readings')
+        .select(`
+          *,
+          sensor:temperature_sensors(*)
+        `)
+        .gte('reading_time', startDate.toISOString())
+        .lte('reading_time', endDate.toISOString());
+
+      if (error) {
+        console.warn('Erreur lors de la récupération des capteurs température:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('Erreur lors de la récupération des capteurs température:', err);
+      return [];
+    }
+  }, []);
+
+  const fetchColdStorageUnits = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const { data, error } = await supabase
+        .from('cold_storage_temperature_readings')
+        .select(`
+          *,
+          cold_storage_unit:cold_storage_units(*)
+        `)
+        .gte('reading_date', startDate.toISOString())
+        .lte('reading_date', endDate.toISOString());
+
+      if (error) {
+        console.warn('Erreur lors de la récupération du stockage réfrigéré:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('Erreur lors de la récupération du stockage réfrigéré:', err);
+      return [];
+    }
+  }, []);
+
+  const fetchEquipments = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const { data, error } = await supabase
+        .from('equipments')
+        .select('*')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
+        .eq('organization_id', employee?.organization_id);
+
+      if (error) {
+        console.warn('Erreur lors de la récupération des équipements:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('Erreur lors de la récupération des équipements:', err);
+      return [];
+    }
+  }, [employee?.organization_id]);
+
+  const fetchCorrectiveActions = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const { data, error } = await supabase
+        .from('corrective_actions')
+        .select('*')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
+        .eq('organization_id', employee?.organization_id);
+
+      if (error) {
+        console.warn('Erreur lors de la récupération des actions correctives:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('Erreur lors de la récupération des actions correctives:', err);
+      return [];
+    }
+  }, [employee?.organization_id]);
+
   const generateHACCPReport = useCallback(async (): Promise<HACCPReportData | null> => {
     if (!startDate || !endDate || !employee?.organization_id) {
       enqueueSnackbar('Veuillez sélectionner une période valide', { variant: 'error' });
@@ -320,6 +505,30 @@ export default function ExportHACCP() {
         fetchPromises.push(fetchCleaningPlan(startDate, endDate).then(data => ({ cleaningPlan: data })));
       }
 
+      if (selectedModules.checklists) {
+        fetchPromises.push(fetchChecklists(startDate, endDate).then(data => ({ checklists: data })));
+      }
+
+      if (selectedModules.controleHuile) {
+        fetchPromises.push(fetchOilControls(startDate, endDate).then(data => ({ oilControls: data })));
+      }
+
+      if (selectedModules.capteursTemperature) {
+        fetchPromises.push(fetchTemperatureSensors(startDate, endDate).then(data => ({ temperatureSensors: data })));
+      }
+
+      if (selectedModules.stockageFroide) {
+        fetchPromises.push(fetchColdStorageUnits(startDate, endDate).then(data => ({ coldStorageUnits: data })));
+      }
+
+      if (selectedModules.equipements) {
+        fetchPromises.push(fetchEquipments(startDate, endDate).then(data => ({ equipments: data })));
+      }
+
+      if (selectedModules.actionsCorrectives) {
+        fetchPromises.push(fetchCorrectiveActions(startDate, endDate).then(data => ({ correctiveActions: data })));
+      }
+
       const results = await Promise.allSettled(fetchPromises);
       
       // Fusion des résultats (seulement ceux qui ont réussi)
@@ -337,7 +546,7 @@ export default function ExportHACCP() {
       enqueueSnackbar('Erreur lors de la récupération des données', { variant: 'error' });
       return null;
     }
-  }, [startDate, endDate, selectedModules, employee, fetchDeliveries, fetchLabels, fetchDLCPrints, fetchTemperatureControls, fetchCoolingTracking, fetchCleaningPlan, enqueueSnackbar]);
+  }, [startDate, endDate, selectedModules, employee, fetchDeliveries, fetchLabels, fetchDLCPrints, fetchTemperatureControls, fetchCoolingTracking, fetchCleaningPlan, fetchChecklists, fetchOilControls, fetchTemperatureSensors, fetchColdStorageUnits, fetchEquipments, fetchCorrectiveActions, enqueueSnackbar]);
 
   const generatePDF = (data: HACCPReportData): jsPDF => {
     const doc = new jsPDF();
@@ -604,14 +813,151 @@ export default function ExportHACCP() {
       yPos += 20;
     }
 
-    // Section 5: Actions correctives recommandées
+    // Section 6: Checklists et exécutions
+    if (selectedModules.checklists && data.checklists) {
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('6. CHECKLISTS ET EXÉCUTIONS', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Exécutions de checklists : ${data.checklists.length}`, 20, yPos);
+      
+      const completedChecklists = data.checklists.filter((item: any) => item.is_completed);
+      const completionRate = data.checklists.length > 0 ? 
+        (completedChecklists.length / data.checklists.length * 100).toFixed(1) : '0.0';
+      
+      yPos += 10;
+      doc.text(`Taux de completion : ${completionRate}%`, 20, yPos);
+      yPos += 20;
+    }
+
+    // Section 7: Contrôle qualité huile
+    if (selectedModules.controleHuile && data.oilControls) {
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('7. CONTRÔLE QUALITÉ HUILE', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Contrôles d'huile effectués : ${data.oilControls.length}`, 20, yPos);
+      
+      const compliantOilControls = data.oilControls.filter((control: any) => 
+        control.readings?.some((reading: any) => reading.is_compliant)
+      );
+      const oilComplianceRate = data.oilControls.length > 0 ? 
+        (compliantOilControls.length / data.oilControls.length * 100).toFixed(1) : '0.0';
+      
+      yPos += 10;
+      doc.text(`Taux de conformité : ${oilComplianceRate}%`, 20, yPos);
+      yPos += 20;
+    }
+
+    // Section 8: Capteurs de température
+    if (selectedModules.capteursTemperature && data.temperatureSensors) {
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('8. CAPTEURS DE TEMPÉRATURE', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Relevés de capteurs : ${data.temperatureSensors.length}`, 20, yPos);
+      
+      const alertReadings = data.temperatureSensors.filter((reading: any) => reading.is_alert);
+      yPos += 10;
+      doc.text(`Alertes déclenchées : ${alertReadings.length}`, 20, yPos);
+      yPos += 20;
+    }
+
+    // Section 9: Stockage réfrigéré
+    if (selectedModules.stockageFroide && data.coldStorageUnits) {
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('9. STOCKAGE RÉFRIGÉRÉ', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Relevés de stockage réfrigéré : ${data.coldStorageUnits.length}`, 20, yPos);
+      
+      const compliantStorageReadings = data.coldStorageUnits.filter((reading: any) => reading.is_compliant);
+      const storageComplianceRate = data.coldStorageUnits.length > 0 ? 
+        (compliantStorageReadings.length / data.coldStorageUnits.length * 100).toFixed(1) : '0.0';
+      
+      yPos += 10;
+      doc.text(`Taux de conformité : ${storageComplianceRate}%`, 20, yPos);
+      yPos += 20;
+    }
+
+    // Section 10: Équipements
+    if (selectedModules.equipements && data.equipments) {
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('10. ÉQUIPEMENTS', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Équipements enregistrés : ${data.equipments.length}`, 20, yPos);
+      
+      const activeEquipments = data.equipments.filter((equipment: any) => equipment.equipment_state);
+      yPos += 10;
+      doc.text(`Équipements actifs : ${activeEquipments.length}`, 20, yPos);
+      yPos += 20;
+    }
+
+    // Section 11: Actions correctives
+    if (selectedModules.actionsCorrectives && data.correctiveActions) {
+      checkPageBreak(40);
+      
+      doc.setFillColor(secondaryColor);
+      doc.rect(10, yPos - 5, 190, 15, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('11. ACTIONS CORRECTIVES', 15, yPos + 5);
+      
+      yPos += 25;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Actions correctives définies : ${data.correctiveActions.length}`, 20, yPos);
+      
+      const activeActions = data.correctiveActions.filter((action: any) => action.is_active);
+      yPos += 10;
+      doc.text(`Actions actives : ${activeActions.length}`, 20, yPos);
+      yPos += 20;
+    }
+
+    // Section 12: Actions correctives recommandées
     checkPageBreak(40);
     
     doc.setFillColor(secondaryColor);
     doc.rect(10, yPos - 5, 190, 15, 'F');
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('5. ACTIONS CORRECTIVES RECOMMANDÉES', 15, yPos + 5);
+    doc.text('12. ACTIONS CORRECTIVES RECOMMANDÉES', 15, yPos + 5);
     
     yPos += 25;
     doc.setFontSize(12);
