@@ -316,7 +316,8 @@ export default function HACCPSetupComponent() {
               }
               console.log('Organization created successfully:', newOrg);
             }
-          } catch (error) {
+          } catch (err) {
+            console.error('Error saving data:', err);
             setError('Erreur lors de la sauvegarde des données');
             return;
           }
@@ -336,7 +337,7 @@ export default function HACCPSetupComponent() {
     } finally {
       setLoading(false);
     }
-  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, establishmentName, activitySector]);
+  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, establishmentName, activitySector, user, supabase]);
 
   const handlePrevious = useCallback(() => {
     const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];
@@ -485,7 +486,7 @@ export default function HACCPSetupComponent() {
                 </Box>
                 <TextField
                   fullWidth
-                  label="Nom de l'établissement"
+                  label="Nom de l&apos;établissement"
                   value={establishmentName}
                   onChange={(e) => setEstablishmentName(e.target.value)}
                 />
@@ -494,7 +495,7 @@ export default function HACCPSetupComponent() {
                   <Select
                     value={activitySector}
                     onChange={(e) => setActivitySector(e.target.value)}
-                    label="Secteur d'activité"
+                    label="Secteur d&apos;activité"
                   >
                     <MenuItem value="">
                       <em>Sélectionnez un secteur</em>
