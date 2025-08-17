@@ -110,7 +110,7 @@ export default function HACCPSetupComponent() {
             
             // Get organization data
             if (userData.organization_id) {
-              const { data: orgData, error: orgError } = await supabase
+              const { data: orgData } = await supabase
                 .from('organizations')
                 .select('name, activity_sector_id')
                 .eq('id', userData.organization_id)
@@ -121,7 +121,7 @@ export default function HACCPSetupComponent() {
                 
                 // Get activity sector
                 if (orgData.activity_sector_id) {
-                  const { data: sectorData, error: sectorError } = await supabase
+                  const { data: sectorData } = await supabase
                     .from('activity_sectors')
                     .select('name')
                     .eq('id', orgData.activity_sector_id)
@@ -213,6 +213,8 @@ export default function HACCPSetupComponent() {
             // Handle activity sector
             let activitySectorId = null;
             if (activitySector) {
+              console.log('Processing activity sector:', activitySector);
+              
               // Map select values to full names
               const sectorNameMapping: { [key: string]: string } = {
                 'restaurant': 'Restaurant',
@@ -224,17 +226,26 @@ export default function HACCPSetupComponent() {
               };
               
               const fullSectorName = sectorNameMapping[activitySector] || activitySector;
+              console.log('Full sector name:', fullSectorName);
               
               // First check if the activity sector already exists
-              const { data: existingSector } = await supabase
+              const { data: existingSector, error: sectorLookupError } = await supabase
                 .from('activity_sectors')
                 .select('id')
                 .eq('name', fullSectorName)
                 .single();
 
+              if (sectorLookupError && sectorLookupError.code !== 'PGRST116') {
+                console.error('Error looking up sector:', sectorLookupError);
+                setError('Erreur lors de la recherche du secteur d\'activité');
+                return;
+              }
+
               if (existingSector) {
+                console.log('Using existing sector:', existingSector.id);
                 activitySectorId = existingSector.id;
               } else {
+                console.log('Creating new sector:', fullSectorName);
                 // Create new activity sector
                 const { data: newSector, error: sectorError } = await supabase
                   .from('activity_sectors')
@@ -243,21 +254,33 @@ export default function HACCPSetupComponent() {
                   .single();
                   
                 if (sectorError) {
-                  setError('Erreur lors de la création du secteur d\'activité');
+                  console.error('Error creating sector:', sectorError);
+                  setError(`Erreur lors de la création du secteur d'activité: ${sectorError.message}`);
                   return;
                 }
+                console.log('Created new sector:', newSector);
                 activitySectorId = newSector.id;
               }
             }
+            
+            console.log('Final activitySectorId:', activitySectorId);
 
             // Then create or update organization
-            const { data: existingOrg } = await supabase
+            console.log('Looking for existing organization for user:', user.id);
+            const { data: existingOrg, error: orgLookupError } = await supabase
               .from('organizations')
               .select('id')
               .eq('user_id', user.id)
               .single();
 
+            if (orgLookupError && orgLookupError.code !== 'PGRST116') {
+              console.error('Error looking up organization:', orgLookupError);
+              setError('Erreur lors de la recherche de l\'organisation');
+              return;
+            }
+
             if (existingOrg) {
+              console.log('Updating existing organization:', existingOrg.id);
               // Update existing organization
               const { error: orgUpdateError } = await supabase
                 .from('organizations')
@@ -268,23 +291,30 @@ export default function HACCPSetupComponent() {
                 .eq('id', existingOrg.id);
                 
               if (orgUpdateError) {
-                setError('Erreur lors de la mise à jour de l\'établissement');
+                console.error('Error updating organization:', orgUpdateError);
+                setError(`Erreur lors de la mise à jour de l'établissement: ${orgUpdateError.message}`);
                 return;
               }
+              console.log('Organization updated successfully');
             } else {
+              console.log('Creating new organization for user:', user.id);
               // Create new organization
-              const { error: orgCreateError } = await supabase
+              const { data: newOrg, error: orgCreateError } = await supabase
                 .from('organizations')
                 .insert({
                   name: establishmentName,
                   user_id: user.id,
                   activity_sector_id: activitySectorId
-                });
+                })
+                .select('id')
+                .single();
                 
               if (orgCreateError) {
-                setError('Erreur lors de la création de l\'établissement');
+                console.error('Error creating organization:', orgCreateError);
+                setError(`Erreur lors de la création de l'établissement: ${orgCreateError.message}`);
                 return;
               }
+              console.log('Organization created successfully:', newOrg);
             }
           } catch (error) {
             setError('Erreur lors de la sauvegarde des données');
