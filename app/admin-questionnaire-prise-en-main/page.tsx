@@ -381,7 +381,7 @@ export default function HACCPSetupComponent() {
                     Connecté en tant que: {user.email}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Cliquez sur "Suivant" pour continuer la configuration
+                    Cliquez sur &quot;Suivant&quot; pour continuer la configuration
                   </Typography>
                 </Box>
               ) : (
