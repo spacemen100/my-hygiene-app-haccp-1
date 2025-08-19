@@ -8,7 +8,7 @@ import { useAuth } from '@/components/AuthProvider';
 export function useOrganizationCheck() {
   const [hasOrganization, setHasOrganization] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const { user, session } = useAuth();
+  const { user, session, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -21,14 +21,26 @@ export function useOrganizationCheck() {
 
   useEffect(() => {
     const checkOrganization = async () => {
+      console.log('[useOrganizationCheck] Début de vérification - pathname:', pathname, 'user:', !!user, 'session:', !!session);
+      
       // Si on est sur une page exclue, pas besoin de vérifier
       if (excludedPages.includes(pathname)) {
+        console.log('[useOrganizationCheck] Page exclue détectée, permettre l\'accès');
         setHasOrganization(true); // Permettre l'accès
         setLoading(false);
         return;
       }
 
+      // Si l'auth est en cours de chargement, attendre
+      if (authLoading) {
+        console.log('[useOrganizationCheck] Authentification en cours de chargement...');
+        return;
+      }
+
+      // Si pas d'utilisateur après le chargement de l'auth, l'utilisateur n'est pas connecté
       if (!user?.id || !session) {
+        console.log('[useOrganizationCheck] Utilisateur non connecté après chargement auth');
+        setHasOrganization(false);
         setLoading(false);
         return;
       }
@@ -53,8 +65,10 @@ export function useOrganizationCheck() {
         if (!employee?.organization_id) {
           // Aucune organisation trouvée, rediriger vers le questionnaire
           console.log('[useOrganizationCheck] Aucune organisation trouvée pour l\'utilisateur - redirection vers questionnaire');
+          console.log('[useOrganizationCheck] Données employé:', employee);
           setHasOrganization(false);
           setLoading(false);
+          console.log('[useOrganizationCheck] Tentative de redirection vers /admin-questionnaire-prise-en-main');
           router.push('/admin-questionnaire-prise-en-main');
           return;
         }
@@ -90,7 +104,7 @@ export function useOrganizationCheck() {
     };
 
     checkOrganization();
-  }, [user?.id, session, router, pathname]);
+  }, [user?.id, session, router, pathname, authLoading]);
 
   return { hasOrganization, loading };
 }
