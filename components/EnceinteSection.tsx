@@ -182,7 +182,7 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
           </Box>
         </Box>
 
-        {/* Alerte pour lectures hors limites */}
+        {/* Alerte détaillée pour lectures hors limites */}
         {stats.hasAlerts && (
           <Box sx={{ p: 3, pt: 0 }}>
             <Alert 
@@ -194,9 +194,31 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                 '& .MuiAlert-icon': { color: 'warning.light' }
               }}
             >
-              <Typography variant="body2">
-                <strong>{stats.outOfBoundsReadings}</strong> lecture{stats.outOfBoundsReadings > 1 ? 's' : ''} récente{stats.outOfBoundsReadings > 1 ? 's' : ''} hors limites détectée{stats.outOfBoundsReadings > 1 ? 's' : ''}
+              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                ⚠️ Alerte Température Détectée
               </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>{stats.outOfBoundsReadings}</strong> lecture{stats.outOfBoundsReadings > 1 ? 's' : ''} récente{stats.outOfBoundsReadings > 1 ? 's' : ''} hors de la plage autorisée ({unit.min_temperature}°C - {unit.max_temperature}°C)
+              </Typography>
+              {unitReadings.slice(0, 3).filter(r => r.temperature < unit.min_temperature || r.temperature > unit.max_temperature).map((reading) => {
+                const tempDiff = reading.temperature < unit.min_temperature 
+                  ? (unit.min_temperature - reading.temperature)
+                  : (reading.temperature - unit.max_temperature);
+                const alertType = reading.temperature < unit.min_temperature ? 'trop froide' : 'trop chaude';
+                return (
+                  <Box key={reading.id} sx={{ mt: 1, p: 1, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 1 }}>
+                    <Typography variant="caption" sx={{ display: 'block' }}>
+                      📅 {new Date(reading.reading_date).toLocaleString('fr-FR')} - 
+                      🌡️ {reading.temperature}°C ({alertType} de {tempDiff.toFixed(1)}°C)
+                    </Typography>
+                  </Box>
+                );
+              })}
+              {stats.outOfBoundsReadings > 3 && (
+                <Typography variant="caption" sx={{ mt: 1, display: 'block', fontStyle: 'italic' }}>
+                  ... et {stats.outOfBoundsReadings - 3} autre{stats.outOfBoundsReadings - 3 > 1 ? 's' : ''} lecture{stats.outOfBoundsReadings - 3 > 1 ? 's' : ''} hors limites
+                </Typography>
+              )}
             </Alert>
           </Box>
         )}
@@ -209,12 +231,20 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                 <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main' }}>
                   <ShowChart />
                 </Avatar>
-                <Box>
+                <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     Évolution des Températures
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Dernières 20 lectures
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    🔴 Points rouges : Hors limites
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    🔵 Points bleus : Conformes
                   </Typography>
                 </Box>
               </Box>
@@ -235,14 +265,32 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                       domain={[unit.min_temperature - 2, unit.max_temperature + 2]}
                     />
                     <Tooltip 
-                      formatter={(value: number, name: string, props: { payload?: { isOutOfBounds?: boolean } }) => {
+                      formatter={(value: number, name: string, props: { payload?: { isOutOfBounds?: boolean; temperature?: number } }) => {
                         const isOutOfBounds = props.payload?.isOutOfBounds;
-                        return [
-                          `${value}°C ${isOutOfBounds ? '⚠️ Hors limites' : '✅ Conforme'}`, 
-                          'Température'
-                        ];
+                        const temp = props.payload?.temperature || value;
+                        let status = '';
+                        
+                        if (isOutOfBounds) {
+                          if (temp < unit.min_temperature) {
+                            const diff = unit.min_temperature - temp;
+                            status = `⚠️ Trop froid (${diff.toFixed(1)}°C sous la limite)`;
+                          } else if (temp > unit.max_temperature) {
+                            const diff = temp - unit.max_temperature;
+                            status = `⚠️ Trop chaud (${diff.toFixed(1)}°C au-dessus de la limite)`;
+                          }
+                        } else {
+                          status = '✅ Température conforme';
+                        }
+                        
+                        return [`${value}°C - ${status}`, 'Température'];
                       }}
-                      labelFormatter={(label: string) => `Temps: ${label}`}
+                      labelFormatter={(label: string) => `📅 ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: 'white'
+                      }}
                     />
                     
                     {/* Lignes de référence */}
@@ -382,13 +430,23 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                               </Box>
                             </TableCell>
                             <TableCell>
-                              <Chip
-                                size="small"
-                                icon={reading.is_compliant ? <CheckCircle /> : <Cancel />}
-                                label={reading.is_compliant ? 'Conforme' : 'Non conforme'}
-                                color={reading.is_compliant ? 'success' : 'error'}
-                                variant={reading.is_compliant ? 'outlined' : 'filled'}
-                              />
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <Chip
+                                  size="small"
+                                  icon={reading.is_compliant ? <CheckCircle /> : <Cancel />}
+                                  label={reading.is_compliant ? 'Conforme' : 'Non conforme'}
+                                  color={reading.is_compliant ? 'success' : 'error'}
+                                  variant={reading.is_compliant ? 'outlined' : 'filled'}
+                                />
+                                {!reading.is_compliant && (
+                                  <Typography variant="caption" color="error.main" sx={{ fontSize: '0.65rem' }}>
+                                    {reading.temperature < unit.min_temperature 
+                                      ? `Trop froid (-${(unit.min_temperature - reading.temperature).toFixed(1)}°C)`
+                                      : `Trop chaud (+${(reading.temperature - unit.max_temperature).toFixed(1)}°C)`
+                                    }
+                                  </Typography>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         );
