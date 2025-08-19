@@ -265,7 +265,7 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                       domain={[unit.min_temperature - 2, unit.max_temperature + 2]}
                     />
                     <Tooltip 
-                      formatter={(value: number, name: string, props: { payload?: { isOutOfBounds?: boolean; temperature?: number } }) => {
+                      formatter={(value: number, _name: string, props: { payload?: { isOutOfBounds?: boolean; temperature?: number } }) => {
                         const isOutOfBounds = props.payload?.isOutOfBounds;
                         const temp = props.payload?.temperature || value;
                         let status = '';

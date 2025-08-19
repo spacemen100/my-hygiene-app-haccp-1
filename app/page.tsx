@@ -11,6 +11,7 @@ import {
   ListItemText,
   Chip,
   Paper,
+  CircularProgress,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -24,8 +25,35 @@ import {
   DirectionsRun as Activity,
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { useOrganizationCheck } from '@/hooks/useOrganizationCheck';
 
 export default function Home() {
+  const { hasOrganization, loading } = useOrganizationCheck();
+
+  // Afficher un spinner pendant la vérification
+  if (loading) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '50vh',
+        flexDirection: 'column',
+        gap: 2
+      }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" color="text.secondary">
+          Vérification de votre configuration...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Si pas d'organisation, ne pas afficher la page (la redirection se fait dans le hook)
+  if (hasOrganization === false) {
+    return null;
+  }
+
   const quickStats = [
     { icon: CheckCircle, label: 'Contrôles OK', value: '24', color: '#4caf50' },
     { icon: Warning, label: 'Alertes', value: '3', color: '#ff9800' },
