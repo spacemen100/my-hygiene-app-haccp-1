@@ -141,7 +141,7 @@ export default function OilQualityControl() {
   ];
 
   // Types d'huile disponibles
-  const oilTypes = [
+  const oilTypes = useMemo(() => [
     { value: 'tournesol', label: 'Huile de tournesol', description: 'Huile végétale polyvalente' },
     { value: 'olive', label: 'Huile d\'olive', description: 'Huile d\'olive extra vierge ou raffinée' },
     { value: 'colza', label: 'Huile de colza', description: 'Huile de colza/canola' },
@@ -152,7 +152,7 @@ export default function OilQualityControl() {
     { value: 'coco', label: 'Huile de coco', description: 'Huile de coco raffinée' },
     { value: 'melange', label: 'Mélange d\'huiles', description: 'Mélange de plusieurs huiles végétales' },
     { value: 'autre', label: 'Autre type d\'huile', description: 'Autre type d\'huile non listé' }
-  ];
+  ], []);
 
   // Fetch des équipements
   const fetchEquipments = useCallback(async () => {

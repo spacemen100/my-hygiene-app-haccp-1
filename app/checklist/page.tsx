@@ -45,7 +45,6 @@ import {
   Cancel as CancelIcon,
   History as HistoryIcon,
   Visibility as ViewIcon,
-  FilterList as FilterIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   AccessTime as AccessTimeIcon,
@@ -319,22 +318,22 @@ export default function ChecklistPage() {
     }
   };
 
-  const getNextDueDate = (checklist: ChecklistWithLastExecution): Date | null => {
-    if (!checklist.lastExecution || checklist.frequency === 'on_demand') return null;
-    
-    const lastExecution = new Date(checklist.lastExecution);
-    
-    switch (checklist.frequency) {
-      case 'daily':
-        return new Date(lastExecution.getTime() + (24 * 60 * 60 * 1000));
-      case 'weekly':
-        return new Date(lastExecution.getTime() + (7 * 24 * 60 * 60 * 1000));
-      case 'monthly':
-        return new Date(lastExecution.getTime() + (30 * 24 * 60 * 60 * 1000));
-      default:
-        return null;
-    }
-  };
+  // const getNextDueDate = (checklist: ChecklistWithLastExecution): Date | null => {
+  //   if (!checklist.lastExecution || checklist.frequency === 'on_demand') return null;
+  //   
+  //   const lastExecution = new Date(checklist.lastExecution);
+  //   
+  //   switch (checklist.frequency) {
+  //     case 'daily':
+  //       return new Date(lastExecution.getTime() + (24 * 60 * 60 * 1000));
+  //     case 'weekly':
+  //       return new Date(lastExecution.getTime() + (7 * 24 * 60 * 60 * 1000));
+  //     case 'monthly':
+  //       return new Date(lastExecution.getTime() + (30 * 24 * 60 * 60 * 1000));
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   const formatLastExecution = (lastExecution: string | null | undefined) => {
     if (!lastExecution) return 'Jamais réalisée';

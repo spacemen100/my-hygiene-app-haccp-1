@@ -10,10 +10,6 @@ import {
   Typography,
   TextField,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Paper,
   Stepper,
   Step,
@@ -165,7 +161,7 @@ export default function HACCPSetupComponent() {
     } finally {
       setLoading(false);
     }
-  }, [currentStep, email, password, passwordRequirements, signUp, firstName, lastName, user, supabase]);
+  }, [currentStep, email, password, passwordRequirements, signUp, user]);
 
   const handlePrevious = useCallback(() => {
     const stepOrder: Step[] = ['login', 'info', 'users', 'suppliers', 'enclosures', 'cleaning', 'complete'];

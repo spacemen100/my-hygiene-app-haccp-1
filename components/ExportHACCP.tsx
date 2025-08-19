@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { Tables } from '../src/types/database';
 import {
   Box,
   Typography,
@@ -87,12 +88,12 @@ interface HACCPReportData {
   temperatureControls?: TruckTemperatureControl[];
   coolingTracking?: CoolingRecord[];
   cleaningPlan?: (CleaningTask | CleaningRecord)[];
-  checklists?: any[];
-  oilControls?: any[];
-  temperatureSensors?: any[];
-  coldStorageUnits?: any[];
-  equipments?: any[];
-  correctiveActions?: any[];
+  checklists?: Tables<'checklist_executions'>[];
+  oilControls?: (Tables<'oil_controls'> & { readings?: { is_compliant: boolean }[] })[];
+  temperatureSensors?: Tables<'temperature_sensors'>[];
+  coldStorageUnits?: Tables<'cold_storage_units'>[];
+  equipments?: Tables<'equipments'>[];
+  correctiveActions?: Tables<'corrective_actions'>[];
 }
 
 export default function ExportHACCP() {
@@ -828,7 +829,7 @@ export default function ExportHACCP() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Exécutions de checklists : ${data.checklists.length}`, 20, yPos);
       
-      const completedChecklists = data.checklists.filter((item: any) => item.is_completed);
+      const completedChecklists = data.checklists.filter((item) => item.is_completed);
       const completionRate = data.checklists.length > 0 ? 
         (completedChecklists.length / data.checklists.length * 100).toFixed(1) : '0.0';
       
@@ -852,8 +853,8 @@ export default function ExportHACCP() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Contrôles d'huile effectués : ${data.oilControls.length}`, 20, yPos);
       
-      const compliantOilControls = data.oilControls.filter((control: any) => 
-        control.readings?.some((reading: any) => reading.is_compliant)
+      const compliantOilControls = data.oilControls.filter((control) => 
+        control.readings?.some((reading) => reading.is_compliant)
       );
       const oilComplianceRate = data.oilControls.length > 0 ? 
         (compliantOilControls.length / data.oilControls.length * 100).toFixed(1) : '0.0';
@@ -878,7 +879,7 @@ export default function ExportHACCP() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Relevés de capteurs : ${data.temperatureSensors.length}`, 20, yPos);
       
-      const alertReadings = data.temperatureSensors.filter((reading: any) => reading.is_alert);
+      const alertReadings = data.temperatureSensors.filter((reading) => !reading.is_active);
       yPos += 10;
       doc.text(`Alertes déclenchées : ${alertReadings.length}`, 20, yPos);
       yPos += 20;
@@ -899,7 +900,7 @@ export default function ExportHACCP() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Relevés de stockage réfrigéré : ${data.coldStorageUnits.length}`, 20, yPos);
       
-      const compliantStorageReadings = data.coldStorageUnits.filter((reading: any) => reading.is_compliant);
+      const compliantStorageReadings = data.coldStorageUnits.filter((reading) => reading.is_active);
       const storageComplianceRate = data.coldStorageUnits.length > 0 ? 
         (compliantStorageReadings.length / data.coldStorageUnits.length * 100).toFixed(1) : '0.0';
       
@@ -923,7 +924,7 @@ export default function ExportHACCP() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Équipements enregistrés : ${data.equipments.length}`, 20, yPos);
       
-      const activeEquipments = data.equipments.filter((equipment: any) => equipment.equipment_state);
+      const activeEquipments = data.equipments.filter((equipment) => equipment.equipment_state);
       yPos += 10;
       doc.text(`Équipements actifs : ${activeEquipments.length}`, 20, yPos);
       yPos += 20;
@@ -944,7 +945,7 @@ export default function ExportHACCP() {
       doc.setFont('helvetica', 'normal');
       doc.text(`Actions correctives définies : ${data.correctiveActions.length}`, 20, yPos);
       
-      const activeActions = data.correctiveActions.filter((action: any) => action.is_active);
+      const activeActions = data.correctiveActions.filter((action) => action.is_active);
       yPos += 10;
       doc.text(`Actions actives : ${activeActions.length}`, 20, yPos);
       yPos += 20;
