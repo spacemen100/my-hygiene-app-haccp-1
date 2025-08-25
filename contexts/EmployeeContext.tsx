@@ -30,14 +30,14 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   
   console.log('[EmployeeProvider] Auth state:', { user: !!user, userId: user?.id, session: !!session });
 
-  // Timeout de sécurité pour forcer l'arrêt du loading après 10 secondes
+  // Timeout de sécurité pour forcer l'arrêt du loading après 3 secondes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (loading) {
-        console.log('[EmployeeProvider] TIMEOUT: Forcing loading to false after 10 seconds');
+        console.log('[EmployeeProvider] TIMEOUT: Forcing loading to false after 3 seconds');
         setLoading(false);
       }
-    }, 10000);
+    }, 3000);
 
     return () => clearTimeout(timeoutId);
   }, [loading]);

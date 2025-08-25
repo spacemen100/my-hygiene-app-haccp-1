@@ -59,7 +59,6 @@ export function AuthProvider({
       return error.message;
     }
 
-    router.refresh();
     return null;
   };
 

@@ -8,6 +8,7 @@ import { useAuth } from '@/components/AuthProvider';
 export function useOrganizationCheck() {
   const [hasOrganization, setHasOrganization] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirected, setRedirected] = useState(false);
   const { user, session, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -68,8 +69,11 @@ export function useOrganizationCheck() {
           console.log('[useOrganizationCheck] Données employé:', employee);
           setHasOrganization(false);
           setLoading(false);
-          console.log('[useOrganizationCheck] Tentative de redirection vers /admin-questionnaire-prise-en-main');
-          router.push('/admin-questionnaire-prise-en-main');
+          if (!redirected) {
+            setRedirected(true);
+            console.log('[useOrganizationCheck] Tentative de redirection vers /admin-questionnaire-prise-en-main');
+            router.replace('/admin-questionnaire-prise-en-main');
+          }
           return;
         }
 
@@ -87,7 +91,10 @@ export function useOrganizationCheck() {
           console.log('[useOrganizationCheck] Organisation non trouvée dans la base - redirection vers questionnaire');
           setHasOrganization(false);
           setLoading(false);
-          router.push('/admin-questionnaire-prise-en-main');
+          if (!redirected) {
+            setRedirected(true);
+            router.replace('/admin-questionnaire-prise-en-main');
+          }
           return;
         }
 

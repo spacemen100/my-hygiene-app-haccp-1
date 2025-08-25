@@ -17,14 +17,17 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (session) {
-      router.push('/');
+      router.replace('/');
     }
   }, [session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(''); // Reset error
     const error = await signInWithEmail(email, password);
-    if (error) setError(error);
+    if (error) {
+      setError(error);
+    }
   };
 
   if (isLoading) {
