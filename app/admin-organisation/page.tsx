@@ -197,6 +197,19 @@ export default function AdminOrganisationPage() {
       setError(null);
       setSuccess(null);
 
+      // Vérifier s'il y a des employés liés à cette organisation
+      const { data: employees, error: employeesError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('organization_id', organizationToDelete.id);
+
+      if (employeesError) throw employeesError;
+
+      if (employees && employees.length > 0) {
+        setError(`Impossible de supprimer l'organisation : ${employees.length} employé(s) y sont encore rattachés. Veuillez d'abord supprimer ou réassigner ces employés.`);
+        return;
+      }
+
       const { error } = await supabase
         .from('organizations')
         .delete()
@@ -210,7 +223,14 @@ export default function AdminOrganisationPage() {
       setOrganizationToDelete(null);
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
-      setError('Erreur lors de la suppression');
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+      
+      // Gérer spécifiquement l'erreur de contrainte de clé étrangère
+      if (errorMessage.includes('foreign key constraint') || errorMessage.includes('23503')) {
+        setError('Impossible de supprimer l\'organisation : des données y sont encore liées. Veuillez d\'abord supprimer ou réassigner les éléments dépendants.');
+      } else {
+        setError(`Erreur lors de la suppression: ${errorMessage}`);
+      }
     }
   };
 

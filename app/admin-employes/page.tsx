@@ -354,6 +354,19 @@ export default function AdminEmployesPage() {
       setError(null);
       setSuccess(null);
 
+      // Vérifier s'il y a des équipements de nettoyage assignés à cet employé
+      const { data: equipment, error: equipmentError } = await supabase
+        .from('cleaning_equipment')
+        .select('id')
+        .eq('employee_id', employeeToDelete.id);
+
+      if (equipmentError) throw equipmentError;
+
+      if (equipment && equipment.length > 0) {
+        setError(`Impossible de supprimer l'employé : ${equipment.length} équipement(s) de nettoyage lui sont encore assignés. Veuillez d'abord réassigner ces équipements.`);
+        return;
+      }
+
       const { error } = await supabase
         .from('employees')
         .delete()
@@ -367,7 +380,18 @@ export default function AdminEmployesPage() {
       setEmployeeToDelete(null);
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
-      setError('Erreur lors de la suppression');
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+      
+      // Gérer spécifiquement l'erreur de contrainte de clé étrangère
+      if (errorMessage.includes('foreign key constraint') || errorMessage.includes('23503')) {
+        if (errorMessage.includes('cleaning_equipment')) {
+          setError('Impossible de supprimer l\'employé : des équipements de nettoyage lui sont encore assignés. Veuillez d\'abord réassigner ces équipements.');
+        } else {
+          setError('Impossible de supprimer l\'employé : des données y sont encore liées. Veuillez d\'abord supprimer ou réassigner les éléments dépendants.');
+        }
+      } else {
+        setError(`Erreur lors de la suppression: ${errorMessage}`);
+      }
     }
   };
 

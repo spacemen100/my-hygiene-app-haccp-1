@@ -4,7 +4,8 @@ import { AppProvider } from './AppProvider';
 import Header from './Header';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
-import { Box, CircularProgress } from '@mui/material';
+import { useOrganizationCheck } from '../hooks/useOrganizationCheck';
+import { Box, CircularProgress, Alert, AlertTitle, Button } from '@mui/material';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const { isLoading } = useAuth();
+  const { showAlert, alertMessage, redirectToQuestionnaire } = useOrganizationCheck();
 
   // Pages qui ne doivent pas afficher le header et sidebar
   const noLayoutPages = ['/login', '/register'];
@@ -41,9 +43,37 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <>
+      {showAlert && (
+        <Alert 
+          severity="warning" 
+          sx={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            zIndex: 1300,
+            borderRadius: 0
+          }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={redirectToQuestionnaire}
+              variant="outlined"
+            >
+              Remplir maintenant
+            </Button>
+          }
+        >
+          <AlertTitle>Configuration requise</AlertTitle>
+          {alertMessage}
+        </Alert>
+      )}
       <Header onMenuClick={handleDrawerToggle} />
       <AppProvider mobileOpen={mobileOpen} onDrawerToggle={handleDrawerToggle}>
-        {children}
+        <Box sx={{ mt: showAlert ? 8 : 0 }}>
+          {children}
+        </Box>
       </AppProvider>
     </>
   );

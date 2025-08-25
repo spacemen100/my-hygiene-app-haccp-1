@@ -9,6 +9,7 @@ export function useOrganizationCheck() {
   const [hasOrganization, setHasOrganization] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirected, setRedirected] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   const { user, session, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -64,16 +65,12 @@ export function useOrganizationCheck() {
         }
 
         if (!employee?.organization_id) {
-          // Aucune organisation trouvée, rediriger vers le questionnaire
-          console.log('[useOrganizationCheck] Aucune organisation trouvée pour l\'utilisateur - redirection vers questionnaire');
+          // Aucune organisation trouvée, afficher l'alerte
+          console.log('[useOrganizationCheck] Aucune organisation trouvée pour l\'utilisateur - affichage de l\'alerte');
           console.log('[useOrganizationCheck] Données employé:', employee);
           setHasOrganization(false);
+          setShowAlert(true);
           setLoading(false);
-          if (!redirected) {
-            setRedirected(true);
-            console.log('[useOrganizationCheck] Tentative de redirection vers /admin-questionnaire-prise-en-main');
-            router.replace('/admin-questionnaire-prise-en-main');
-          }
           return;
         }
 
@@ -87,14 +84,11 @@ export function useOrganizationCheck() {
           .single();
 
         if (orgError || !organization) {
-          // L'organisation n'existe pas, rediriger vers le questionnaire
-          console.log('[useOrganizationCheck] Organisation non trouvée dans la base - redirection vers questionnaire');
+          // L'organisation n'existe pas, afficher l'alerte
+          console.log('[useOrganizationCheck] Organisation non trouvée dans la base - affichage de l\'alerte');
           setHasOrganization(false);
+          setShowAlert(true);
           setLoading(false);
-          if (!redirected) {
-            setRedirected(true);
-            router.replace('/admin-questionnaire-prise-en-main');
-          }
           return;
         }
 
@@ -113,5 +107,14 @@ export function useOrganizationCheck() {
     checkOrganization();
   }, [user?.id, session, router, pathname, authLoading]);
 
-  return { hasOrganization, loading };
+  return { 
+    hasOrganization, 
+    loading, 
+    showAlert,
+    alertMessage: "Merci de remplir le Questionnaire de prise en main",
+    redirectToQuestionnaire: () => {
+      setShowAlert(false);
+      router.replace('/admin-questionnaire-prise-en-main');
+    }
+  };
 }
