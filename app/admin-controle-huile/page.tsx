@@ -189,6 +189,19 @@ export default function EquipmentAdmin() {
   // Supprimer un équipement
   const deleteEquipment = async (id: string) => {
     try {
+      // Vérifier s'il y a des lectures d'huile liées à cet équipement
+      const { data: readings, error: readingsError } = await supabase
+        .from('oil_equipment_readings')
+        .select('id')
+        .eq('equipment_id', id);
+
+      if (readingsError) throw readingsError;
+
+      if (readings && readings.length > 0) {
+        enqueueSnackbar(`Impossible de supprimer l'équipement : ${readings.length} lecture(s) d'huile y sont encore liées. Veuillez d'abord supprimer ces lectures.`, { variant: 'error' });
+        return;
+      }
+
       const { error } = await supabase
         .from('equipments')
         .delete()
@@ -199,7 +212,18 @@ export default function EquipmentAdmin() {
       fetchEquipments();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      
+      // Gérer spécifiquement l'erreur de contrainte de clé étrangère
+      if (errorMessage.includes('foreign key constraint') || errorMessage.includes('23503')) {
+        if (errorMessage.includes('oil_equipment_readings')) {
+          enqueueSnackbar('Impossible de supprimer l\'équipement : des lectures d\'huile y sont encore liées. Veuillez d\'abord supprimer ces lectures.', { variant: 'error' });
+        } else {
+          enqueueSnackbar('Impossible de supprimer l\'équipement : des données y sont encore liées. Veuillez d\'abord supprimer les éléments dépendants.', { variant: 'error' });
+        }
+      } else {
+        enqueueSnackbar(`Erreur lors de la suppression: ${errorMessage}`, { variant: 'error' });
+      }
     }
   };
 
