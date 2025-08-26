@@ -998,6 +998,25 @@ export default function CoolingTracking() {
 
       <Container maxWidth="xl">
         
+        {/* Missing Elements Alerts */}
+        {foodProducts.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Produits alimentaires</strong> - Aucun produit alimentaire n'est configuré dans le système. 
+              Rendez-vous dans "Administration des Produits alimentaires" pour créer votre catalogue de produits.
+            </Typography>
+          </Alert>
+        )}
+
+        {productTypes.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Types de produits</strong> - Aucun type de produit n'est configuré dans le système. 
+              Les types de produits permettent de catégoriser vos aliments pour un meilleur suivi.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Statistiques rapides */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
           <Box>

@@ -21,7 +21,8 @@ import {
   Checkbox,
   Avatar,
   Skeleton,
-  Paper
+  Paper,
+  Alert
 } from '@mui/material';
 import {
   AcUnit,
@@ -254,6 +255,16 @@ export default function ColdStorage() {
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         
+        {/* Missing Elements Alert */}
+        {units.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Unités de stockage</strong> - Aucune unité de stockage froid n'est configurée dans le système. 
+              Rendez-vous dans "Administration des Unités de stockage" pour créer vos enceintes froides avant d'enregistrer des températures.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Statistiques rapides */}
         <Box sx={{ 
           display: 'grid', 

@@ -592,6 +592,16 @@ export default function OilQualityControl() {
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         
+        {/* Missing Elements Alert */}
+        {equipments.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Équipements</strong> - Aucun équipement n'est configuré dans le système. 
+              Rendez-vous dans "Administration des Équipements" pour créer vos équipements de friture avant d'effectuer des contrôles d'huile.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Tabs Navigation */}
         <Box sx={{ mb: 4 }}>
           <Tabs

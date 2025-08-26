@@ -12,7 +12,8 @@ import {
   CardContent,
   Paper,
   Avatar,
-  Button
+  Button,
+  Alert
 } from '@mui/material';
 import { CleaningServices, Help, Schedule, Assignment } from '@mui/icons-material';
 import CleaningStats from './CleaningStats';
@@ -246,6 +247,16 @@ export default function CleaningPlan() {
       </Paper>
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+        {/* Missing Elements Alert */}
+        {tasks.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Tâches de nettoyage</strong> - Aucune tâche de nettoyage n'est configurée dans le système. 
+              Rendez-vous dans "Administration du Plan de Nettoyage" pour créer vos premières tâches.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Statistiques */}
         <CleaningStats tasks={tasks} records={records} />
 

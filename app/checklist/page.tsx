@@ -439,6 +439,16 @@ export default function ChecklistPage() {
 
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         
+        {/* Missing Elements Alert */}
+        {checklists.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Checklists</strong> - Aucune checklist n'est configurée dans le système. 
+              Rendez-vous dans "Administration des Checklists" pour créer vos checklists de contrôle HACCP.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Tabs */}
         <Box sx={{ mb: 4 }}>
           <Tabs

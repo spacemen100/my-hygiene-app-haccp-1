@@ -337,6 +337,25 @@ export default function LabelPrinting() {
       </Paper>
 
       <Container maxWidth="xl">
+        {/* Missing Elements Alerts */}
+        {labelTypes.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Types d'étiquettes de produit</strong> - Aucun type d'étiquette n'est configuré dans le système. 
+              Rendez-vous dans "Administration des Étiquettes" pour créer vos types d'étiquettes avant d'imprimer des DLC.
+            </Typography>
+          </Alert>
+        )}
+
+        {printers.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              <strong>Penser à créer les Imprimantes</strong> - Aucune imprimante n'est configurée dans le système. 
+              Rendez-vous dans "Administration des Imprimantes" pour configurer vos imprimantes.
+            </Typography>
+          </Alert>
+        )}
+
         {/* Onglets */}
         <Paper sx={{ mb: 4 }}>
           <Tabs

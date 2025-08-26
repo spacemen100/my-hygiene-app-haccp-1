@@ -762,6 +762,16 @@ export default function DeliveryComponent() {
         </Box>
       </Paper>
 
+      {/* Missing Elements Alert */}
+      {suppliers.length === 0 && (
+        <Alert severity="warning" sx={{ mb: 3, mx: { xs: -1, sm: 0 } }}>
+          <Typography variant="body2">
+            <strong>Penser à créer les Fournisseurs</strong> - Aucun fournisseur n'est configuré dans le système. 
+            Rendez-vous dans "Administration des Fournisseurs" pour créer vos fournisseurs avant d'enregistrer des livraisons.
+          </Typography>
+        </Alert>
+      )}
+
       {/* New Delivery Dialog */}
       <Dialog
         open={openDialog}
