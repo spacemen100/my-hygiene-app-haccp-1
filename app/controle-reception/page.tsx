@@ -893,20 +893,42 @@ export default function DeliveryComponent() {
                   multiple
                   onChange={(e) => handleFileSelect(e, 'delivery')}
                 />
-                <Button
-                  variant="outlined"
-                  startIcon={<CloudUpload />}
-                  fullWidth
-                  onClick={() => document.getElementById('delivery-photo-upload')?.click()}
-                  sx={{ 
-                    py: { xs: 1.5, sm: 2 },
-                    minHeight: '44px'
-                  }}
-                >
-                  {deliveryPhotoPreviews.length > 0 
-                    ? `${deliveryPhotoPreviews.length} photo(s) sélectionnée(s)` 
-                    : 'Ajouter des photos de la livraison'}
-                </Button>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="delivery-camera-capture"
+                  type="file"
+                  capture="environment"
+                  onChange={(e) => handleFileSelect(e, 'delivery')}
+                />
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<CameraAlt />}
+                    onClick={() => document.getElementById('delivery-camera-capture')?.click()}
+                    sx={{ 
+                      py: { xs: 1.5, sm: 2 },
+                      minHeight: '44px',
+                      flex: { xs: 1, sm: 'none' }
+                    }}
+                  >
+                    Scanner le bon de livraison
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CloudUpload />}
+                    onClick={() => document.getElementById('delivery-photo-upload')?.click()}
+                    sx={{ 
+                      py: { xs: 1.5, sm: 2 },
+                      minHeight: '44px',
+                      flex: 1
+                    }}
+                  >
+                    {deliveryPhotoPreviews.length > 0 
+                      ? `${deliveryPhotoPreviews.length} photo(s) sélectionnée(s)` 
+                      : 'Ajouter des photos'}
+                  </Button>
+                </Box>
                 <PhotosPreview
                   previewUrls={deliveryPhotoPreviews}
                   field="delivery"
