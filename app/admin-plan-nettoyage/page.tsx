@@ -349,6 +349,31 @@ export default function AdminPlanNettoyagePage() {
         </Alert>
       )}
 
+      {/* Missing Elements Alerts */}
+      {products.length === 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            <strong>Penser à créer les Produits de nettoyage</strong> - Aucun produit de nettoyage n'est configuré dans le système.
+          </Typography>
+        </Alert>
+      )}
+
+      {equipment.length === 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            <strong>Penser à créer les Équipements</strong> - Aucun équipement de nettoyage n'est configuré dans le système.
+          </Typography>
+        </Alert>
+      )}
+
+      {methods.length === 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            <strong>Penser à créer les Méthodes</strong> - Aucune méthode de nettoyage n'est configurée dans le système.
+          </Typography>
+        </Alert>
+      )}
+
       {/* Add Button */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
