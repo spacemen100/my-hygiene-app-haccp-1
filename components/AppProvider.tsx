@@ -34,6 +34,7 @@ import {
   GetApp as ExportIcon,
   ChecklistRtl as ChecklistIcon,
   Warning as WarningIcon,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -73,6 +74,7 @@ const adminMenuItems = [
   { href: "/admin-etiquettes", icon: LabelsIcon, label: "Étiquettes" },
   { href: "/admin-imprimantes", icon: PrinterIcon, label: "Imprimantes" },
   { href: "/admin-export-haccp", icon: ExportIcon, label: "Export HACCP" },
+  { href: "/admin-horaires-etablissement", icon: ScheduleIcon, label: "Horaires d'Établissement" },
   { href: "/admin-questionnaire-prise-en-main", icon: AdminIcon, label: "Questionnaire de prise en main" },
 ];
 
