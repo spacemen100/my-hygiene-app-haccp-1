@@ -35,6 +35,7 @@ import {
   ChecklistRtl as ChecklistIcon,
   Warning as WarningIcon,
   Schedule as ScheduleIcon,
+  Archive as ArchiveIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -60,6 +61,7 @@ const standardMenuItems = [
 const adminMenuItems = [
   { href: "/admin-organisation", icon: BusinessIcon, label: "Organisation" },
   { href: "/admin-employes", icon: PeopleIcon, label: "Employés" },
+  { href: "/admin-consultation-archive", icon: ArchiveIcon, label: "Consultation Archives" },
   { href: "/admin-plan-nettoyage", icon: AdminIcon, label: "Plan de nettoyage" },
   { href: "/admin-checklist", icon: ChecklistIcon, label: "Checklists" },
   { href: "/admin-non-conformite", icon: WarningIcon, label: "Non-conformités" },
