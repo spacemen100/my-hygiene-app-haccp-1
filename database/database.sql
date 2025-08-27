@@ -20,11 +20,11 @@ CREATE TABLE public.checklist_executions (
   organization_id uuid NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT checklist_executions_pkey PRIMARY KEY (id),
-  CONSTRAINT checklist_executions_checklist_id_fkey FOREIGN KEY (checklist_id) REFERENCES public.checklists(id),
-  CONSTRAINT checklist_executions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT checklist_executions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT checklist_executions_checklist_id_fkey FOREIGN KEY (checklist_id) REFERENCES public.checklists(id),
+  CONSTRAINT checklist_executions_checklist_item_id_fkey FOREIGN KEY (checklist_item_id) REFERENCES public.checklist_items(id),
   CONSTRAINT checklist_executions_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT checklist_executions_checklist_item_id_fkey FOREIGN KEY (checklist_item_id) REFERENCES public.checklist_items(id)
+  CONSTRAINT checklist_executions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.checklist_items (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -38,9 +38,9 @@ CREATE TABLE public.checklist_items (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT checklist_items_pkey PRIMARY KEY (id),
-  CONSTRAINT checklist_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT checklist_items_checklist_id_fkey FOREIGN KEY (checklist_id) REFERENCES public.checklists(id),
-  CONSTRAINT checklist_items_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT checklist_items_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
+  CONSTRAINT checklist_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.checklists (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -55,8 +55,8 @@ CREATE TABLE public.checklists (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT checklists_pkey PRIMARY KEY (id),
-  CONSTRAINT checklists_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT checklists_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT checklists_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT checklists_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.cleaning_equipment (
@@ -70,9 +70,9 @@ CREATE TABLE public.cleaning_equipment (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT cleaning_equipment_pkey PRIMARY KEY (id),
-  CONSTRAINT cleaning_equipment_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT cleaning_equipment_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT cleaning_equipment_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT cleaning_equipment_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT cleaning_equipment_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.cleaning_methods (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -85,8 +85,8 @@ CREATE TABLE public.cleaning_methods (
   user_id uuid,
   CONSTRAINT cleaning_methods_pkey PRIMARY KEY (id),
   CONSTRAINT cleaning_methods_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT cleaning_methods_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT cleaning_methods_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT cleaning_methods_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT cleaning_methods_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.cleaning_products (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -101,9 +101,9 @@ CREATE TABLE public.cleaning_products (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT cleaning_products_pkey PRIMARY KEY (id),
+  CONSTRAINT cleaning_products_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT cleaning_products_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT cleaning_products_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT cleaning_products_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT cleaning_products_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
 );
 CREATE TABLE public.cleaning_records (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -119,9 +119,9 @@ CREATE TABLE public.cleaning_records (
   updated_at timestamp with time zone DEFAULT now(),
   employee_id uuid,
   CONSTRAINT cleaning_records_pkey PRIMARY KEY (id),
+  CONSTRAINT cleaning_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT cleaning_records_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT cleaning_records_cleaning_task_id_fkey FOREIGN KEY (cleaning_task_id) REFERENCES public.cleaning_tasks(id),
-  CONSTRAINT cleaning_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT cleaning_records_cleaning_task_id_fkey FOREIGN KEY (cleaning_task_id) REFERENCES public.cleaning_tasks(id)
 );
 CREATE TABLE public.cleaning_sub_zones (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -132,8 +132,8 @@ CREATE TABLE public.cleaning_sub_zones (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT cleaning_sub_zones_pkey PRIMARY KEY (id),
-  CONSTRAINT cleaning_sub_zones_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT cleaning_sub_zones_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
+  CONSTRAINT cleaning_sub_zones_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT cleaning_sub_zones_cleaning_zone_id_fkey FOREIGN KEY (cleaning_zone_id) REFERENCES public.cleaning_zones(id)
 );
 CREATE TABLE public.cleaning_tasks (
@@ -155,14 +155,14 @@ CREATE TABLE public.cleaning_tasks (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT cleaning_tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT cleaning_tasks_cleaning_sub_zone_id_fkey FOREIGN KEY (cleaning_sub_zone_id) REFERENCES public.cleaning_sub_zones(id),
+  CONSTRAINT cleaning_tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT cleaning_tasks_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
+  CONSTRAINT cleaning_tasks_cleaning_method_id_fkey FOREIGN KEY (cleaning_method_id) REFERENCES public.cleaning_methods(id),
+  CONSTRAINT cleaning_tasks_cleaning_equipment_id_fkey FOREIGN KEY (cleaning_equipment_id) REFERENCES public.cleaning_equipment(id),
   CONSTRAINT cleaning_tasks_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT cleaning_tasks_cleaning_zone_id_fkey FOREIGN KEY (cleaning_zone_id) REFERENCES public.cleaning_zones(id),
-  CONSTRAINT cleaning_tasks_cleaning_sub_zone_id_fkey FOREIGN KEY (cleaning_sub_zone_id) REFERENCES public.cleaning_sub_zones(id),
-  CONSTRAINT cleaning_tasks_cleaning_product_id_fkey FOREIGN KEY (cleaning_product_id) REFERENCES public.cleaning_products(id),
-  CONSTRAINT cleaning_tasks_cleaning_equipment_id_fkey FOREIGN KEY (cleaning_equipment_id) REFERENCES public.cleaning_equipment(id),
-  CONSTRAINT cleaning_tasks_cleaning_method_id_fkey FOREIGN KEY (cleaning_method_id) REFERENCES public.cleaning_methods(id),
-  CONSTRAINT cleaning_tasks_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT cleaning_tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT cleaning_tasks_cleaning_product_id_fkey FOREIGN KEY (cleaning_product_id) REFERENCES public.cleaning_products(id)
 );
 CREATE TABLE public.cleaning_zones (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -173,9 +173,9 @@ CREATE TABLE public.cleaning_zones (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT cleaning_zones_pkey PRIMARY KEY (id),
+  CONSTRAINT cleaning_zones_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT cleaning_zones_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT cleaning_zones_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT cleaning_zones_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT cleaning_zones_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
 );
 CREATE TABLE public.cold_storage_temperature_readings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -188,9 +188,9 @@ CREATE TABLE public.cold_storage_temperature_readings (
   created_at timestamp with time zone DEFAULT now(),
   employee_id uuid,
   CONSTRAINT cold_storage_temperature_readings_pkey PRIMARY KEY (id),
+  CONSTRAINT cold_storage_readings_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT cold_storage_temperature_readings_cold_storage_unit_id_fkey FOREIGN KEY (cold_storage_unit_id) REFERENCES public.cold_storage_units(id),
-  CONSTRAINT cold_storage_temperature_readings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT cold_storage_readings_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT cold_storage_temperature_readings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.cold_storage_units (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -206,9 +206,9 @@ CREATE TABLE public.cold_storage_units (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT cold_storage_units_pkey PRIMARY KEY (id),
+  CONSTRAINT cold_storage_units_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT cold_storage_units_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT cold_storage_units_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT cold_storage_units_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT cold_storage_units_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.cooling_records (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -228,10 +228,10 @@ CREATE TABLE public.cooling_records (
   food_product_id uuid,
   operation_type character varying NOT NULL DEFAULT 'cooling'::character varying CHECK (operation_type::text = ANY (ARRAY['cold_preparation'::character varying, 'cooling'::character varying, 'hot_preparation'::character varying, 'hot_serving'::character varying, 'reheating'::character varying]::text[])),
   CONSTRAINT cooling_records_pkey PRIMARY KEY (id),
-  CONSTRAINT cooling_records_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT cooling_records_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT cooling_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
   CONSTRAINT cooling_records_food_product_id_fkey FOREIGN KEY (food_product_id) REFERENCES public.food_products(id),
-  CONSTRAINT cooling_records_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
+  CONSTRAINT cooling_records_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.corrective_actions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -321,9 +321,9 @@ CREATE TABLE public.food_products (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT food_products_pkey PRIMARY KEY (id),
-  CONSTRAINT food_products_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT food_products_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT food_products_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT food_products_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT food_products_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.label_printings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -337,11 +337,11 @@ CREATE TABLE public.label_printings (
   employee_id uuid,
   printer_id uuid,
   CONSTRAINT label_printings_pkey PRIMARY KEY (id),
-  CONSTRAINT label_printings_product_label_type_id_fkey FOREIGN KEY (product_label_type_id) REFERENCES public.product_label_types(id),
-  CONSTRAINT label_printings_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT label_printings_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT label_printings_printer_id_fkey FOREIGN KEY (printer_id) REFERENCES public.printers(id),
-  CONSTRAINT label_printings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT label_printings_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT label_printings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT label_printings_product_label_type_id_fkey FOREIGN KEY (product_label_type_id) REFERENCES public.product_label_types(id),
+  CONSTRAINT label_printings_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
 );
 CREATE TABLE public.label_records (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -374,10 +374,10 @@ CREATE TABLE public.non_conformities (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT non_conformities_pkey PRIMARY KEY (id),
-  CONSTRAINT non_conformities_delivery_id_fkey FOREIGN KEY (delivery_id) REFERENCES public.deliveries(id),
+  CONSTRAINT non_conformities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT non_conformities_product_reception_control_id_fkey FOREIGN KEY (product_reception_control_id) REFERENCES public.product_reception_controls(id),
-  CONSTRAINT non_conformities_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT non_conformities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT non_conformities_delivery_id_fkey FOREIGN KEY (delivery_id) REFERENCES public.deliveries(id),
+  CONSTRAINT non_conformities_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
 );
 CREATE TABLE public.oil_control_history (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -390,9 +390,9 @@ CREATE TABLE public.oil_control_history (
   performed_at timestamp with time zone DEFAULT now(),
   reason text,
   CONSTRAINT oil_control_history_pkey PRIMARY KEY (id),
-  CONSTRAINT oil_control_history_oil_control_id_fkey FOREIGN KEY (oil_control_id) REFERENCES public.oil_controls(id),
   CONSTRAINT oil_control_history_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id),
-  CONSTRAINT oil_control_history_performed_by_fkey FOREIGN KEY (performed_by) REFERENCES public.users(id)
+  CONSTRAINT oil_control_history_performed_by_fkey FOREIGN KEY (performed_by) REFERENCES public.users(id),
+  CONSTRAINT oil_control_history_oil_control_id_fkey FOREIGN KEY (oil_control_id) REFERENCES public.oil_controls(id)
 );
 CREATE TABLE public.oil_controls (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -405,8 +405,8 @@ CREATE TABLE public.oil_controls (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT oil_controls_pkey PRIMARY KEY (id),
-  CONSTRAINT oil_controls_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT oil_controls_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+  CONSTRAINT oil_controls_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT oil_controls_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.oil_equipment_readings (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -426,8 +426,8 @@ CREATE TABLE public.oil_equipment_readings (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT oil_equipment_readings_pkey PRIMARY KEY (id),
-  CONSTRAINT oil_equipment_readings_oil_control_id_fkey FOREIGN KEY (oil_control_id) REFERENCES public.oil_controls(id),
   CONSTRAINT oil_equipment_readings_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipments(id),
+  CONSTRAINT oil_equipment_readings_oil_control_id_fkey FOREIGN KEY (oil_control_id) REFERENCES public.oil_controls(id),
   CONSTRAINT oil_equipment_readings_validated_by_fkey FOREIGN KEY (validated_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.oil_quality_controls (
@@ -458,6 +458,32 @@ CREATE TABLE public.oil_reading_corrective_actions (
   CONSTRAINT oil_reading_corrective_actions_action_id_fkey FOREIGN KEY (action_id) REFERENCES public.corrective_actions(id),
   CONSTRAINT oil_reading_corrective_actions_reading_id_fkey FOREIGN KEY (reading_id) REFERENCES public.oil_equipment_readings(id)
 );
+CREATE TABLE public.opening_hours (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  day_of_week integer NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+  open_time time without time zone,
+  close_time time without time zone,
+  is_closed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  employee_id uuid,
+  user_id uuid,
+  CONSTRAINT opening_hours_pkey PRIMARY KEY (id),
+  CONSTRAINT opening_hours_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT opening_hours_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT opening_hours_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+);
+CREATE TABLE public.opening_hours_slots (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  opening_hours_id uuid NOT NULL,
+  open_time time without time zone NOT NULL,
+  close_time time without time zone NOT NULL,
+  slot_order integer NOT NULL DEFAULT 1,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT opening_hours_slots_pkey PRIMARY KEY (id),
+  CONSTRAINT opening_hours_slots_opening_hours_id_fkey FOREIGN KEY (opening_hours_id) REFERENCES public.opening_hours(id)
+);
 CREATE TABLE public.organizations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL,
@@ -474,6 +500,30 @@ CREATE TABLE public.organizations (
   CONSTRAINT organizations_pkey PRIMARY KEY (id),
   CONSTRAINT organizations_activity_sector_id_fkey FOREIGN KEY (activity_sector_id) REFERENCES public.activity_sectors(id),
   CONSTRAINT organizations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.preparations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  designation text NOT NULL,
+  lot_number text,
+  dlc date,
+  allergens jsonb DEFAULT '[]'::jsonb,
+  selling_price numeric NOT NULL,
+  price_unit text NOT NULL DEFAULT 'piece'::text CHECK (price_unit = ANY (ARRAY['kg'::text, 'litre'::text, 'piece'::text, 'lot'::text, 'filet'::text, 'barquette'::text, 'portion'::text])),
+  state text NOT NULL DEFAULT 'fresh'::text CHECK (state = ANY (ARRAY['fresh'::text, 'frozen'::text, 'vacuum_packed'::text, 'vacuum_frozen'::text, 'defrosted'::text, 'cooked'::text, 'precooked'::text])),
+  category text NOT NULL CHECK (category = ANY (ARRAY['meat'::text, 'poultry'::text, 'game'::text, 'fish'::text, 'seafood'::text, 'charcuterie'::text, 'vegetable'::text, 'fruit'::text, 'dairy'::text, 'pastry'::text, 'sauce'::text, 'other'::text])),
+  quantity numeric NOT NULL,
+  quantity_unit text NOT NULL DEFAULT 'kg'::text CHECK (quantity_unit = ANY (ARRAY['kg'::text, 'g'::text, 'litre'::text, 'ml'::text, 'piece'::text, 'unit'::text])),
+  save_to_preparations boolean NOT NULL DEFAULT false,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  employee_id uuid,
+  user_id uuid,
+  CONSTRAINT preparations_pkey PRIMARY KEY (id),
+  CONSTRAINT preparations_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT preparations_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
+  CONSTRAINT preparations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.printers (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -506,8 +556,8 @@ CREATE TABLE public.product_label_types (
   user_id uuid,
   CONSTRAINT product_label_types_pkey PRIMARY KEY (id),
   CONSTRAINT product_label_types_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT product_label_types_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
-  CONSTRAINT product_label_types_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT product_label_types_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT product_label_types_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
 );
 CREATE TABLE public.product_reception_controls (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -556,9 +606,9 @@ CREATE TABLE public.products (
   employee_id uuid,
   user_id uuid,
   CONSTRAINT products_pkey PRIMARY KEY (id),
-  CONSTRAINT products_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT products_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT products_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
+  CONSTRAINT products_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.sensor_temperature_readings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -612,10 +662,10 @@ CREATE TABLE public.temperature_alerts (
   user_id uuid,
   CONSTRAINT temperature_alerts_pkey PRIMARY KEY (id),
   CONSTRAINT temperature_alerts_temperature_reading_id_fkey FOREIGN KEY (temperature_reading_id) REFERENCES public.sensor_temperature_readings(id),
-  CONSTRAINT temperature_alerts_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES public.users(id),
   CONSTRAINT temperature_alerts_sensor_id_fkey FOREIGN KEY (sensor_id) REFERENCES public.temperature_sensors(id),
   CONSTRAINT temperature_alerts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT temperature_alerts_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id)
+  CONSTRAINT temperature_alerts_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id),
+  CONSTRAINT temperature_alerts_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.temperature_sensors (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -667,6 +717,6 @@ CREATE TABLE public.users (
   last_login_at timestamp with time zone,
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id),
-  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
-  CONSTRAINT users_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
+  CONSTRAINT users_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
