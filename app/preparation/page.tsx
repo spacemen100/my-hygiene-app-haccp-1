@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Box,
   Paper,
@@ -136,9 +137,10 @@ const COMMON_ALLERGENS = [
   'Graines de sésame',
   'Anhydride sulfureux',
   'Lupin',
+  'Autre allergène',
 ];
 
-export default function PreparationPage() {
+function PreparationContent() {
   const { employee } = useEmployee();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -161,6 +163,9 @@ export default function PreparationPage() {
     quantity_unit: 'kg',
     save_to_preparations: false,
   });
+
+  const [customAllergen, setCustomAllergen] = useState('');
+  const [showCustomAllergenInput, setShowCustomAllergenInput] = useState(false);
 
   const fetchPreparations = useCallback(async () => {
     setLoading(true);
@@ -301,12 +306,16 @@ export default function PreparationPage() {
       quantity_unit: 'kg',
       save_to_preparations: false,
     });
+    setCustomAllergen('');
+    setShowCustomAllergenInput(false);
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingPreparation(null);
+    setCustomAllergen('');
+    setShowCustomAllergenInput(false);
   };
 
   const getStateConfig = (state: string) => {
@@ -574,14 +583,55 @@ export default function PreparationPage() {
       </Paper>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingPreparation ? 'Modifier la préparation' : 'Nouvelle préparation'}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={handleCloseDialog} 
+        maxWidth="lg" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            maxHeight: '90vh',
+            m: { xs: 1, sm: 2 },
+            width: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 32px)' }
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
+            color: 'white',
+            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            fontWeight: 600,
+            py: { xs: 2, sm: 3 }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <RestaurantIcon />
+            {editingPreparation ? 'Modifier la préparation' : 'Nouvelle préparation'}
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
+        <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 1 }}>
+            {/* Section 1: Informations générales */}
+            <Grid item xs={12}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'primary.main', 
+                  fontWeight: 600, 
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <CategoryIcon />
+                Informations générales
+              </Typography>
+            </Grid>
+
             {/* Designation */}
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 required
@@ -589,28 +639,33 @@ export default function PreparationPage() {
                 value={formData.designation}
                 onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                 placeholder="Nom du plat ou de la préparation"
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
             
             {/* Lot Number */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Numéro de lot"
                 value={formData.lot_number}
                 onChange={(e) => setFormData({ ...formData, lot_number: e.target.value })}
                 placeholder="Optionnel"
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
 
             {/* Category */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Catégorie</InputLabel>
                 <Select
                   value={formData.category}
                   label="Catégorie"
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  sx={{ borderRadius: 2 }}
                 >
                   {CATEGORIES.map((category) => (
                     <MenuItem key={category.value} value={category.value}>
@@ -625,13 +680,14 @@ export default function PreparationPage() {
             </Grid>
 
             {/* State */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>État</InputLabel>
                 <Select
                   value={formData.state}
                   label="État"
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  sx={{ borderRadius: 2 }}
                 >
                   {STATES.map((state) => (
                     <MenuItem key={state.value} value={state.value}>
@@ -642,8 +698,27 @@ export default function PreparationPage() {
               </FormControl>
             </Grid>
 
+            {/* Section 2: Quantités et mesures */}
+            <Grid item xs={12}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'primary.main', 
+                  fontWeight: 600, 
+                  mb: 2,
+                  mt: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <ScaleIcon />
+                Quantités et mesures
+              </Typography>
+            </Grid>
+
             {/* Quantity */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 required
@@ -659,17 +734,19 @@ export default function PreparationPage() {
                     </InputAdornment>
                   ),
                 }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
 
             {/* Quantity Unit */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Unité de quantité</InputLabel>
                 <Select
                   value={formData.quantity_unit}
                   label="Unité de quantité"
                   onChange={(e) => setFormData({ ...formData, quantity_unit: e.target.value })}
+                  sx={{ borderRadius: 2 }}
                 >
                   {QUANTITY_UNITS.map((unit) => (
                     <MenuItem key={unit.value} value={unit.value}>
@@ -680,8 +757,27 @@ export default function PreparationPage() {
               </FormControl>
             </Grid>
 
+            {/* Section 3: Tarification */}
+            <Grid item xs={12}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'primary.main', 
+                  fontWeight: 600, 
+                  mb: 2,
+                  mt: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <EuroIcon />
+                Tarification
+              </Typography>
+            </Grid>
+
             {/* Selling Price */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 required
@@ -697,17 +793,19 @@ export default function PreparationPage() {
                     </InputAdornment>
                   ),
                 }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
 
             {/* Price Unit */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Unité de prix</InputLabel>
                 <Select
                   value={formData.price_unit}
                   label="Unité de prix"
                   onChange={(e) => setFormData({ ...formData, price_unit: e.target.value })}
+                  sx={{ borderRadius: 2 }}
                 >
                   {PRICE_UNITS.map((unit) => (
                     <MenuItem key={unit.value} value={unit.value}>
@@ -718,46 +816,112 @@ export default function PreparationPage() {
               </FormControl>
             </Grid>
 
+            {/* Section 4: Options et dates */}
+            <Grid item xs={12}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'primary.main', 
+                  fontWeight: 600, 
+                  mb: 2,
+                  mt: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <TagIcon />
+                Options et dates
+              </Typography>
+            </Grid>
+
             {/* DLC */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <DatePicker
                 label="Date limite de consommation"
                 value={formData.dlc}
                 onChange={(date) => setFormData({ ...formData, dlc: date })}
                 slotProps={{
-                  textField: { fullWidth: true }
+                  textField: { 
+                    fullWidth: true,
+                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                  }
                 }}
               />
             </Grid>
 
             {/* Save to preparations switch */}
-            <Grid item xs={12} md={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.save_to_preparations}
-                    onChange={(e) => setFormData({ ...formData, save_to_preparations: e.target.checked })}
-                  />
-                }
-                label="Sauvegarder dans les préparations"
-              />
+            <Grid item xs={12}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '56px',
+                  pl: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper'
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.save_to_preparations}
+                      onChange={(e) => setFormData({ ...formData, save_to_preparations: e.target.checked })}
+                      color="primary"
+                    />
+                  }
+                  label="Sauvegarder dans les préparations"
+                  sx={{ m: 0 }}
+                />
+              </Box>
             </Grid>
 
-            {/* Allergens */}
+            {/* Section 5: Allergènes */}
             <Grid item xs={12}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'primary.main', 
+                  fontWeight: 600, 
+                  mb: 2,
+                  mt: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <WarningIcon />
+                Allergènes
+              </Typography>
+              
               <Autocomplete
                 multiple
                 options={COMMON_ALLERGENS}
                 value={formData.allergens}
-                onChange={(_, value) => setFormData({ ...formData, allergens: value })}
+                onChange={(_, value) => {
+                  const hasOtherAllergen = value.includes('Autre allergène');
+                  setShowCustomAllergenInput(hasOtherAllergen);
+                  
+                  if (!hasOtherAllergen) {
+                    setCustomAllergen('');
+                    const filteredAllergens = value.filter(allergen => !allergen.startsWith('Autre: '));
+                    setFormData({ ...formData, allergens: filteredAllergens });
+                  } else {
+                    setFormData({ ...formData, allergens: value });
+                  }
+                }}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
                     <Chip
                       variant="outlined"
                       label={option}
                       color="warning"
+                      size="small"
                       {...getTagProps({ index })}
                       key={option}
+                      sx={{ borderRadius: 2 }}
                     />
                   ))
                 }
@@ -765,13 +929,14 @@ export default function PreparationPage() {
                   <TextField
                     {...params}
                     label="Allergènes"
-                    placeholder="Sélectionnez les allergènes"
+                    placeholder="Sélectionnez les allergènes présents"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
                         <>
                           <InputAdornment position="start">
-                            <WarningIcon />
+                            <WarningIcon color="warning" />
                           </InputAdornment>
                           {params.InputProps.startAdornment}
                         </>
@@ -779,17 +944,115 @@ export default function PreparationPage() {
                     }}
                   />
                 )}
+                sx={{ mb: showCustomAllergenInput ? 2 : 0 }}
               />
+              
+              {/* Custom allergen input */}
+              {showCustomAllergenInput && (
+                <Box
+                  sx={{
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: 'warning.main',
+                    borderRadius: 2,
+                    bgcolor: 'warning.50',
+                    mt: 2
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    label="Nom de l'allergène personnalisé"
+                    value={customAllergen}
+                    onChange={(e) => setCustomAllergen(e.target.value)}
+                    onBlur={() => {
+                      if (customAllergen.trim()) {
+                        const customAllergenName = `Autre: ${customAllergen.trim()}`;
+                        const updatedAllergens = formData.allergens
+                          .filter(allergen => allergen !== 'Autre allergène' && !allergen.startsWith('Autre: '))
+                          .concat([customAllergenName]);
+                        setFormData({ ...formData, allergens: updatedAllergens });
+                        setShowCustomAllergenInput(false);
+                        setCustomAllergen('');
+                      }
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && customAllergen.trim()) {
+                        const customAllergenName = `Autre: ${customAllergen.trim()}`;
+                        const updatedAllergens = formData.allergens
+                          .filter(allergen => allergen !== 'Autre allergène' && !allergen.startsWith('Autre: '))
+                          .concat([customAllergenName]);
+                        setFormData({ ...formData, allergens: updatedAllergens });
+                        setShowCustomAllergenInput(false);
+                        setCustomAllergen('');
+                      }
+                    }}
+                    placeholder="Saisissez le nom de l'allergène et appuyez sur Entrée"
+                    helperText="Appuyez sur Entrée ou cliquez en dehors pour valider"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <WarningIcon color="warning" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              )}
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Annuler</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingPreparation ? 'Modifier' : 'Créer'}
+        <DialogActions 
+          sx={{ 
+            p: 3, 
+            gap: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.default'
+          }}
+        >
+          <Button 
+            onClick={handleCloseDialog}
+            variant="outlined"
+            sx={{ 
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600
+            }}
+          >
+            Annuler
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained"
+            sx={{ 
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #e85a2b 0%, #e0831a 100%)'
+              }
+            }}
+          >
+            {editingPreparation ? 'Modifier la préparation' : 'Créer la préparation'}
           </Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
+}
+
+// Composant qui ne s'affiche qu'après hydratation
+const ClientOnlyPreparationContent = dynamic(
+  () => Promise.resolve({ default: PreparationContent }),
+  { ssr: false }
+);
+
+export default function PreparationPage() {
+  return <ClientOnlyPreparationContent />;
 }
