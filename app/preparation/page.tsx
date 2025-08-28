@@ -631,7 +631,7 @@ function PreparationContent() {
             </Grid>
 
             {/* Designation */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 required
@@ -645,7 +645,7 @@ function PreparationContent() {
             </Grid>
             
             {/* Lot Number */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Numéro de lot"
@@ -658,7 +658,7 @@ function PreparationContent() {
             </Grid>
 
             {/* Category */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>Catégorie</InputLabel>
                 <Select
@@ -680,7 +680,7 @@ function PreparationContent() {
             </Grid>
 
             {/* State */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>État</InputLabel>
                 <Select
@@ -718,7 +718,7 @@ function PreparationContent() {
             </Grid>
 
             {/* Quantity */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 required
@@ -739,7 +739,7 @@ function PreparationContent() {
             </Grid>
 
             {/* Quantity Unit */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>Unité de quantité</InputLabel>
                 <Select
@@ -777,7 +777,7 @@ function PreparationContent() {
             </Grid>
 
             {/* Selling Price */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 required
@@ -798,7 +798,7 @@ function PreparationContent() {
             </Grid>
 
             {/* Price Unit */}
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>Unité de prix</InputLabel>
                 <Select
