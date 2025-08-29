@@ -189,15 +189,17 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
               severity="error" 
               icon={<Warning />}
               sx={{ 
-                bgcolor: 'rgba(255, 255, 255, 0.1)',
+                bgcolor: 'error.dark',
                 color: 'white',
-                '& .MuiAlert-icon': { color: 'warning.light' }
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                '& .MuiAlert-icon': { color: 'warning.light' },
+                '& .MuiAlert-message': { color: 'white' }
               }}
             >
-              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1, color: 'white' }}>
                 ⚠️ Alerte Température Détectée
               </Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ mb: 1, color: 'white' }}>
                 <strong>{stats.outOfBoundsReadings}</strong> lecture{stats.outOfBoundsReadings > 1 ? 's' : ''} récente{stats.outOfBoundsReadings > 1 ? 's' : ''} hors de la plage autorisée ({unit.min_temperature}°C - {unit.max_temperature}°C)
               </Typography>
               {unitReadings.slice(0, 3).filter(r => r.temperature < unit.min_temperature || r.temperature > unit.max_temperature).map((reading) => {
@@ -206,8 +208,8 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                   : (reading.temperature - unit.max_temperature);
                 const alertType = reading.temperature < unit.min_temperature ? 'trop froide' : 'trop chaude';
                 return (
-                  <Box key={reading.id} sx={{ mt: 1, p: 1, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 1 }}>
-                    <Typography variant="caption" sx={{ display: 'block' }}>
+                  <Box key={reading.id} sx={{ mt: 1, p: 1, bgcolor: 'rgba(255, 255, 255, 0.15)', borderRadius: 1, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <Typography variant="caption" sx={{ display: 'block', color: 'white', fontWeight: 500 }}>
                       📅 {new Date(reading.reading_date).toLocaleString('fr-FR')} - 
                       🌡️ {reading.temperature}°C ({alertType} de {tempDiff.toFixed(1)}°C)
                     </Typography>
@@ -215,7 +217,7 @@ export default function EnceinteSection({ unit, readings, loading = false }: Enc
                 );
               })}
               {stats.outOfBoundsReadings > 3 && (
-                <Typography variant="caption" sx={{ mt: 1, display: 'block', fontStyle: 'italic' }}>
+                <Typography variant="caption" sx={{ mt: 1, display: 'block', fontStyle: 'italic', color: 'white', opacity: 0.9 }}>
                   ... et {stats.outOfBoundsReadings - 3} autre{stats.outOfBoundsReadings - 3 > 1 ? 's' : ''} lecture{stats.outOfBoundsReadings - 3 > 1 ? 's' : ''} hors limites
                 </Typography>
               )}

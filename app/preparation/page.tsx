@@ -45,6 +45,7 @@ import {
   Category as CategoryIcon,
   LocalOffer as TagIcon,
   Warning as WarningIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { supabase } from '@/lib/supabase';
@@ -586,13 +587,16 @@ function PreparationContent() {
       <Dialog 
         open={dialogOpen} 
         onClose={handleCloseDialog} 
-        maxWidth="lg" 
+        maxWidth="xl" 
         fullWidth
         PaperProps={{
           sx: {
-            maxHeight: '90vh',
-            m: { xs: 1, sm: 2 },
-            width: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 32px)' }
+            maxHeight: { xs: '95vh', sm: '90vh' },
+            height: { xs: '95vh', sm: 'auto' },
+            m: { xs: 0.5, sm: 2 },
+            width: { xs: 'calc(100% - 8px)', sm: 'calc(100% - 32px)' },
+            display: 'flex',
+            flexDirection: 'column'
           }
         }}
       >
@@ -602,405 +606,454 @@ function PreparationContent() {
             color: 'white',
             fontSize: { xs: '1.25rem', sm: '1.5rem' },
             fontWeight: 600,
-            py: { xs: 2, sm: 3 }
+            py: { xs: 2, sm: 3 },
+            pr: 1
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <RestaurantIcon />
-            {editingPreparation ? 'Modifier la préparation' : 'Nouvelle préparation'}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <RestaurantIcon />
+              {editingPreparation ? 'Modifier la préparation' : 'Nouvelle préparation'}
+            </Box>
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{ 
+                color: 'white',
+                '&:hover': { 
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
           </Box>
         </DialogTitle>
-        <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 1 }}>
-            {/* Section 1: Informations générales */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: 'primary.main', 
-                  fontWeight: 600, 
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <CategoryIcon />
-                Informations générales
-              </Typography>
-            </Grid>
-
-            {/* Designation */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Désignation"
-                value={formData.designation}
-                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                placeholder="Nom du plat ou de la préparation"
-                variant="outlined"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
+        <DialogContent 
+          sx={{ 
+            p: { xs: 1.5, sm: 3 }, 
+            flex: 1,
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'rgba(0,0,0,0.1)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              borderRadius: '4px',
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.5)',
+              }
+            }
+          }}
+        >
+          <Box sx={{ maxWidth: '800px', mx: 'auto', mt: 1 }}>
             
-            {/* Lot Number */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Numéro de lot"
-                value={formData.lot_number}
-                onChange={(e) => setFormData({ ...formData, lot_number: e.target.value })}
-                placeholder="Optionnel"
-                variant="outlined"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-
-            {/* Category */}
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Catégorie</InputLabel>
-                <Select
-                  value={formData.category}
-                  label="Catégorie"
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  sx={{ borderRadius: 2 }}
-                >
-                  {CATEGORIES.map((category) => (
-                    <MenuItem key={category.value} value={category.value}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{category.icon}</span>
-                        {category.label}
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* State */}
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>État</InputLabel>
-                <Select
-                  value={formData.state}
-                  label="État"
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  sx={{ borderRadius: 2 }}
-                >
-                  {STATES.map((state) => (
-                    <MenuItem key={state.value} value={state.value}>
-                      {state.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Section 2: Quantités et mesures */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: 'primary.main', 
-                  fontWeight: 600, 
-                  mb: 2,
-                  mt: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <ScaleIcon />
-                Quantités et mesures
-              </Typography>
-            </Grid>
-
-            {/* Quantity */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                label="Quantité"
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
-                inputProps={{ min: 0, step: 0.1 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <ScaleIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-
-            {/* Quantity Unit */}
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Unité de quantité</InputLabel>
-                <Select
-                  value={formData.quantity_unit}
-                  label="Unité de quantité"
-                  onChange={(e) => setFormData({ ...formData, quantity_unit: e.target.value })}
-                  sx={{ borderRadius: 2 }}
-                >
-                  {QUANTITY_UNITS.map((unit) => (
-                    <MenuItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Section 3: Tarification */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: 'primary.main', 
-                  fontWeight: 600, 
-                  mb: 2,
-                  mt: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <EuroIcon />
-                Tarification
-              </Typography>
-            </Grid>
-
-            {/* Selling Price */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                label="Prix de vente"
-                value={formData.selling_price}
-                onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) || 0 })}
-                inputProps={{ min: 0, step: 0.01 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EuroIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-
-            {/* Price Unit */}
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Unité de prix</InputLabel>
-                <Select
-                  value={formData.price_unit}
-                  label="Unité de prix"
-                  onChange={(e) => setFormData({ ...formData, price_unit: e.target.value })}
-                  sx={{ borderRadius: 2 }}
-                >
-                  {PRICE_UNITS.map((unit) => (
-                    <MenuItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Section 4: Options et dates */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: 'primary.main', 
-                  fontWeight: 600, 
-                  mb: 2,
-                  mt: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <TagIcon />
-                Options et dates
-              </Typography>
-            </Grid>
-
-            {/* DLC */}
-            <Grid item xs={12}>
-              <DatePicker
-                label="Date limite de consommation"
-                value={formData.dlc}
-                onChange={(date) => setFormData({ ...formData, dlc: date })}
-                slotProps={{
-                  textField: { 
-                    fullWidth: true,
-                    sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Save to preparations switch */}
-            <Grid item xs={12}>
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  height: '56px',
-                  pl: 2,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper'
-                }}
-              >
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.save_to_preparations}
-                      onChange={(e) => setFormData({ ...formData, save_to_preparations: e.target.checked })}
-                      color="primary"
-                    />
-                  }
-                  label="Sauvegarder dans les préparations"
-                  sx={{ m: 0 }}
-                />
-              </Box>
-            </Grid>
-
-            {/* Section 5: Allergènes */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: 'primary.main', 
-                  fontWeight: 600, 
-                  mb: 2,
-                  mt: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <WarningIcon />
-                Allergènes
-              </Typography>
+            {/* Section unique */}
+            <Box>
               
-              <Autocomplete
-                multiple
-                options={COMMON_ALLERGENS}
-                value={formData.allergens}
-                onChange={(_, value) => {
-                  const hasOtherAllergen = value.includes('Autre allergène');
-                  setShowCustomAllergenInput(hasOtherAllergen);
-                  
-                  if (!hasOtherAllergen) {
-                    setCustomAllergen('');
-                    const filteredAllergens = value.filter(allergen => !allergen.startsWith('Autre: '));
-                    setFormData({ ...formData, allergens: filteredAllergens });
-                  } else {
-                    setFormData({ ...formData, allergens: value });
-                  }
-                }}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
+              {/* Section 1: Informations générales */}
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: 'primary.main', 
+                    fontWeight: 600, 
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    pb: 1,
+                    borderBottom: '2px solid',
+                    borderColor: 'primary.main'
+                  }}
+                >
+                  <CategoryIcon />
+                  Informations générales
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Désignation"
+                      value={formData.designation}
+                      onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                      placeholder="Nom du plat ou de la préparation"
                       variant="outlined"
-                      label={option}
-                      color="warning"
-                      size="small"
-                      {...getTagProps({ index })}
-                      key={option}
-                      sx={{ borderRadius: 2 }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Allergènes"
-                    placeholder="Sélectionnez les allergènes présents"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <>
+                  </Grid>
+                  
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Numéro de lot"
+                      value={formData.lot_number}
+                      onChange={(e) => setFormData({ ...formData, lot_number: e.target.value })}
+                      placeholder="Optionnel"
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth required>
+                      <InputLabel>Catégorie</InputLabel>
+                      <Select
+                        value={formData.category}
+                        label="Catégorie"
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {CATEGORIES.map((category) => (
+                          <MenuItem key={category.value} value={category.value}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <span>{category.icon}</span>
+                              {category.label}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <FormControl fullWidth required>
+                      <InputLabel>État</InputLabel>
+                      <Select
+                        value={formData.state}
+                        label="État"
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {STATES.map((state) => (
+                          <MenuItem key={state.value} value={state.value}>
+                            {state.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Section 2: Quantités et mesures */}
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: 'primary.main', 
+                    fontWeight: 600, 
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    pb: 1,
+                    borderBottom: '2px solid',
+                    borderColor: 'primary.main'
+                  }}
+                >
+                  <ScaleIcon />
+                  Quantités et mesures
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="Quantité"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
+                      inputProps={{ min: 0, step: 0.1 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <ScaleIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth required>
+                      <InputLabel>Unité de quantité</InputLabel>
+                      <Select
+                        value={formData.quantity_unit}
+                        label="Unité de quantité"
+                        onChange={(e) => setFormData({ ...formData, quantity_unit: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {QUANTITY_UNITS.map((unit) => (
+                          <MenuItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Section 3: Tarification */}
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: 'primary.main', 
+                    fontWeight: 600, 
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    pb: 1,
+                    borderBottom: '2px solid',
+                    borderColor: 'primary.main'
+                  }}
+                >
+                  <EuroIcon />
+                  Tarification
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="Prix de vente"
+                      value={formData.selling_price}
+                      onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) || 0 })}
+                      inputProps={{ min: 0, step: 0.01 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EuroIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth required>
+                      <InputLabel>Unité de prix</InputLabel>
+                      <Select
+                        value={formData.price_unit}
+                        label="Unité de prix"
+                        onChange={(e) => setFormData({ ...formData, price_unit: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {PRICE_UNITS.map((unit) => (
+                          <MenuItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Section 4: Options et dates */}
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: 'primary.main', 
+                    fontWeight: 600, 
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    pb: 1,
+                    borderBottom: '2px solid',
+                    borderColor: 'primary.main'
+                  }}
+                >
+                  <TagIcon />
+                  Options et dates
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <DatePicker
+                      label="Date limite de consommation"
+                      value={formData.dlc}
+                      onChange={(date) => setFormData({ ...formData, dlc: date })}
+                      slotProps={{
+                        textField: { 
+                          fullWidth: true,
+                          sx: { '& .MuiOutlinedInput-root': { borderRadius: 2 } }
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        height: '56px',
+                        pl: 2,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper'
+                      }}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.save_to_preparations}
+                            onChange={(e) => setFormData({ ...formData, save_to_preparations: e.target.checked })}
+                            color="primary"
+                          />
+                        }
+                        label="Sauvegarder dans les préparations"
+                        sx={{ m: 0 }}
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Section 5: Allergènes */}
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: 'primary.main', 
+                    fontWeight: 600, 
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    pb: 1,
+                    borderBottom: '2px solid',
+                    borderColor: 'primary.main'
+                  }}
+                >
+                  <WarningIcon />
+                  Allergènes
+                </Typography>
+                
+                <Autocomplete
+                  multiple
+                  options={COMMON_ALLERGENS}
+                  value={formData.allergens}
+                  onChange={(_, value) => {
+                    const hasOtherAllergen = value.includes('Autre allergène');
+                    setShowCustomAllergenInput(hasOtherAllergen);
+                    
+                    if (!hasOtherAllergen) {
+                      setCustomAllergen('');
+                      const filteredAllergens = value.filter(allergen => !allergen.startsWith('Autre: '));
+                      setFormData({ ...formData, allergens: filteredAllergens });
+                    } else {
+                      setFormData({ ...formData, allergens: value });
+                    }
+                  }}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        variant="outlined"
+                        label={option}
+                        color="warning"
+                        size="small"
+                        {...getTagProps({ index })}
+                        key={option}
+                        sx={{ borderRadius: 2, m: 0.25 }}
+                      />
+                    ))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Allergènes"
+                      placeholder="Sélectionnez les allergènes présents"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <WarningIcon color="warning" />
+                            </InputAdornment>
+                            {params.InputProps.startAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  sx={{ mb: showCustomAllergenInput ? 2 : 0 }}
+                />
+                
+                {/* Custom allergen input */}
+                {showCustomAllergenInput && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      border: '1px solid',
+                      borderColor: 'warning.main',
+                      borderRadius: 2,
+                      bgcolor: 'warning.50',
+                      mt: 2
+                    }}
+                  >
+                    <TextField
+                      fullWidth
+                      label="Nom de l'allergène personnalisé"
+                      value={customAllergen}
+                      onChange={(e) => setCustomAllergen(e.target.value)}
+                      onBlur={() => {
+                        if (customAllergen.trim()) {
+                          const customAllergenName = `Autre: ${customAllergen.trim()}`;
+                          const updatedAllergens = formData.allergens
+                            .filter(allergen => allergen !== 'Autre allergène' && !allergen.startsWith('Autre: '))
+                            .concat([customAllergenName]);
+                          setFormData({ ...formData, allergens: updatedAllergens });
+                          setShowCustomAllergenInput(false);
+                          setCustomAllergen('');
+                        }
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && customAllergen.trim()) {
+                          const customAllergenName = `Autre: ${customAllergen.trim()}`;
+                          const updatedAllergens = formData.allergens
+                            .filter(allergen => allergen !== 'Autre allergène' && !allergen.startsWith('Autre: '))
+                            .concat([customAllergenName]);
+                          setFormData({ ...formData, allergens: updatedAllergens });
+                          setShowCustomAllergenInput(false);
+                          setCustomAllergen('');
+                        }
+                      }}
+                      placeholder="Saisissez le nom de l'allergène et appuyez sur Entrée"
+                      helperText="Appuyez sur Entrée ou cliquez en dehors pour valider"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      InputProps={{
+                        startAdornment: (
                           <InputAdornment position="start">
                             <WarningIcon color="warning" />
                           </InputAdornment>
-                          {params.InputProps.startAdornment}
-                        </>
-                      ),
-                    }}
-                  />
+                        ),
+                      }}
+                    />
+                  </Box>
                 )}
-                sx={{ mb: showCustomAllergenInput ? 2 : 0 }}
-              />
-              
-              {/* Custom allergen input */}
-              {showCustomAllergenInput && (
-                <Box
-                  sx={{
-                    p: 2,
-                    border: '1px solid',
-                    borderColor: 'warning.main',
-                    borderRadius: 2,
-                    bgcolor: 'warning.50',
-                    mt: 2
-                  }}
-                >
-                  <TextField
-                    fullWidth
-                    label="Nom de l'allergène personnalisé"
-                    value={customAllergen}
-                    onChange={(e) => setCustomAllergen(e.target.value)}
-                    onBlur={() => {
-                      if (customAllergen.trim()) {
-                        const customAllergenName = `Autre: ${customAllergen.trim()}`;
-                        const updatedAllergens = formData.allergens
-                          .filter(allergen => allergen !== 'Autre allergène' && !allergen.startsWith('Autre: '))
-                          .concat([customAllergenName]);
-                        setFormData({ ...formData, allergens: updatedAllergens });
-                        setShowCustomAllergenInput(false);
-                        setCustomAllergen('');
-                      }
-                    }}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && customAllergen.trim()) {
-                        const customAllergenName = `Autre: ${customAllergen.trim()}`;
-                        const updatedAllergens = formData.allergens
-                          .filter(allergen => allergen !== 'Autre allergène' && !allergen.startsWith('Autre: '))
-                          .concat([customAllergenName]);
-                        setFormData({ ...formData, allergens: updatedAllergens });
-                        setShowCustomAllergenInput(false);
-                        setCustomAllergen('');
-                      }
-                    }}
-                    placeholder="Saisissez le nom de l'allergène et appuyez sur Entrée"
-                    helperText="Appuyez sur Entrée ou cliquez en dehors pour valider"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <WarningIcon color="warning" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Box>
-              )}
-            </Grid>
-          </Grid>
+              </Box>
+
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions 
           sx={{ 
