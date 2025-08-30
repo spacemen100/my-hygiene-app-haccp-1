@@ -1,5 +1,5 @@
 -- Table pour les fournisseurs
-CREATE TABLE suppliers (
+CREATE TABLE IF NOT EXISTS suppliers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   name VARCHAR NOT NULL,
@@ -82,6 +82,14 @@ CREATE TABLE delivery_note_items (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Ajout de la colonne is_active si elle n'existe pas
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'suppliers' AND column_name = 'is_active') THEN
+        ALTER TABLE suppliers ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+    END IF;
+END $$;
+
 -- Index pour améliorer les performances
 CREATE INDEX idx_purchase_orders_organization ON purchase_orders(organization_id);
 CREATE INDEX idx_purchase_orders_supplier ON purchase_orders(supplier_id);
@@ -94,7 +102,7 @@ CREATE INDEX idx_delivery_notes_date ON delivery_notes(delivery_date);
 CREATE INDEX idx_delivery_notes_status ON delivery_notes(status);
 
 CREATE INDEX idx_suppliers_organization ON suppliers(organization_id);
-CREATE INDEX idx_suppliers_active ON suppliers(is_active);
+CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(is_active);
 
 -- Triggers pour mettre à jour updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -105,7 +113,12 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_suppliers_updated_at') THEN
+        CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 CREATE TRIGGER update_purchase_orders_updated_at BEFORE UPDATE ON purchase_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_purchase_order_items_updated_at BEFORE UPDATE ON purchase_order_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_delivery_notes_updated_at BEFORE UPDATE ON delivery_notes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
