@@ -1159,19 +1159,6 @@ export default function ClientOrdersAndDeliveries() {
         </Box>
       </Paper>
 
-      {/* Migration Required Alert */}
-      <Alert severity="warning" sx={{ mb: 3 }}>
-        <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
-          🚨 Migration de Base de Données Requise
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          Les tables pour les commandes clients n&apos;existent pas encore dans votre base de données Supabase.
-        </Typography>
-        <Typography variant="body2">
-          <strong>Action requise :</strong> Allez sur votre dashboard Supabase → SQL Editor → 
-          Copiez/collez le contenu du fichier <code>supabase/migrations/create_clients_invoices_tables.sql</code> → Exécutez
-        </Typography>
-      </Alert>
 
       {/* Missing Elements Alert */}
       {clients.length === 0 && (
