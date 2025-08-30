@@ -217,7 +217,7 @@ CREATE TABLE public.client_orders (
   CONSTRAINT client_orders_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT client_orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
-CREATE TABLE IF NOT EXISTS public.clients (
+CREATE TABLE public.clients (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   organization_id uuid,
   name character varying NOT NULL,
