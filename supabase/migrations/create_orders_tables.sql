@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
 );
 
 -- Table pour les bons de commande
-CREATE TABLE purchase_orders (
+CREATE TABLE IF NOT EXISTS purchase_orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   order_number VARCHAR NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE purchase_orders (
 );
 
 -- Table pour les articles des bons de commande
-CREATE TABLE purchase_order_items (
+CREATE TABLE IF NOT EXISTS purchase_order_items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   purchase_order_id UUID REFERENCES purchase_orders(id) ON DELETE CASCADE,
   product_name VARCHAR NOT NULL,
@@ -87,6 +87,20 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'suppliers' AND column_name = 'is_active') THEN
         ALTER TABLE suppliers ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+    END IF;
+END $$;
+
+-- Ajout des colonnes manquantes pour la table clients
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'clients' AND column_name = 'vat_number') THEN
+        ALTER TABLE clients ADD COLUMN vat_number VARCHAR;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'clients' AND column_name = 'payment_terms') THEN
+        ALTER TABLE clients ADD COLUMN payment_terms INTEGER DEFAULT 30;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'clients' AND column_name = 'is_active') THEN
+        ALTER TABLE clients ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
     END IF;
 END $$;
 
