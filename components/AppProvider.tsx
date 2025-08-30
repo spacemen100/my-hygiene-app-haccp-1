@@ -37,6 +37,7 @@ import {
   Schedule as ScheduleIcon,
   Archive as ArchiveIcon,
   Restaurant as RestaurantIcon,
+  ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -52,6 +53,7 @@ const standardMenuItems = [
   { href: "/controle-reception", icon: ClipboardCheck, label: "Contrôle à réception" },
   { href: "/etiquettes", icon: TagsIcon, label: "Enregistrement des étiquettes" },
   { href: "/preparation", icon: RestaurantIcon, label: "Préparations" },
+  { href: "/bon-commande-et-livraison", icon: ShoppingCartIcon, label: "Commandes Clients & Livraisons" },
   { href: "/impression-dlc", icon: PrinterIcon, label: "Impression des DLC secondaires" },
   { href: "/enceintes-froides", icon: SnowflakeIcon, label: "Enceintes froides" },
   { href: "/controle-huile", icon: OilIcon, label: "Contrôle qualité de l'huile" },
