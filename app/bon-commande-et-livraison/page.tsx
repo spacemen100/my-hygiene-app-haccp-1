@@ -448,39 +448,86 @@ export default function ClientOrdersAndDeliveries() {
   };
 
   const handleSaveClient = async () => {
+    // Validation du nom du client
     if (!clientFormData.name.trim()) {
-      enqueueSnackbar('Le nom du client est obligatoire', { variant: 'error' });
+      enqueueSnackbar('⚠️ Le nom du client est obligatoire', { variant: 'error' });
+      return;
+    }
+
+    // Validation de l'email si fourni
+    if (clientFormData.email && !clientFormData.email.includes('@')) {
+      enqueueSnackbar('⚠️ Format d\'email invalide', { variant: 'error' });
+      return;
+    }
+
+    // Validation des délais de paiement
+    if (clientFormData.payment_terms <= 0) {
+      enqueueSnackbar('⚠️ Le délai de paiement doit être supérieur à 0 jours', { variant: 'error' });
+      return;
+    }
+
+    // Validation de l'organisation
+    if (!employee?.organization_id) {
+      enqueueSnackbar('❌ Erreur de connexion - Organisation non identifiée', { variant: 'error' });
       return;
     }
 
     try {
+      enqueueSnackbar('🔄 Sauvegarde du client...', { variant: 'info' });
+
       const clientData = {
-        ...clientFormData,
-        organization_id: employee?.organization_id,
+        name: clientFormData.name.trim(),
+        contact_person: clientFormData.contact_person.trim() || null,
+        email: clientFormData.email.trim() || null,
+        phone: clientFormData.phone.trim() || null,
+        address: clientFormData.address.trim() || null,
+        siret: clientFormData.siret.trim() || null,
+        vat_number: clientFormData.vat_number.trim() || null,
+        payment_terms: clientFormData.payment_terms,
+        organization_id: employee.organization_id,
       };
 
       if (editingClient) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('clients')
           .update(clientData)
-          .eq('id', editingClient.id);
+          .eq('id', editingClient.id)
+          .select()
+          .single();
 
         if (error) throw error;
-        enqueueSnackbar('Client modifié avec succès', { variant: 'success' });
+        enqueueSnackbar('✅ Client modifié avec succès', { variant: 'success' });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('clients')
-          .insert([clientData]);
+          .insert([clientData])
+          .select()
+          .single();
 
         if (error) throw error;
-        enqueueSnackbar('Client créé avec succès', { variant: 'success' });
+        enqueueSnackbar('✅ Client créé avec succès', { variant: 'success' });
       }
 
       handleCloseClientDialog();
-      fetchClients();
+      await fetchClients();
+      
+      enqueueSnackbar(`🎉 ${editingClient ? 'Modification' : 'Création'} du client "${clientData.name}" terminée !`, { variant: 'success' });
+
     } catch (error) {
       console.error('Error saving client:', error);
-      enqueueSnackbar('Erreur lors de la sauvegarde - Migration de BDD requise', { variant: 'warning' });
+      
+      let errorMessage = 'Erreur lors de la sauvegarde';
+      if (error?.message?.includes('violates row-level security')) {
+        errorMessage = '🔒 Erreur de permissions - Contactez votre administrateur';
+      } else if (error?.message?.includes('duplicate key')) {
+        errorMessage = '⚠️ Un client avec ce nom existe déjà';
+      } else if (error?.message?.includes('unique constraint')) {
+        errorMessage = '⚠️ Ces informations sont déjà utilisées par un autre client';
+      } else if (error?.message) {
+        errorMessage = `❌ ${error.message}`;
+      }
+      
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
 
@@ -546,41 +593,60 @@ export default function ClientOrdersAndDeliveries() {
   };
 
   const handleSaveOrder = async () => {
+    // Validation du client
     if (!orderFormData.client_id) {
-      enqueueSnackbar('Veuillez sélectionner un client', { variant: 'error' });
+      enqueueSnackbar('⚠️ Veuillez sélectionner un client pour créer la commande', { variant: 'error' });
       return;
     }
 
+    // Validation des produits
     if (orderFormData.items.length === 0) {
-      enqueueSnackbar('Veuillez ajouter au moins un produit', { variant: 'error' });
+      enqueueSnackbar('⚠️ Veuillez ajouter au moins un produit à la commande', { variant: 'error' });
+      return;
+    }
+
+    // Validation des quantités
+    const invalidItems = orderFormData.items.filter(item => item.quantity <= 0 || item.unit_price <= 0);
+    if (invalidItems.length > 0) {
+      enqueueSnackbar('⚠️ Tous les produits doivent avoir une quantité et un prix supérieurs à 0', { variant: 'error' });
+      return;
+    }
+
+    // Validation de l'employé
+    if (!employee?.organization_id) {
+      enqueueSnackbar('❌ Erreur de connexion - Employé non identifié', { variant: 'error' });
       return;
     }
 
     try {
+      enqueueSnackbar('🔄 Sauvegarde en cours...', { variant: 'info' });
+
       const totalAmount = calculateOrderTotal(orderFormData.items);
       const orderData = {
         order_number: orderFormData.order_number,
         client_id: orderFormData.client_id,
         order_date: orderFormData.order_date.toISOString().split('T')[0],
         delivery_date: orderFormData.delivery_date ? orderFormData.delivery_date.toISOString().split('T')[0] : null,
-        delivery_address: orderFormData.delivery_address,
+        delivery_address: orderFormData.delivery_address || null,
         status: orderFormData.status,
         total_amount: totalAmount,
-        notes: orderFormData.notes,
-        organization_id: employee?.organization_id,
-        employee_id: employee?.id,
+        notes: orderFormData.notes || null,
+        organization_id: employee.organization_id,
+        employee_id: employee.id,
       };
 
       let orderId: string;
       if (editingOrder) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('client_orders')
           .update(orderData)
-          .eq('id', editingOrder.id);
+          .eq('id', editingOrder.id)
+          .select()
+          .single();
 
         if (error) throw error;
         orderId = editingOrder.id;
-        enqueueSnackbar('Commande modifiée avec succès', { variant: 'success' });
+        enqueueSnackbar('✅ Commande modifiée avec succès', { variant: 'success' });
       } else {
         const { data, error } = await supabase
           .from('client_orders')
@@ -590,43 +656,63 @@ export default function ClientOrdersAndDeliveries() {
 
         if (error) throw error;
         orderId = data.id;
-        enqueueSnackbar('Commande créée avec succès', { variant: 'success' });
+        enqueueSnackbar('✅ Commande créée avec succès', { variant: 'success' });
       }
 
-      // Delete existing items if editing
-      if (editingOrder) {
-        await supabase
+      // Suppression des anciens items si modification
+      if (editingOrder && orderFormData.items.length > 0) {
+        const { error: deleteError } = await supabase
           .from('client_order_items')
           .delete()
           .eq('client_order_id', orderId);
+        
+        if (deleteError) throw deleteError;
       }
 
-      // Insert new items
-      const itemsToInsert = orderFormData.items.map(item => ({
-        client_order_id: orderId,
-        preparation_id: item.preparation_id,
-        product_name: item.product_name,
-        description: item.description,
-        quantity: item.quantity,
-        unit: item.unit,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-        allergens: item.allergens,
-        lot_number: item.lot_number,
-        dlc: item.dlc,
-      }));
+      // Insertion des nouveaux items
+      if (orderFormData.items.length > 0) {
+        const itemsToInsert = orderFormData.items.map(item => ({
+          client_order_id: orderId,
+          preparation_id: item.preparation_id || null,
+          product_name: item.product_name,
+          description: item.description || null,
+          quantity: item.quantity,
+          unit: item.unit,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          allergens: item.allergens || [],
+          lot_number: item.lot_number || null,
+          dlc: item.dlc || null,
+        }));
 
-      const { error: itemsError } = await supabase
-        .from('client_order_items')
-        .insert(itemsToInsert);
+        const { error: itemsError } = await supabase
+          .from('client_order_items')
+          .insert(itemsToInsert);
 
-      if (itemsError) throw itemsError;
+        if (itemsError) throw itemsError;
+      }
 
+      // Fermeture du dialog et rechargement des données
       handleCloseOrderDialog();
-      fetchClientOrders();
+      await fetchClientOrders();
+      
+      enqueueSnackbar(`🎉 ${editingOrder ? 'Modification' : 'Création'} terminée ! Total: ${totalAmount.toFixed(2)}€`, { variant: 'success' });
+
     } catch (error) {
       console.error('Error saving order:', error);
-      enqueueSnackbar('Erreur lors de la sauvegarde', { variant: 'error' });
+      
+      let errorMessage = 'Erreur lors de la sauvegarde';
+      if (error?.message?.includes('violates row-level security')) {
+        errorMessage = '🔒 Erreur de permissions - Contactez votre administrateur';
+      } else if (error?.message?.includes('duplicate key')) {
+        errorMessage = '⚠️ Ce numéro de commande existe déjà';
+      } else if (error?.message?.includes('foreign key')) {
+        errorMessage = '⚠️ Client ou produit invalide';
+      } else if (error?.message) {
+        errorMessage = `❌ ${error.message}`;
+      }
+      
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
 
@@ -718,6 +804,243 @@ export default function ClientOrdersAndDeliveries() {
         } : item
       )
     }));
+  };
+
+  // Print functions
+  const handlePrintOrder = (order: ClientOrder) => {
+    try {
+      enqueueSnackbar('🖨️ Préparation de l\'impression...', { variant: 'info' });
+
+      const client = clients.find(c => c.id === order.client_id);
+      if (!client) {
+        enqueueSnackbar('❌ Client introuvable pour cette commande', { variant: 'error' });
+        return;
+      }
+
+      // Créer le contenu HTML pour l'impression
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Commande ${order.order_number}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .company-info { margin-bottom: 20px; }
+            .order-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
+            .client-info { flex: 1; margin-right: 20px; }
+            .order-details { flex: 1; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .total { text-align: right; font-weight: bold; font-size: 18px; }
+            .footer { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>BON DE COMMANDE</h1>
+            <p>N° ${order.order_number}</p>
+          </div>
+
+          <div class="order-info">
+            <div class="client-info">
+              <h3>CLIENT</h3>
+              <p><strong>${client.name}</strong></p>
+              ${client.contact_person ? `<p>Contact: ${client.contact_person}</p>` : ''}
+              ${client.address ? `<p>${client.address}</p>` : ''}
+              ${client.phone ? `<p>Tél: ${client.phone}</p>` : ''}
+              ${client.email ? `<p>Email: ${client.email}</p>` : ''}
+            </div>
+            <div class="order-details">
+              <h3>COMMANDE</h3>
+              <p><strong>Date:</strong> ${format(new Date(order.order_date), 'dd/MM/yyyy', { locale: fr })}</p>
+              ${order.delivery_date ? `<p><strong>Livraison:</strong> ${format(new Date(order.delivery_date), 'dd/MM/yyyy', { locale: fr })}</p>` : ''}
+              ${order.delivery_address ? `<p><strong>Adresse livraison:</strong> ${order.delivery_address}</p>` : ''}
+              <p><strong>Statut:</strong> ${ORDER_STATUS_COLORS[order.status]?.label || order.status}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Description</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.items?.map(item => `
+                <tr>
+                  <td>${item.product_name}</td>
+                  <td>${item.description || '-'}</td>
+                  <td>${item.quantity} ${item.unit}</td>
+                  <td>${item.unit_price.toFixed(2)}€</td>
+                  <td>${item.total_price.toFixed(2)}€</td>
+                </tr>
+              `).join('') || '<tr><td colspan="5">Aucun produit</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="total">
+            <p>TOTAL: ${order.total_amount?.toFixed(2) || '0.00'}€</p>
+          </div>
+
+          ${order.notes ? `<div class="footer"><h3>NOTES</h3><p>${order.notes}</p></div>` : ''}
+
+          <div class="footer">
+            <p><em>Imprimé le ${format(new Date(), 'dd/MM/yyyy à HH:mm', { locale: fr })}</em></p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Ouvrir une nouvelle fenêtre pour l'impression
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+        enqueueSnackbar('✅ Commande envoyée à l\'imprimante', { variant: 'success' });
+      } else {
+        enqueueSnackbar('❌ Impossible d\'ouvrir la fenêtre d\'impression', { variant: 'error' });
+      }
+    } catch (error) {
+      console.error('Error printing order:', error);
+      enqueueSnackbar('❌ Erreur lors de l\'impression', { variant: 'error' });
+    }
+  };
+
+  const handlePrintInvoice = (invoice: Invoice) => {
+    try {
+      enqueueSnackbar('🖨️ Préparation de l\'impression...', { variant: 'info' });
+
+      const client = clients.find(c => c.id === invoice.client_id);
+      if (!client) {
+        enqueueSnackbar('❌ Client introuvable pour cette facture', { variant: 'error' });
+        return;
+      }
+
+      // Créer le contenu HTML pour l'impression
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Facture ${invoice.invoice_number}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
+            .client-info { flex: 1; margin-right: 20px; }
+            .invoice-details { flex: 1; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .totals { margin-left: 50%; }
+            .totals tr td:first-child { font-weight: bold; }
+            .total-final { background-color: #f0f0f0; font-weight: bold; font-size: 18px; }
+            .footer { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>FACTURE</h1>
+            <p>N° ${invoice.invoice_number}</p>
+          </div>
+
+          <div class="invoice-info">
+            <div class="client-info">
+              <h3>FACTURÉ À</h3>
+              <p><strong>${client.name}</strong></p>
+              ${client.contact_person ? `<p>Contact: ${client.contact_person}</p>` : ''}
+              ${client.address ? `<p>${client.address}</p>` : ''}
+              ${client.phone ? `<p>Tél: ${client.phone}</p>` : ''}
+              ${client.email ? `<p>Email: ${client.email}</p>` : ''}
+              ${client.siret ? `<p>SIRET: ${client.siret}</p>` : ''}
+              ${client.vat_number ? `<p>N° TVA: ${client.vat_number}</p>` : ''}
+            </div>
+            <div class="invoice-details">
+              <h3>FACTURE</h3>
+              <p><strong>Date facture:</strong> ${format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: fr })}</p>
+              <p><strong>Date échéance:</strong> ${format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: fr })}</p>
+              <p><strong>Délai paiement:</strong> ${client.payment_terms} jours</p>
+              <p><strong>Statut:</strong> ${INVOICE_STATUS_COLORS[invoice.status]?.label || invoice.status}</p>
+              ${invoice.client_order?.order_number ? `<p><strong>Commande:</strong> ${invoice.client_order.order_number}</p>` : ''}
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Description</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoice.items?.map(item => `
+                <tr>
+                  <td>${item.product_name}</td>
+                  <td>${item.description || '-'}</td>
+                  <td>${item.quantity} ${item.unit}</td>
+                  <td>${item.unit_price.toFixed(2)}€</td>
+                  <td>${item.total_price.toFixed(2)}€</td>
+                </tr>
+              `).join('') || '<tr><td colspan="5">Aucun article</td></tr>'}
+            </tbody>
+          </table>
+
+          <table class="totals">
+            <tr>
+              <td>Sous-total HT:</td>
+              <td>${invoice.subtotal.toFixed(2)}€</td>
+            </tr>
+            <tr>
+              <td>TVA (${invoice.tax_rate}%):</td>
+              <td>${invoice.tax_amount.toFixed(2)}€</td>
+            </tr>
+            <tr class="total-final">
+              <td>TOTAL TTC:</td>
+              <td>${invoice.total_amount.toFixed(2)}€</td>
+            </tr>
+          </table>
+
+          ${invoice.notes ? `<div class="footer"><h3>NOTES</h3><p>${invoice.notes}</p></div>` : ''}
+
+          <div class="footer">
+            <p><em>Facture générée le ${format(new Date(), 'dd/MM/yyyy à HH:mm', { locale: fr })}</em></p>
+            ${invoice.payment_date ? `<p><strong>Payée le:</strong> ${format(new Date(invoice.payment_date), 'dd/MM/yyyy', { locale: fr })}</p>` : ''}
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Ouvrir une nouvelle fenêtre pour l'impression
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+        enqueueSnackbar('✅ Facture envoyée à l\'imprimante', { variant: 'success' });
+      } else {
+        enqueueSnackbar('❌ Impossible d\'ouvrir la fenêtre d\'impression', { variant: 'error' });
+      }
+    } catch (error) {
+      console.error('Error printing invoice:', error);
+      enqueueSnackbar('❌ Erreur lors de l\'impression', { variant: 'error' });
+    }
   };
 
   // Generate invoice from order
@@ -1120,7 +1443,13 @@ export default function ClientOrdersAndDeliveries() {
                             >
                               <ReceiptIcon fontSize="small" />
                             </IconButton>
-                            <IconButton size="small" color="default">
+                            <IconButton 
+                              size="small" 
+                              color="default"
+                              onClick={() => handlePrintOrder(order)}
+                              disabled={!order.items || order.items.length === 0}
+                              title="Imprimer la commande"
+                            >
                               <PrintIcon fontSize="small" />
                             </IconButton>
                           </Box>
@@ -1226,7 +1555,13 @@ export default function ClientOrdersAndDeliveries() {
                               <IconButton size="small" color="primary">
                                 <EditIcon fontSize="small" />
                               </IconButton>
-                              <IconButton size="small" color="default">
+                              <IconButton 
+                                size="small" 
+                                color="default"
+                                onClick={() => handlePrintInvoice(invoice)}
+                                disabled={!invoice.items || invoice.items.length === 0}
+                                title="Imprimer la facture"
+                              >
                                 <PrintIcon fontSize="small" />
                               </IconButton>
                             </Box>
